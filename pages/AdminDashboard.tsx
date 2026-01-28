@@ -125,7 +125,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     fetchExams();
     fetchPatientStats();
 
-    // Carregar Campanhas
+    // Carregar Campanhas (Ainda no localStorage por enquanto)
     const savedCampaigns = localStorage.getItem('lab_campaigns');
     if (savedCampaigns) {
       setCampaignsList(JSON.parse(savedCampaigns));
@@ -138,18 +138,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       localStorage.setItem('lab_campaigns', JSON.stringify(initialCampaigns));
     }
 
-    // Carregar Administradores
-    const savedAdmins = localStorage.getItem('lab_admins_list');
-    if (savedAdmins) {
-      setAdminsList(JSON.parse(savedAdmins));
-    } else {
-      const initialAdmins: User[] = [
-        { id: 'admin-1', name: 'Kaliton Gonçalves Leite', cpf: '000.000.000-00', role: UserRole.ADMIN },
-        { id: 'admin-2', name: 'Sistema Central', cpf: '111.111.111-11', role: UserRole.ADMIN },
-      ];
-      setAdminsList(initialAdmins);
-      localStorage.setItem('lab_admins_list', JSON.stringify(initialAdmins));
-    }
+    // Carregar Equipe do Supabase (Admins, Médicos e Recepção)
+    const fetchStaff = async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['ADMIN', 'MEDICAL', 'RECEPTION'])
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar equipe:', error);
+      } else {
+        setAdminsList(data || []);
+      }
+    };
+    fetchStaff();
   }, []);
 
   // Estado para controle de edição
@@ -313,15 +316,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     }
   };
 
-  const deleteAdmin = (id: string) => {
+  const deleteAdmin = async (id: string) => {
     if (id === user.id) {
       alert("Você não pode excluir seu próprio acesso administrativo.");
       return;
     }
     if (window.confirm("Deseja revogar o acesso deste administrador?")) {
-      const updated = adminsList.filter(a => a.id !== id);
-      setAdminsList(updated);
-      localStorage.setItem('lab_admins_list', JSON.stringify(updated));
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ role: UserRole.PATIENT })
+          .eq('id', id);
+
+        if (error) throw error;
+
+        setAdminsList(prev => prev.filter(a => a.id !== id));
+        alert("Acesso administrativo revogado com sucesso.");
+      } catch (err: any) {
+        alert("Erro ao revogar acesso: " + err.message);
+      }
     }
   };
 
@@ -484,7 +497,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'exames', label: 'Registros', icon: 'fa-file-medical' },
           { id: 'relatorios', label: 'Relatórios', icon: 'fa-file-contract' },
           { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
-          { id: 'admins', label: 'Admins', icon: 'fa-user-shield' },
+          { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
         ]}
         activeTab={activeTab}
@@ -794,13 +807,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       {activeTab === 'admins' && (
         <div className="space-y-6 animate-in fade-in duration-500">
           <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-black text-slate-800">Administradores do Sistema</h2>
+            <h2 className="text-2xl font-black text-slate-800">Membros da Equipe</h2>
             <div className="bg-white p-5 md:p-6 rounded-[28px] shadow-sm border border-gray-100">
               <div className="relative">
                 <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
                 <input
                   type="text"
-                  placeholder="Buscar administrador por nome ou CPF..."
+                  placeholder="Buscar membro por nome ou CPF..."
                   className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-500 outline-none text-sm font-bold transition-all placeholder:text-gray-300"
                   value={adminSearchTerm}
                   onChange={e => {
@@ -818,8 +831,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <table className="w-full text-left min-w-[600px]">
                 <thead className="bg-gray-50/50 border-b border-gray-50">
                   <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    <th className="px-8 py-5">Administrador</th>
-                    <th className="px-8 py-5">CPF</th>
+                    <th className="px-8 py-5">Membro</th>
+                    <th className="px-8 py-5">Cargo</th>
                     <th className="px-8 py-5 text-center">Ações</th>
                   </tr>
                 </thead>
@@ -828,20 +841,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                     <tr key={admin.id} className="hover:bg-purple-50/10 transition-colors group">
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 font-black text-xs">
-                            <i className="fas fa-user-tie"></i>
+                          <div className={`w-9 h-9 ${admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-600' : admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600'} rounded-xl flex items-center justify-center font-black text-xs`}>
+                            <i className={`fas ${admin.role === 'ADMIN' ? 'fa-user-tie' : admin.role === 'MEDICAL' ? 'fa-user-md' : 'fa-user-nurse'}`}></i>
                           </div>
-                          <p className="font-black text-slate-800 text-sm">{admin.name} {admin.id === user.id && <span className="text-[8px] bg-blue-600 text-white px-1.5 py-0.5 rounded ml-2">VOCÊ</span>}</p>
+                          <div>
+                            <p className="font-black text-slate-800 text-sm">{admin.name} {admin.id === user.id && <span className="text-[8px] bg-blue-600 text-white px-1.5 py-0.5 rounded ml-2">VOCÊ</span>}</p>
+                            <p className="text-[10px] text-gray-400 font-bold">{maskCPF(admin.cpf || '')}</p>
+                          </div>
                         </div>
                       </td>
-                      <td className="px-8 py-5 font-bold text-gray-500 text-sm">{admin.cpf}</td>
+                      <td className="px-8 py-5">
+                        <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                            admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-700' :
+                              'bg-emerald-100 text-emerald-700'
+                          }`}>
+                          {admin.role === 'ADMIN' ? 'Administrador' : admin.role === 'MEDICAL' ? 'Área Médica' : 'Recepção'}
+                        </span>
+                      </td>
                       <td className="px-8 py-5">
                         <div className="flex justify-center gap-2">
                           <button
                             disabled={admin.id === user.id}
                             onClick={() => deleteAdmin(admin.id)}
                             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-sm border ${admin.id === user.id ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed' : 'bg-red-50 text-red-500 border-red-100 hover:bg-red-500 hover:text-white'}`}
-                            title="Remover Administrador"
+                            title="Remover Acesso"
                           >
                             <i className="fas fa-user-minus text-xs"></i>
                           </button>
