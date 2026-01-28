@@ -29,6 +29,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>('all');
 
+  // Estados para estatísticas reais
+  const [patientStats, setPatientStats] = useState({ total: 0, growth: 0 });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reportRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +80,50 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         setExamsList(mappedExams);
       }
     };
+    // Carregar Estatísticas de Pacientes
+    const fetchPatientStats = async () => {
+      try {
+        // Total atual de pacientes
+        const { count: total, error: totalError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'PATIENT');
+
+        if (totalError) throw totalError;
+
+        // Total antes do mês atual para calcular crescimento
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const { count: previousTotal, error: prevError } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('role', 'PATIENT')
+          .lt('created_at', startOfMonth.toISOString());
+
+        if (prevError) throw prevError;
+
+        const currentTotal = total || 0;
+        const prevTotal = previousTotal || 0;
+
+        // Cálculo de crescimento: (atual - anterior) / anterior
+        // Se anterior for 0, mas atual for > 0, o crescimento é 100%
+        let growth = 0;
+        if (prevTotal > 0) {
+          growth = ((currentTotal - prevTotal) / prevTotal) * 100;
+        } else if (currentTotal > 0) {
+          growth = 100;
+        }
+
+        setPatientStats({ total: currentTotal, growth: Math.round(growth) });
+      } catch (err) {
+        console.error('Erro ao buscar estatísticas de pacientes:', err);
+      }
+    };
+
     fetchExams();
+    fetchPatientStats();
 
     // Carregar Campanhas
     const savedCampaigns = localStorage.getItem('lab_campaigns');
@@ -450,10 +496,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pacientes Totais</p>
-              <h3 className="text-3xl font-black text-slate-800">2.543</h3>
-              <div className="flex items-center gap-1 text-emerald-500 mt-1">
-                <i className="fas fa-arrow-up text-[10px]"></i>
-                <span className="text-[10px] font-black">12% este mês</span>
+              <h3 className="text-3xl font-black text-slate-800">{patientStats.total.toLocaleString('pt-BR')}</h3>
+              <div className={`flex items-center gap-1 mt-1 ${patientStats.growth >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <i className={`fas ${patientStats.growth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[10px]`}></i>
+                <span className="text-[10px] font-black">{Math.abs(patientStats.growth)}% este mês</span>
               </div>
             </div>
             <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
