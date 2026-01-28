@@ -136,32 +136,41 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8fafc] relative overflow-hidden">
       {/* Background Decorativo Moderno */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#002147]/10 blur-[120px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#22c55e]/10 blur-[120px] rounded-full pointer-events-none"></div>
+      {/* Top Banner Section: Filling the top of the screen */}
+      <div className="w-full bg-gradient-to-br from-[#002147] via-[#002147] to-[#003366] pt-16 pb-24 md:pt-20 md:pb-32 px-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
+        {/* Decorative subtle logo background */}
+        <div className="absolute inset-0 opacity-10 pointer-events-none">
+          <img src="/assets/logo-uarini.jpg" className="w-full h-full object-cover blur-3xl scale-125" alt="" />
+        </div>
 
-      <div className="flex-grow flex items-center justify-center p-4 relative z-10">
-        <div className="bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,33,71,0.2)] w-full max-w-md p-10 flex flex-col items-center border border-white/50 modern-shadow">
-          <div className="relative mb-8 group">
-            <div className="absolute -inset-1 bg-gradient-to-tr from-[#22c55e] to-[#eab308] rounded-[40px] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-            <div className="relative bg-white w-28 h-28 rounded-[35px] shadow-2xl flex items-center justify-center border border-gray-100 overflow-hidden p-2">
-              <img
-                src="/assets/logo-uarini.jpg"
-                alt="Logo Uarini"
-                className="w-full h-full object-contain"
-              />
-            </div>
+        {/* Glow Effects */}
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[100%] bg-blue-400/10 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[100%] bg-[#22c55e]/10 blur-[120px] rounded-full"></div>
+
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="bg-white p-5 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/20 mb-8 transform hover:scale-105 transition-transform duration-500">
+            <img
+              src="/assets/logo-uarini.jpg"
+              alt="Logo Uarini"
+              className="w-32 h-32 md:w-48 md:h-48 object-contain"
+            />
           </div>
 
-          <div className="text-center mb-10">
-            <h1 className="text-3xl font-extrabold text-[#002147] leading-tight tracking-tight">
-              Laboratório Municipal
-            </h1>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <span className="h-[2px] w-4 bg-[#22c55e] rounded-full"></span>
-              <p className="text-[10px] text-[#22c55e] font-bold uppercase tracking-[0.4em]">Análises Clínicas</p>
-              <span className="h-[2px] w-4 bg-[#22c55e] rounded-full"></span>
-            </div>
+          <h1 className="text-3xl md:text-5xl font-black text-white text-center leading-tight tracking-tighter drop-shadow-2xl px-6">
+            Laboratório Municipal de Uarini
+          </h1>
+
+          <div className="flex items-center justify-center gap-3 mt-4 bg-white/5 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
+            <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
+            <p className="text-[10px] md:text-xs text-[#22c55e] font-black uppercase tracking-[0.4em]">Análises Clínicas</p>
+            <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
           </div>
+        </div>
+      </div>
+
+      <div className="flex-grow flex flex-col items-center p-4 relative z-20 -mt-16 md:-mt-24 pb-20">
+        <div className="bg-white rounded-[40px] shadow-[0_40px_80px_-15px_rgba(0,33,71,0.25)] w-full max-w-md p-10 flex flex-col items-center border border-white/80 backdrop-blur-xl relative">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-1.5 bg-gray-100 rounded-full"></div>
 
           <div className="w-full space-y-6">
             <div className="space-y-1">
@@ -230,7 +239,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 onClick={() => setShowQRModal(true)}
                 className="w-full border border-gray-100 bg-white text-[#002147] font-bold py-4 rounded-xl flex items-center justify-center gap-3 text-[10px] uppercase tracking-widest hover:border-[#002147]/20 hover:bg-gray-50 transition-all shadow-sm"
               >
-                <i className="fas fa-qrcode"></i> Digital/PDF
+                <i className="fas fa-qrcode"></i> QR CODE
               </button>
             </div>
 

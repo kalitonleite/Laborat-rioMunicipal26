@@ -38,7 +38,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
 
             <div className="flex flex-col">
               <h1 className="font-extrabold text-xl md:text-3xl leading-none tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-blue-200">
-                Laboratório Municipal
+                Laboratório Municipal de Uarini
               </h1>
               <p className="text-[9px] md:text-[11px] font-bold uppercase tracking-[0.2em] mt-2 flex items-center gap-2">
                 <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
