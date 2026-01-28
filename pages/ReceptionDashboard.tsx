@@ -90,6 +90,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         if (key === 'specific_limits') setSpecificLimits(value);
         localStorage.setItem(`lab_${key}`, JSON.stringify(value));
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
+        fetchAppointments();
+      })
       .subscribe();
 
     return () => {
@@ -596,8 +599,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                         : 'bg-white border-transparent text-slate-400 hover:border-blue-200'
                       }`}
                   >
-                    <span className="relative z-10">{date.getDate()}</span>
-                    <span className="relative z-10 text-[7px] font-black opacity-60">{count}/{currentLimit}</span>
+                    <span className="relative z-10 text-[8px] font-black opacity-80 mb-0.5 leading-none">{currentLimit - count} vagas</span>
+                    <span className="relative z-10 text-xs">{date.getDate()}</span>
                     {hasOverride && (
                       <i className="fas fa-star text-[6px] absolute top-1 right-1 text-blue-500"></i>
                     )}

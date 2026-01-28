@@ -577,9 +577,10 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                                 : 'bg-white text-blue-600 border-transparent hover:border-blue-200 hover:bg-blue-50'
                             }`}
                         >
-                          <span>{date.getDate()}</span>
-                          {isB && <span className="text-[7px] mt-0.5 font-bold">BLOQ</span>}
-                          {isFull && !isB && <span className="text-[7px] mt-0.5 font-bold">LOTADO</span>}
+                          <span className="relative z-10 text-[8px] font-black opacity-80 mb-0.5 leading-none">{currentLimit - countForDay} Vagas</span>
+                          <span className="relative z-10 text-xs">{date.getDate()}</span>
+                          {isB && <span className="text-[6px] mt-0.5 font-bold uppercase tracking-tighter">BLOQ</span>}
+                          {isFull && !isB && <span className="text-[6px] mt-0.5 font-bold uppercase tracking-tighter">LOTADO</span>}
                           {isS && !isUnavailable && <div className="w-1 h-1 rounded-full bg-white absolute top-1 right-1"></div>}
                         </button>
                       );

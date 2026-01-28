@@ -52,10 +52,11 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
       const { data: codeData, error: codeError } = await supabase
         .from('authorization_codes')
         .select('code')
+        .eq('code', formData.unitCode.trim().toUpperCase())
         .eq('role', UserRole.MEDICAL)
-        .single();
+        .maybeSingle();
 
-      if (codeError || codeData?.code !== formData.unitCode) {
+      if (codeError || !codeData) {
         alert('Código de autorização da unidade inválido!');
         return;
       }

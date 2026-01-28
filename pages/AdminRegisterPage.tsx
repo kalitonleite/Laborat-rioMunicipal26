@@ -52,10 +52,11 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
       const { data: codeData, error: codeError } = await supabase
         .from('authorization_codes')
         .select('code')
+        .eq('code', formData.accessCode.trim().toUpperCase())
         .eq('role', UserRole.ADMIN)
-        .single();
+        .maybeSingle();
 
-      if (codeError || codeData?.code !== formData.accessCode) {
+      if (codeError || !codeData) {
         alert('Código de autorização do laboratório inválido!');
         return;
       }
