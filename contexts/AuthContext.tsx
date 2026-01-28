@@ -64,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     id: data.id,
                     name: data.name,
                     cpf: data.cpf,
+                    sus_number: data.sus_number,
                     role: (data.role || '').trim().toUpperCase() as UserRole,
                     avatar: data.avatar,
                 });

@@ -103,7 +103,7 @@ const MedicalLoginPage: React.FC<MedicalLoginPageProps> = ({ onLogin }) => {
 
           <div className="mt-12 text-center">
             <p className="text-[11px] text-slate-400 font-medium">
-              Novo médico no laboratório? <button onClick={() => navigate('/medical/register')} className="text-blue-600 font-extrabold hover:text-blue-800 transition-colors">Cadastrar CRM</button>
+              Novo médico no laboratório? <button onClick={() => navigate('/medical/register')} className="text-blue-600 font-extrabold hover:text-blue-800 transition-colors">Cadastrar</button>
             </p>
           </div>
         </div>

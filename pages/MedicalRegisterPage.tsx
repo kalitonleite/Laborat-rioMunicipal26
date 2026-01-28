@@ -108,9 +108,9 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </div>
             </div>
 
-            <div className="space-y-4 mb-10">
-              <h1 className="text-4xl font-extrabold text-[#1e3a8a] tracking-tight leading-tight">Credenciamento Médico</h1>
-              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+            <div className="space-y-4 mb-8 md:mb-10">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-[#1e3a8a] tracking-tight leading-tight">Cadastro Médico</h1>
+              <p className="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">
                 Solicite seu acesso ao Portal Médico para gerenciar laudos e históricos do Laboratório Municipal.
               </p>
             </div>
@@ -199,8 +199,8 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </div>
 
               <button type="submit" className="md:col-span-2 w-full bg-[#1e3a8a] text-white font-extrabold py-5 rounded-3xl shadow-2xl hover:bg-blue-900 hover:-translate-y-0.5 transition-all mt-6 uppercase tracking-widest text-xs flex items-center justify-center gap-4 active:scale-95">
-                Solicitar Credenciamento Médico
-                <i className="fas fa-stethoscope text-[10px]"></i>
+                Cadastrar
+                <i className="fas fa-check-circle text-[10px]"></i>
               </button>
             </form>
           </div>

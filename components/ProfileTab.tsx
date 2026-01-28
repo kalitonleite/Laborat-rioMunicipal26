@@ -100,6 +100,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
                 </button>
               </div>
               <p className="text-sm text-gray-500 font-medium">CPF: {user.cpf}</p>
+              {user.sus_number && <p className="text-sm text-emerald-600 font-bold">Cartão SUS: {user.sus_number}</p>}
             </div>
           </div>
 
@@ -109,6 +110,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
               <div className="space-y-4">
                 <InfoRow icon="fa-id-card" label="ID do Sistema" value={user.id} />
                 <InfoRow icon="fa-shield-halved" label="Nível de Acesso" value={getRoleLabel(user.role)} />
+                {user.sus_number && <InfoRow icon="fa-address-card" label="Nº Cartão SUS" value={user.sus_number} />}
                 <InfoRow icon="fa-envelope" label="Email de Recuperação" value="Não cadastrado" />
               </div>
             </div>

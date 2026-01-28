@@ -10,6 +10,7 @@ export interface User {
   id: string;
   name: string;
   cpf: string;
+  sus_number?: string;
   role: UserRole;
   avatar?: string;
 }

@@ -13,6 +13,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
+    sus_number: '',
     email: '',
     phone: '',
     password: '',
@@ -47,7 +48,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
 
     try {
       const cleanCPF = formData.cpf.replace(/\D/g, '');
-      console.log('Registering user with email:', formData.email, 'and CPF:', cleanCPF);
+      const cleanSUS = formData.sus_number.replace(/\D/g, '');
+      console.log('Registering user with email:', formData.email, 'and CPF/SUS:', cleanCPF, cleanSUS);
 
       const { error } = await supabase.auth.signUp({
         email: formData.email,
@@ -55,7 +57,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
         options: {
           data: {
             name: formData.name,
-            cpf: cleanCPF, // Armazenar apenas dígitos no banco
+            cpf: cleanCPF,
+            sus_number: cleanSUS,
             role: UserRole.PATIENT
           }
         }
@@ -96,9 +99,9 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
               </div>
             </div>
 
-            <div className="space-y-4 mb-10">
-              <h1 className="text-4xl font-extrabold text-[#002147] tracking-tight leading-tight">Novo Registro</h1>
-              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+            <div className="space-y-4 mb-8 md:mb-10">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-[#002147] tracking-tight leading-tight">Novo Registro</h1>
+              <p className="text-xs md:text-sm text-slate-500 font-medium leading-relaxed">
                 Crie sua conta para acessar seus exames e acompanhar sua saúde no Laboratório Municipal.
               </p>
             </div>
@@ -138,6 +141,18 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
                     required type="text" placeholder="000.000.000-00"
                     className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
                     value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Número do Cartão SUS</label>
+                <div className="relative group">
+                  <i className="fas fa-address-card absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#22c55e] transition-colors"></i>
+                  <input
+                    required type="text" placeholder="000 0000 0000 0000"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#22c55e]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.sus_number} onChange={(e) => setFormData({ ...formData, sus_number: e.target.value.replace(/\D/g, '').slice(0, 15) })}
                   />
                 </div>
               </div>

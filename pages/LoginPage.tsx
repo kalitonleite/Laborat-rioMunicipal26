@@ -14,7 +14,7 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
-  const [cpf, setCpf] = useState('');
+  const [identification, setIdentification] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
@@ -44,15 +44,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     }
 
     try {
-      const cleanCPF = cpf.replace(/\D/g, '');
+      const cleanId = identification.replace(/\D/g, '');
 
-      const { data, error: rpcError } = await supabase.rpc('get_email_by_cpf', {
-        p_cpf: cleanCPF,
+      const { data, error: rpcError } = await supabase.rpc('get_email_by_identification', {
+        p_id: cleanId,
         p_role: UserRole.PATIENT
       });
 
       if (rpcError || !data || data.length === 0) {
-        alert('CPF não encontrado ou não cadastrado.');
+        alert('Identificação não encontrada ou não cadastrada.');
         return;
       }
 
@@ -137,50 +137,50 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     <div className="min-h-screen flex flex-col bg-[#f8fafc] relative overflow-hidden">
       {/* Background Decorativo Moderno */}
       {/* Top Banner Section: Filling the top of the screen */}
-      <div className="w-full bg-gradient-to-br from-[#002147] via-[#002147] to-[#003366] pt-16 pb-24 md:pt-20 md:pb-32 px-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
+      <div className="w-full bg-gradient-to-br from-[#002147] via-[#002147] to-[#003366] pt-10 pb-20 md:pt-20 md:pb-32 px-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
         {/* Decorative subtle logo background */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <img src="/assets/logo-uarini.jpg" className="w-full h-full object-cover blur-3xl scale-125" alt="" />
+          <img src="/assets/logo-uarini.jpg" className="w-full h-full object-cover blur-3xl scale-150 md:scale-125" alt="" />
         </div>
 
         {/* Glow Effects */}
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[100%] bg-blue-400/10 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[100%] bg-[#22c55e]/10 blur-[120px] rounded-full"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[80%] md:w-[60%] h-[100%] bg-blue-400/10 blur-[80px] md:blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[80%] md:w-[60%] h-[100%] bg-[#22c55e]/10 blur-[80px] md:blur-[120px] rounded-full"></div>
 
         <div className="relative z-10 flex flex-col items-center">
-          <div className="bg-white p-5 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/20 mb-8 transform hover:scale-105 transition-transform duration-500">
+          <div className="bg-white p-3.5 md:p-5 rounded-[30px] md:rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/20 mb-6 md:mb-8 transform hover:scale-105 transition-transform duration-500">
             <img
               src="/assets/logo-uarini.jpg"
               alt="Logo Uarini"
-              className="w-32 h-32 md:w-48 md:h-48 object-contain"
+              className="w-24 h-24 md:w-48 md:h-48 object-contain"
             />
           </div>
 
-          <h1 className="text-3xl md:text-5xl font-black text-white text-center leading-tight tracking-tighter drop-shadow-2xl px-6">
+          <h1 className="text-2xl md:text-5xl font-black text-white text-center leading-tight tracking-tighter drop-shadow-2xl px-4 md:px-6">
             Laboratório Municipal de Uarini
           </h1>
 
-          <div className="flex items-center justify-center gap-3 mt-4 bg-white/5 backdrop-blur-md px-6 py-2 rounded-full border border-white/10">
-            <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
-            <p className="text-[10px] md:text-xs text-[#22c55e] font-black uppercase tracking-[0.4em]">Análises Clínicas</p>
-            <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
+          <div className="flex items-center justify-center gap-2 md:gap-3 mt-3 md:mt-4 bg-white/5 backdrop-blur-md px-4 md:px-6 py-1.5 md:py-2 rounded-full border border-white/10">
+            <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
+            <p className="text-[9px] md:text-xs text-[#22c55e] font-black uppercase tracking-[0.3em] md:tracking-[0.4em]">Análises Clínicas</p>
+            <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-[#22c55e] rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></span>
           </div>
         </div>
       </div>
 
-      <div className="flex-grow flex flex-col items-center p-4 relative z-20 -mt-16 md:-mt-24 pb-20">
-        <div className="bg-white rounded-[40px] shadow-[0_40px_80px_-15px_rgba(0,33,71,0.25)] w-full max-w-md p-10 flex flex-col items-center border border-white/80 backdrop-blur-xl relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-1.5 bg-gray-100 rounded-full"></div>
+      <div className="flex-grow flex flex-col items-center p-4 relative z-20 -mt-10 md:-mt-24 pb-12 md:pb-20">
+        <div className="bg-white rounded-[32px] md:rounded-[40px] shadow-[0_40px_80px_-15px_rgba(0,33,71,0.25)] w-full max-w-md p-6 md:p-10 flex flex-col items-center border border-white/80 backdrop-blur-xl relative">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 md:w-20 h-1 md:h-1.5 bg-gray-100 rounded-full"></div>
 
           <div className="w-full space-y-6">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Identificação (CPF)</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Identificação (CPF ou SUS)</label>
               <div className="relative group">
                 <i className="fas fa-id-card absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
                 <input
-                  type="text" placeholder="000.000.000-00"
+                  type="text" placeholder="CPF ou Número SUS"
                   className="w-full pl-14 pr-4 py-4.5 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 focus:border-[#002147]/20 outline-none transition-all text-sm font-bold text-slate-700"
-                  value={cpf} onChange={(e) => setCpf(maskCPF(e.target.value))}
+                  value={identification} onChange={(e) => setIdentification(e.target.value)}
                 />
               </div>
             </div>
