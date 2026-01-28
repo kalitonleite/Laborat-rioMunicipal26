@@ -1,0 +1,47 @@
+
+export enum UserRole {
+  PATIENT = 'PATIENT',
+  MEDICAL = 'MEDICAL',
+  RECEPTION = 'RECEPTION',
+  ADMIN = 'ADMIN'
+}
+
+export interface User {
+  id: string;
+  name: string;
+  cpf: string;
+  role: UserRole;
+  avatar?: string;
+}
+
+export interface Campaign {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: 'AVISO' | 'CAMPANHA' | 'SAUDE';
+  active: boolean;
+}
+
+export interface ExamResult {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientCpf?: string;
+  examName: string;
+  date: string;
+  status: 'PENDING' | 'READY' | 'ANALYZED';
+  resultData?: string;
+  aiAnalysis?: string;
+  fileUrl?: string; // Base64 da PDF
+}
+
+export interface Appointment {
+  id: string;
+  patientId: string;
+  patientName: string;
+  patientCpf?: string;
+  date: string;
+  time: string;
+  examType: string;
+}

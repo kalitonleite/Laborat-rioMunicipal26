@@ -1,0 +1,7 @@
+{
+  "name": "Laboratório Municipal de Análises Clínicas de Uarini",
+  "description": "Uma plataforma completa para gestão de laboratórios de análises clínicas, com portais para pacientes, médicos, recepção e administradores, incluindo análise inteligente de resultados via Gemini API.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

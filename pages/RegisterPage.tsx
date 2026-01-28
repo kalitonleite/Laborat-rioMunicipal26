@@ -1,0 +1,214 @@
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { User, UserRole } from '../types';
+import { supabase } from '../services/supabase';
+
+interface RegisterPageProps {
+  onLogin: (user: User) => void;
+}
+
+const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    cpf: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const maskCPF = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+      .slice(0, 14);
+  };
+
+  const maskPhone = (value: string) => {
+    return value
+      .replace(/\D/g, '')
+      .replace(/(\d{2})(\d)/, '$1 $2')
+      .replace(/(\d{5})(\d)/, '$1 $2')
+      .slice(0, 13);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      alert('As senhas não coincidem!');
+      return;
+    }
+
+    try {
+      const cleanCPF = formData.cpf.replace(/\D/g, '');
+      console.log('Registering user with email:', formData.email, 'and CPF:', cleanCPF);
+
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            cpf: cleanCPF, // Armazenar apenas dígitos no banco
+            role: UserRole.PATIENT
+          }
+        }
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      alert('Cadastro realizado com sucesso! Você já pode acessar sua conta.');
+      navigate('/');
+    } catch (err) {
+      console.error('Registration error:', err);
+      alert('Erro inesperado ao realizar cadastro.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#f8fafc] relative overflow-hidden">
+      {/* Background Decorativo Moderno */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#002147]/5 blur-[120px] rounded-full pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#22c55e]/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+      <div className="flex-grow flex items-center justify-center p-4 relative z-10 py-12 md:py-20">
+        <div className="bg-white/80 backdrop-blur-2xl rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,33,71,0.15)] w-full max-w-4xl p-8 md:p-12 flex flex-col md:flex-row gap-12 border border-white/50 modern-shadow">
+          {/* Lado Esquerdo - Boas Vindas */}
+          <div className="md:w-1/3 flex flex-col">
+            <div className="flex justify-between items-start mb-10">
+              <button
+                onClick={() => navigate('/')}
+                className="text-slate-400 hover:text-[#002147] transition-all bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100 shadow-sm"
+              >
+                <i className="fas fa-arrow-left"></i>
+              </button>
+              <div className="bg-white p-2 rounded-2xl shadow-xl border border-slate-50">
+                <img src="/assets/logo-uarini.jpg" alt="Logo" className="w-12 h-12 object-contain" />
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-10">
+              <h1 className="text-4xl font-extrabold text-[#002147] tracking-tight leading-tight">Novo Registro</h1>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                Crie sua conta para acessar seus exames e acompanhar sua saúde no Laboratório Municipal.
+              </p>
+            </div>
+
+            <div className="mt-auto bg-[#002147]/5 p-8 rounded-[32px] border border-[#002147]/10 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#eab308]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+              <div className="flex items-center gap-3 text-[#002147] mb-3">
+                <i className="fas fa-shield-halved text-lg"></i>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Privacidade</span>
+              </div>
+              <p className="text-[12px] text-slate-600 leading-relaxed font-semibold">
+                Seus dados estão protegidos sob sigilo médico e criptografia de ponta a ponta.
+              </p>
+            </div>
+          </div>
+
+          {/* Lado Direito - Formulário */}
+          <div className="md:w-2/3">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                <div className="relative group">
+                  <i className="fas fa-user absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <input
+                    required type="text" placeholder="Como no seu documento"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">CPF</label>
+                <div className="relative group">
+                  <i className="fas fa-id-card absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <input
+                    required type="text" placeholder="000.000.000-00"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: maskCPF(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">E-mail Pessoal</label>
+                <div className="relative group">
+                  <i className="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <input
+                    required type="email" placeholder="seu@email.com"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Telefone / WhatsApp</label>
+                <div className="relative group">
+                  <i className="fas fa-phone absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <input
+                    type="tel" placeholder="(00) 00000-0000"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Senha (6 caracteres)</label>
+                <div className="relative group">
+                  <i className="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <input
+                    required type={showPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
+                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#002147]">
+                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+              </div>
+
+              <div className="md:col-span-2 space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
+                <div className="relative group">
+                  <i className="fas fa-shield absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <input
+                    required type={showConfirmPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
+                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#002147]">
+                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="md:col-span-2 w-full bg-[#002147] text-white font-extrabold py-5 rounded-3xl shadow-2xl hover:bg-black hover:-translate-y-0.5 transition-all mt-6 uppercase tracking-widest text-xs flex items-center justify-center gap-4 active:scale-95"
+              >
+                Finalizar Cadastro Institucional
+                <i className="fas fa-check-circle text-[10px]"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RegisterPage;
