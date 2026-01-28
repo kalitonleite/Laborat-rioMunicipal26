@@ -115,15 +115,6 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </p>
             </div>
 
-            <div className="mt-auto bg-blue-50 p-8 rounded-[32px] border border-blue-100 relative overflow-hidden">
-              <div className="flex items-center gap-3 text-blue-600 mb-3">
-                <i className="fas fa-stethoscope text-lg"></i>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Área de Saúde</span>
-              </div>
-              <p className="text-[12px] text-blue-900/70 leading-relaxed font-semibold">
-                Sua conta será vinculada ao seu CRM e passará por verificação institucional.
-              </p>
-            </div>
           </div>
 
           {/* Lado Direito - Form */}
@@ -142,7 +133,7 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">CPE (Identificação)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">CPF (Identificação)</label>
                 <div className="relative group">
                   <i className="fas fa-id-card absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors"></i>
                   <input

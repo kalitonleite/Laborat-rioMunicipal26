@@ -90,10 +90,11 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
 
       {/* Footer Flutuante */}
       <footer className="relative z-10 py-8 text-center flex flex-col items-center gap-2">
-        <div className="bg-white/60 backdrop-blur-md px-5 py-2 rounded-full border border-white/20 shadow-sm">
-          <p className="text-slate-400 text-[8px] md:text-[10px] uppercase tracking-[0.25em] font-black">
-            Desenvolvido por <span className="text-blue-600/80">Kaliton Gonçalves Leite</span> &copy; 2026
+        <div className="bg-white/60 backdrop-blur-md px-5 py-2 rounded-full border border-white/20 shadow-sm flex flex-col items-center">
+          <p className="text-black text-[8px] md:text-[10px] uppercase tracking-[0.25em] font-black">
+            Desenvolvedor: <span className="text-black">Biomédico Kaliton Goncalves Leite</span>
           </p>
+          <p className="text-black text-[8px] md:text-[9px] font-bold mt-0.5">2026</p>
         </div>
       </footer>
     </div>

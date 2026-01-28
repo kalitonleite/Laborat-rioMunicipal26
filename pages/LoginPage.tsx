@@ -265,9 +265,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </p>
           </div>
 
-          <div className="mt-8 text-center text-[9px] text-slate-300 space-y-1">
-            <p className="font-bold uppercase tracking-widest">© 2026 Laboratório de Uarini</p>
-            <p className="font-medium">Infraestrutura: Kaliton Gonçalves Leite</p>
+          <div className="mt-8 text-center text-[9px] text-black space-y-1">
+            <p className="font-medium">Desenvolvedor: Biomédico Kaliton Goncalves Leite</p>
+            <p className="font-bold uppercase tracking-widest">2026</p>
           </div>
         </div>
       </div>
