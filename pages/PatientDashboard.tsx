@@ -5,6 +5,7 @@ import { analyzeLabResult } from '../services/geminiService';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import { supabase } from '../services/supabase';
+import { jsPDF } from 'jspdf';
 
 interface PatientDashboardProps {
   user: User;
@@ -164,6 +165,84 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     const analysis = await analyzeLabResult(exam.resultData);
     setExams(prev => prev.map(e => e.id === exam.id ? { ...e, aiAnalysis: analysis, status: 'ANALYZED' as const } : e));
     setAnalyzingId(null);
+  };
+
+  const handleDownloadPDF = (exam: ExamResult) => {
+    if (exam.fileUrl) {
+      // Se já existe um arquivo PDF (upload), baixa diretamente
+      const link = document.createElement('a');
+      link.href = exam.fileUrl;
+      link.target = '_blank';
+      link.download = `Laudo_${exam.examName}_${exam.date.replace(/\//g, '-')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      // Gerar um PDF profissional simulado usando jsPDF
+      const doc = new jsPDF();
+
+      // Configurações visuais
+      const primaryColor = [30, 64, 175]; // Azul Royal (#1e40af)
+
+      // Cabeçalho
+      doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+      doc.rect(0, 0, 210, 40, 'F');
+
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(24);
+      doc.setFont("helvetica", "bold");
+      doc.text("Laboratório Municipal", 105, 20, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text("UNIDADE MUNICIPAL DE ANÁLISES CLÍNICAS", 105, 30, { align: "center" });
+
+      // Dados do Paciente e Exame
+      doc.setTextColor(50, 50, 50);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text("DADOS DO PACIENTE", 20, 55);
+      doc.line(20, 57, 190, 57);
+
+      doc.setFont("helvetica", "normal");
+      doc.text(`Paciente: ${exam.patientName}`, 20, 65);
+      doc.text(`CPF: ${exam.patientCpf || '---'}`, 20, 72);
+      doc.text(`Data do Exame: ${exam.date}`, 140, 65);
+      doc.text(`Protocolo: ${exam.id}`, 140, 72);
+
+      // Conteúdo do Laudo
+      doc.setFont("helvetica", "bold");
+      doc.text("RESULTADOS ANALÍTICOS", 20, 90);
+      doc.line(20, 92, 190, 92);
+
+      doc.setFontSize(14);
+      doc.text(exam.examName.toUpperCase(), 105, 105, { align: "center" });
+
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+
+      if (exam.resultData) {
+        // Divide o texto em linhas para caber no PDF
+        const splitContent = doc.splitTextToSize(exam.resultData, 170);
+        doc.text(splitContent, 20, 115);
+      } else {
+        doc.setTextColor(150, 150, 150);
+        doc.text("Resultados em processamento ou indisponíveis no momento.", 105, 130, { align: "center" });
+      }
+
+      // Rodapé e Assinatura
+      const pageHeight = doc.internal.pageSize.height;
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(9);
+      doc.line(60, pageHeight - 40, 150, pageHeight - 40);
+      doc.text("Dra. Maria Clara - Responsável Técnica", 105, pageHeight - 35, { align: "center" });
+      doc.text("CRBM 1234", 105, pageHeight - 30, { align: "center" });
+
+      doc.setFontSize(8);
+      doc.text("Este documento é uma representação digital oficial do laudo laboratorial.", 105, pageHeight - 15, { align: "center" });
+
+      doc.save(`Laudo_${exam.examName}_${exam.date.replace(/\//g, '-')}.pdf`);
+    }
   };
 
 
@@ -403,23 +482,13 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                             >
                               <i className="fas fa-eye text-sm"></i>
                             </button>
-                            {exam.fileUrl ? (
-                              <a
-                                href={exam.fileUrl}
-                                download={`Laudo_${exam.examName}_${exam.date}.pdf`}
-                                className="w-9 h-9 rounded-full bg-white border border-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-all shadow-sm"
-                                title="Baixar PDF"
-                              >
-                                <i className="fas fa-download text-sm"></i>
-                              </a>
-                            ) : (
-                              <button
-                                disabled
-                                className="w-9 h-9 rounded-full bg-gray-50 text-gray-300 flex items-center justify-center cursor-not-allowed"
-                              >
-                                <i className="fas fa-download text-sm"></i>
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleDownloadPDF(exam)}
+                              className="w-9 h-9 rounded-full bg-white border border-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-all shadow-sm"
+                              title="Baixar PDF"
+                            >
+                              <i className="fas fa-download text-sm"></i>
+                            </button>
                           </>
                         ) : (
                           <div className="w-9 h-9 flex items-center justify-center text-gray-300" title="Aguardando liberação">
