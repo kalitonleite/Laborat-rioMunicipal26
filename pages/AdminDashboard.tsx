@@ -1005,13 +1005,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       {/* MODAL NOVO REGISTRO EXAME */}
       {isRegisterModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className={`p-8 text-white relative ${editingId ? 'bg-indigo-600' : 'bg-[#059669]'}`}>
               <h2 className="text-2xl font-black">{editingId ? 'Editar Exame' : 'Novo Registro'}</h2>
               <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Cadastro de Exame Laboratorial</p>
             </div>
 
-            <div className="p-8 space-y-5 relative">
+            <div className="p-8 space-y-5 relative overflow-y-auto no-scrollbar flex-1">
               <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>
@@ -1076,13 +1076,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       {/* MODAL NOVA CAMPANHA */}
       {isCampaignModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-lg rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="bg-[#1e40af] p-8 text-white relative">
               <h2 className="text-2xl font-black">Nova Campanha</h2>
               <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Divulgação para o Portal do Paciente</p>
             </div>
 
-            <div className="p-8 space-y-5 relative">
+            <div className="p-8 space-y-5 relative overflow-y-auto no-scrollbar flex-1">
               <button type="button" onClick={() => setIsCampaignModalOpen(false)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>
@@ -1217,13 +1217,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       {/* MODAL VISUALIZAR REGISTRO EXAME */}
       {viewingExam && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-5xl max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="bg-[#1e40af] p-8 text-white relative">
               <h2 className="text-2xl font-black">Detalhes do Registro</h2>
               <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Informações do Exame</p>
             </div>
 
-            <div className="p-8 space-y-6 relative">
+            <div className="p-8 space-y-6 relative overflow-y-auto no-scrollbar flex-1">
               <button onClick={() => setViewingExam(null)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>

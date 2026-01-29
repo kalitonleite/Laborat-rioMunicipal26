@@ -768,13 +768,13 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
       {
         viewingSimulated && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-white w-full max-w-3xl max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="bg-[#1e40af] p-8 text-white relative">
                 <h2 className="text-2xl font-black italic">Laboratório Municipal</h2>
                 <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Laudo Digital de Análises Clínicas</p>
               </div>
 
-              <div className="p-8 space-y-8 bg-slate-50 max-h-[70vh] overflow-y-auto no-scrollbar relative">
+              <div className="p-8 space-y-8 bg-slate-50 overflow-y-auto no-scrollbar relative flex-1">
                 <button onClick={() => setViewingSimulated(null)} className="absolute top-4 right-6 text-gray-400 hover:text-red-500 transition-all z-50">
                   <i className="fas fa-times text-xl"></i>
                 </button>
@@ -873,13 +873,13 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
       {
         viewingExam && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-white w-full max-w-5xl max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
               <div className="bg-[#1e40af] p-8 text-white relative">
                 <h2 className="text-2xl font-black">Meu Laudo Digital</h2>
                 <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Arquivo Oficial Disponível</p>
               </div>
 
-              <div className="p-8 space-y-6 relative">
+              <div className="p-8 space-y-6 relative overflow-y-auto no-scrollbar flex-1">
                 <button onClick={() => setViewingExam(null)} className="absolute top-4 right-6 text-gray-400 hover:text-red-500 transition-all z-10">
                   <i className="fas fa-times text-xl"></i>
                 </button>
