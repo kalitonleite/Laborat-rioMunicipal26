@@ -286,6 +286,12 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     e.preventDefault();
     if (!newApp.date || !newApp.time || !newApp.examType) return alert("Preencha todos os campos.");
 
+    const hasActiveAppointment = appointments.some(a => a.patientId === user.id);
+    if (hasActiveAppointment) {
+      alert("Você já possui um agendamento ativo. Por favor, conclua seu atendimento atual antes de realizar um novo agendamento.");
+      return;
+    }
+
     if (blockedDates.includes(newApp.date)) {
       alert("Desculpe, esta data está bloqueada para novos agendamentos. Por favor, escolha outra data.");
       return;
@@ -523,7 +529,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">TIPO DE EXAME</label>
-                  <input required type="text" placeholder="Ex: Hemograma, Glicemia, etc." className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold" value={newApp.examType} onChange={e => setNewApp({ ...newApp, examType: e.target.value })} />
+                  <input required type="text" placeholder="Ex: Hemograma, Glicemia, etc." className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50" value={newApp.examType} onChange={e => setNewApp({ ...newApp, examType: e.target.value })} disabled={appointments.some(a => a.patientId === user.id)} />
                 </div>
 
                 <div className="flex justify-start gap-4 px-1 mb-4">
@@ -545,8 +551,31 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                   </div>
                 </div>
 
+                {/* INDICADOR DE AGENDAMENTO EXISTENTE */}
+                {appointments.some(a => a.patientId === user.id) && (
+                  <div className="mb-4 p-5 rounded-3xl bg-amber-50 border border-amber-100 flex flex-col gap-3 animate-in slide-in-from-top-4 duration-500">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 text-xl shadow-inner">
+                        <i className="fas fa-circle-exclamation"></i>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-black text-amber-800 uppercase tracking-tight">Agendamento Ativo Detectado</h4>
+                        <p className="text-[10px] font-bold text-amber-600/80 leading-tight">Você só pode ter um agendamento por vez em nosso sistema.</p>
+                      </div>
+                    </div>
+                    <div className="bg-white/50 p-3 rounded-xl border border-amber-100/50">
+                      {appointments.filter(a => a.patientId === user.id).map(a => (
+                        <div key={a.id} className="flex justify-between items-center text-[10px] font-black text-slate-500">
+                          <span className="uppercase">{a.examType}</span>
+                          <span className="bg-amber-100 px-2 py-0.5 rounded-md text-amber-700">{a.date} às {a.time}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* INDICADOR DE VAGAS RESTANTES */}
-                {newApp.date && (
+                {newApp.date && !appointments.some(a => a.patientId === user.id) && (
                   <div className={`mb-4 p-4 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300 ${remainingSlotsInfo?.isBlocked
                     ? 'bg-red-50 border-red-100 text-red-600'
                     : remainingSlotsInfo?.isFull
@@ -659,10 +688,16 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">HORÁRIO</label>
-                  <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} />
+                  <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold disabled:opacity-50" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} disabled={appointments.some(a => a.patientId === user.id)} />
                 </div>
 
-                <button type="submit" className="w-full bg-emerald-600 text-white font-black py-5 rounded-[24px] shadow-xl uppercase tracking-widest text-xs">Confirmar Agendamento</button>
+                <button
+                  type="submit"
+                  disabled={appointments.some(a => a.patientId === user.id)}
+                  className="w-full bg-emerald-600 text-white font-black py-5 rounded-[24px] shadow-xl uppercase tracking-widest text-xs disabled:bg-gray-300 disabled:shadow-none transition-all"
+                >
+                  {appointments.some(a => a.patientId === user.id) ? 'Agendamento Restrito' : 'Confirmar Agendamento'}
+                </button>
               </form>
             </div>
           </div>
