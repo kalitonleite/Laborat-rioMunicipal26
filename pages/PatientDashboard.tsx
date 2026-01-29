@@ -774,7 +774,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                 <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Laudo Digital de Análises Clínicas</p>
               </div>
 
-              <div className="p-8 space-y-8 bg-slate-50 overflow-y-auto no-scrollbar relative flex-1">
+              <div className="p-8 space-y-8 bg-slate-50 overflow-y-auto relative flex-1">
                 <button onClick={() => setViewingSimulated(null)} className="absolute top-4 right-6 text-gray-400 hover:text-red-500 transition-all z-50">
                   <i className="fas fa-times text-xl"></i>
                 </button>
@@ -879,7 +879,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                 <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Arquivo Oficial Disponível</p>
               </div>
 
-              <div className="p-8 space-y-6 relative overflow-y-auto no-scrollbar flex-1">
+              <div className="p-8 space-y-6 relative overflow-y-auto flex-1">
                 <button onClick={() => setViewingExam(null)} className="absolute top-4 right-6 text-gray-400 hover:text-red-500 transition-all z-10">
                   <i className="fas fa-times text-xl"></i>
                 </button>

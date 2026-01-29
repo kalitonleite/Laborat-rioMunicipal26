@@ -1011,7 +1011,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Cadastro de Exame Laboratorial</p>
             </div>
 
-            <div className="p-8 space-y-5 relative overflow-y-auto no-scrollbar flex-1">
+            <div className="p-8 space-y-5 relative overflow-y-auto flex-1">
               <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>
@@ -1082,7 +1082,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Divulgação para o Portal do Paciente</p>
             </div>
 
-            <div className="p-8 space-y-5 relative overflow-y-auto no-scrollbar flex-1">
+            <div className="p-8 space-y-5 relative overflow-y-auto flex-1">
               <button type="button" onClick={() => setIsCampaignModalOpen(false)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>
@@ -1223,7 +1223,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Informações do Exame</p>
             </div>
 
-            <div className="p-8 space-y-6 relative overflow-y-auto no-scrollbar flex-1">
+            <div className="p-8 space-y-6 relative overflow-y-auto flex-1">
               <button onClick={() => setViewingExam(null)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>
