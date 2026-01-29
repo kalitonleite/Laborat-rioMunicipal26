@@ -64,15 +64,27 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
-    const fetchCampaigns = () => {
-      const savedCampaigns = localStorage.getItem('lab_campaigns');
-      if (savedCampaigns) {
-        setCampaigns(JSON.parse(savedCampaigns));
+    const fetchCampaigns = async () => {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching campaigns:', error);
       } else {
-        setCampaigns([
-          { id: 'c1', title: 'Campanha de Vacinação', description: 'Atualize sua caderneta. Vacinas disponíveis no laboratório municipal.', type: 'SAUDE', date: '20/10/2024', active: true },
-          { id: 'c2', title: 'Outubro Rosa', description: 'Prevenção é o melhor caminho. Agende seus exames com descontos.', type: 'CAMPANHA', date: '20/10/2024', active: true }
-        ]);
+        const mappedCampaigns = (data || []).map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          date: c.date,
+          type: c.type,
+          active: c.active,
+          mediaUrl: c.media_url,
+          mediaType: c.media_type
+        }));
+        setCampaigns(mappedCampaigns);
       }
     };
     fetchCampaigns();
@@ -354,17 +366,57 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
       {activeTab === 'dashboard' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {campaigns.map((camp, idx) => (
-              <div key={camp.id} className={`p-6 rounded-[28px] shadow-sm relative overflow-hidden text-white ${idx % 2 === 0 ? 'bg-blue-600' : 'bg-rose-500'}`}>
-                <div className="relative z-10">
-                  <h3 className="text-lg font-black mb-1">{camp.title}</h3>
-                  <p className="text-xs opacity-90 leading-relaxed line-clamp-2">{camp.description}</p>
+            {campaigns.map((camp, idx) => {
+              const [y, m, d] = (camp.date || '').split('-');
+              const formattedDate = d ? `${d}/${m}/${y}` : camp.date;
+
+              return (
+                <div key={camp.id} className={`p-6 rounded-[32px] shadow-sm relative overflow-hidden flex flex-col transition-all hover:shadow-md ${idx % 2 === 0 ? 'bg-blue-600 text-white' : 'bg-rose-500 text-white'}`}>
+                  <div className="relative z-10 mb-4 flex-1">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">{formattedDate}</span>
+                      <span className="px-2 py-0.5 rounded-lg bg-white/20 text-[8px] font-black uppercase tracking-wider">{camp.type}</span>
+                    </div>
+                    <h3 className="text-lg font-black mb-2 leading-tight">{camp.title}</h3>
+                    <p className="text-xs opacity-90 leading-relaxed italic line-clamp-2">"{camp.description}"</p>
+                  </div>
+
+                  {/* MEDIA CONTENT */}
+                  {camp.mediaUrl && (
+                    <div className="relative z-10 w-full rounded-2xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 group">
+                      {camp.mediaType === 'IMAGE' && (
+                        <img src={camp.mediaUrl} alt={camp.title} className="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110" />
+                      )}
+                      {camp.mediaType === 'PDF' && (
+                        <a href={camp.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-white/20 hover:bg-white/30 transition-all">
+                          <div className="flex items-center gap-3">
+                            <i className="fas fa-file-pdf text-xl"></i>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Ver Documento</span>
+                          </div>
+                          <i className="fas fa-external-link-alt text-[10px]"></i>
+                        </a>
+                      )}
+                      {camp.mediaType === 'AUDIO' && (
+                        <div className="p-3 bg-white/10">
+                          <audio controls className="w-full h-8 scale-90 origin-left invert brightness-200">
+                            <source src={camp.mediaUrl} />
+                          </audio>
+                        </div>
+                      )}
+                      {camp.mediaType === 'VIDEO' && (
+                        <video controls className="w-full h-32 object-cover">
+                          <source src={camp.mediaUrl} />
+                        </video>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="absolute top-0 right-0 p-4 opacity-10 scale-[2] pointer-events-none">
+                    <i className={`fas ${idx % 2 === 0 ? 'fa-droplet' : 'fa-star-of-life'}`}></i>
+                  </div>
                 </div>
-                <div className="absolute top-0 right-0 p-4 opacity-10 scale-150">
-                  <i className={`fas ${idx % 2 === 0 ? 'fa-droplet' : 'fa-star-of-life'}`}></i>
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
 
           </section>

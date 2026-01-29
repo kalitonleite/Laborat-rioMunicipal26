@@ -25,6 +25,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   const [campaignsList, setCampaignsList] = useState<Campaign[]>([]);
   const [adminsList, setAdminsList] = useState<User[]>([]);
 
+  // Novos estados para mídia de campanha
+  const [campaignMediaFile, setCampaignMediaFile] = useState<string | null>(null);
+  const [campaignMediaBlob, setCampaignMediaBlob] = useState<File | null>(null);
+  const campaignFileRef = useRef<HTMLInputElement>(null);
+
   // Estados para filtros de relatórios
   const [filterMonth, setFilterMonth] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>('all');
@@ -47,7 +52,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     title: '',
     description: '',
     type: 'CAMPANHA' as Campaign['type'],
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    mediaType: 'NONE' as Campaign['mediaType']
   });
 
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -125,18 +131,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     fetchExams();
     fetchPatientStats();
 
-    // Carregar Campanhas (Ainda no localStorage por enquanto)
-    const savedCampaigns = localStorage.getItem('lab_campaigns');
-    if (savedCampaigns) {
-      setCampaignsList(JSON.parse(savedCampaigns));
-    } else {
-      const initialCampaigns: Campaign[] = [
-        { id: 'c1', title: 'Vacinação contra Gripe', description: 'Início da campanha para idosos e grupos de risco na unidade central.', date: '2026-05-10', type: 'SAUDE', active: true },
-        { id: 'c2', title: 'Manutenção Preventiva', description: 'O laboratório passará por manutenção no dia 15/02. Atendimentos reduzidos.', date: '2026-02-15', type: 'AVISO', active: true },
-      ];
-      setCampaignsList(initialCampaigns);
-      localStorage.setItem('lab_campaigns', JSON.stringify(initialCampaigns));
-    }
+    // Carregar Campanhas do Supabase
+    const fetchCampaigns = async () => {
+      const { data, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar campanhas:', error);
+      } else {
+        const mappedCampaigns = (data || []).map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          date: c.date,
+          type: c.type,
+          active: c.active,
+          mediaUrl: c.media_url,
+          mediaType: c.media_type
+        }));
+        setCampaignsList(mappedCampaigns);
+      }
+    };
+    fetchCampaigns();
 
     // Carregar Equipe do Supabase (Admins, Médicos e Recepção)
     const fetchStaff = async () => {
@@ -287,32 +305,101 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     setIsRegisterModalOpen(true);
   };
 
-  const handleRegisterCampaign = (e: React.FormEvent) => {
+  const handleRegisterCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
-    const campaign: Campaign = {
-      id: 'CAMP' + Math.floor(Math.random() * 10000),
-      ...newCampaign,
-      active: true
-    };
+    setUploading(true);
+    try {
+      let mediaUrl = undefined;
 
-    const updatedList = [campaign, ...campaignsList];
-    setCampaignsList(updatedList);
-    localStorage.setItem('lab_campaigns', JSON.stringify(updatedList));
-    setIsCampaignModalOpen(false);
-    setNewCampaign({ title: '', description: '', type: 'CAMPANHA', date: new Date().toISOString().split('T')[0] });
+      // Se houver arquivo para upload
+      if (campaignMediaBlob) {
+        const fileExt = campaignMediaBlob.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `campaigns/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('lab-files')
+          .upload(filePath, campaignMediaBlob);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('lab-files')
+          .getPublicUrl(filePath);
+
+        mediaUrl = publicUrl;
+      }
+
+      const { data, error } = await supabase
+        .from('campaigns')
+        .insert([
+          {
+            title: newCampaign.title,
+            description: newCampaign.description,
+            type: newCampaign.type,
+            date: newCampaign.date,
+            active: true,
+            media_url: mediaUrl,
+            media_type: newCampaign.mediaType
+          }
+        ])
+        .select();
+
+      if (error) throw error;
+
+      if (data && data[0]) {
+        const newItem: Campaign = {
+          id: data[0].id,
+          title: data[0].title,
+          description: data[0].description,
+          date: data[0].date,
+          type: data[0].type,
+          active: data[0].active,
+          mediaUrl: data[0].media_url,
+          mediaType: data[0].media_type
+        };
+        setCampaignsList(prev => [newItem, ...prev]);
+      }
+
+      setIsCampaignModalOpen(false);
+      setNewCampaign({ title: '', description: '', type: 'CAMPANHA', date: new Date().toISOString().split('T')[0], mediaType: 'NONE' });
+      setCampaignMediaBlob(null);
+      setCampaignMediaFile(null);
+      alert('Campanha publicada com sucesso!');
+    } catch (err: any) {
+      alert('Erro ao publicar campanha: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const toggleCampaignStatus = (id: string) => {
-    const updated = campaignsList.map(c => c.id === id ? { ...c, active: !c.active } : c);
-    setCampaignsList(updated);
-    localStorage.setItem('lab_campaigns', JSON.stringify(updated));
+  const toggleCampaignStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('campaigns')
+        .update({ active: !currentStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+      setCampaignsList(prev => prev.map(c => c.id === id ? { ...c, active: !currentStatus } : c));
+    } catch (err: any) {
+      alert('Erro ao atualizar status: ' + err.message);
+    }
   };
 
-  const deleteCampaign = (id: string) => {
+  const deleteCampaign = async (id: string) => {
     if (window.confirm("Deseja excluir esta campanha permanentemente?")) {
-      const updated = campaignsList.filter(c => c.id !== id);
-      setCampaignsList(updated);
-      localStorage.setItem('lab_campaigns', JSON.stringify(updated));
+      try {
+        const { error } = await supabase
+          .from('campaigns')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        setCampaignsList(prev => prev.filter(c => c.id !== id));
+      } catch (err: any) {
+        alert('Erro ao excluir: ' + err.message);
+      }
     }
   };
 
@@ -783,7 +870,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                     <span className="text-[10px] text-gray-400 font-bold">{new Date(camp.date).toLocaleDateString('pt-BR')}</span>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => toggleCampaignStatus(camp.id)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${camp.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
+                    <button onClick={() => toggleCampaignStatus(camp.id, camp.active)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${camp.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
                       <i className={`fas ${camp.active ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
                     </button>
                     <button onClick={() => deleteCampaign(camp.id)} className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
@@ -852,8 +939,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                       </td>
                       <td className="px-8 py-5">
                         <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
-                            admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-700' :
-                              'bg-emerald-100 text-emerald-700'
+                          admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-700' :
+                            'bg-emerald-100 text-emerald-700'
                           }`}>
                           {admin.role === 'ADMIN' ? 'Administrador' : admin.role === 'MEDICAL' ? 'Área Médica' : 'Recepção'}
                         </span>
@@ -995,8 +1082,65 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   </div>
                 </div>
 
-                <button type="submit" className="w-full bg-[#1e40af] text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-blue-900 transition-all uppercase tracking-[0.2em] text-xs mt-4">
-                  Publicar Campanha
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Anexar Mídia (Opcional)</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <select
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-black text-slate-700"
+                      value={newCampaign.mediaType}
+                      onChange={e => setNewCampaign({ ...newCampaign, mediaType: e.target.value as any })}
+                    >
+                      <option value="NONE">SEM MÍDIA</option>
+                      <option value="IMAGE">IMAGEM</option>
+                      <option value="PDF">PDF (Documento)</option>
+                      <option value="AUDIO">ÁUDIO</option>
+                      <option value="VIDEO">VÍDEO</option>
+                    </select>
+
+                    {newCampaign.mediaType !== 'NONE' && (
+                      <button
+                        type="button"
+                        onClick={() => campaignFileRef.current?.click()}
+                        className={`w-full p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border flex items-center justify-center gap-2 ${campaignMediaBlob ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-500'}`}
+                      >
+                        <i className={`fas ${campaignMediaBlob ? 'fa-check-circle' : 'fa-paperclip'}`}></i>
+                        {campaignMediaBlob ? 'Arquivo Pronto' : 'Selecionar'}
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    ref={campaignFileRef}
+                    className="hidden"
+                    accept={
+                      newCampaign.mediaType === 'IMAGE' ? 'image/*' :
+                        newCampaign.mediaType === 'PDF' ? 'application/pdf' :
+                          newCampaign.mediaType === 'AUDIO' ? 'audio/*' :
+                            newCampaign.mediaType === 'VIDEO' ? 'video/*' : '*'
+                    }
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setCampaignMediaBlob(file);
+                    }}
+                  />
+                  {campaignMediaBlob && (
+                    <p className="text-[9px] font-bold text-gray-400 mt-1 ml-1 truncate italic">
+                      Arquivo selecionado: {campaignMediaBlob.name}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="w-full bg-[#1e40af] text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-blue-900 disabled:bg-slate-300 disabled:shadow-none transition-all uppercase tracking-[0.2em] text-xs mt-4 flex items-center justify-center gap-3"
+                >
+                  {uploading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      Publicando...
+                    </>
+                  ) : 'Publicar Campanha'}
                 </button>
               </form>
             </div>

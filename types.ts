@@ -22,6 +22,8 @@ export interface Campaign {
   date: string;
   type: 'AVISO' | 'CAMPANHA' | 'SAUDE';
   active: boolean;
+  mediaUrl?: string;
+  mediaType?: 'IMAGE' | 'PDF' | 'AUDIO' | 'VIDEO' | 'NONE';
 }
 
 export interface ExamResult {
