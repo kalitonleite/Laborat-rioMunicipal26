@@ -307,15 +307,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
   const handleRegisterCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!newCampaign.title || !newCampaign.description) {
+      alert("Por favor, preencha o título e a descrição.");
+      return;
+    }
+
     setUploading(true);
     try {
       let mediaUrl = undefined;
+      let finalMediaType = newCampaign.mediaType;
 
       // Se houver arquivo para upload
       if (campaignMediaBlob) {
         const fileExt = campaignMediaBlob.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `campaigns/${fileName}`;
+
+        // Detectar tipo de mídia se estiver NONE ou AUTO
+        const mimeType = campaignMediaBlob.type;
+        if (mimeType.startsWith('image/')) finalMediaType = 'IMAGE';
+        else if (mimeType === 'application/pdf') finalMediaType = 'PDF';
+        else if (mimeType.startsWith('audio/')) finalMediaType = 'AUDIO';
+        else if (mimeType.startsWith('video/')) finalMediaType = 'VIDEO';
+        else finalMediaType = 'NONE';
 
         const { error: uploadError } = await supabase.storage
           .from('lab-files')
@@ -340,7 +354,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             date: newCampaign.date,
             active: true,
             media_url: mediaUrl,
-            media_type: newCampaign.mediaType
+            media_type: finalMediaType
           }
         ])
         .select();
@@ -879,7 +893,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   </div>
                 </div>
                 <h3 className="text-lg font-black text-slate-800 mb-2">{camp.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed font-medium mb-4">{camp.description}</p>
+                <p className="text-xs text-gray-400 leading-relaxed font-bold mb-4 line-clamp-2">{camp.description}</p>
+
+                {camp.mediaUrl && (
+                  <div className="mb-4 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 h-32 flex items-center justify-center relative">
+                    {camp.mediaType === 'IMAGE' && <img src={camp.mediaUrl} className="w-full h-full object-cover" alt="" />}
+                    {camp.mediaType === 'VIDEO' && <video src={camp.mediaUrl} className="w-full h-full object-cover" />}
+                    {(camp.mediaType === 'AUDIO' || camp.mediaType === 'PDF') && (
+                      <div className="flex flex-col items-center gap-2 text-blue-500">
+                        <i className={`fas ${camp.mediaType === 'AUDIO' ? 'fa-music' : 'fa-file-pdf'} text-2xl`}></i>
+                        <span className="text-[8px] font-black uppercase tracking-widest">{camp.mediaType}</span>
+                      </div>
+                    )}
+                    <a href={camp.mediaUrl} target="_blank" rel="noreferrer" className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                      <i className="fas fa-external-link-alt text-[10px]"></i>
+                    </a>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                   <div className={`w-2 h-2 rounded-full ${camp.active ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></div>
@@ -1082,51 +1112,87 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   </div>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-3">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Anexar Mídia (Opcional)</label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <select
-                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-black text-slate-700"
-                      value={newCampaign.mediaType}
-                      onChange={e => setNewCampaign({ ...newCampaign, mediaType: e.target.value as any })}
-                    >
-                      <option value="NONE">SEM MÍDIA</option>
-                      <option value="IMAGE">IMAGEM</option>
-                      <option value="PDF">PDF (Documento)</option>
-                      <option value="AUDIO">ÁUDIO</option>
-                      <option value="VIDEO">VÍDEO</option>
-                    </select>
 
-                    {newCampaign.mediaType !== 'NONE' && (
-                      <button
-                        type="button"
-                        onClick={() => campaignFileRef.current?.click()}
-                        className={`w-full p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border flex items-center justify-center gap-2 ${campaignMediaBlob ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-500'}`}
-                      >
-                        <i className={`fas ${campaignMediaBlob ? 'fa-check-circle' : 'fa-paperclip'}`}></i>
-                        {campaignMediaBlob ? 'Arquivo Pronto' : 'Selecionar'}
-                      </button>
+                  <div
+                    onClick={() => campaignFileRef.current?.click()}
+                    className={`relative w-full min-h-[140px] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 cursor-pointer group overflow-hidden ${campaignMediaBlob ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200 bg-gray-50/50 hover:border-blue-300 hover:bg-blue-50/30'
+                      }`}
+                  >
+                    {campaignMediaFile ? (
+                      <div className="w-full h-full absolute inset-0">
+                        {newCampaign.mediaType === 'IMAGE' && <img src={campaignMediaFile} className="w-full h-full object-cover" alt="" />}
+                        {newCampaign.mediaType === 'VIDEO' && <video src={campaignMediaFile} className="w-full h-full object-cover" />}
+                        {newCampaign.mediaType === 'AUDIO' && (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50/50">
+                            <i className="fas fa-volume-high text-indigo-400 text-3xl mb-2"></i>
+                            <span className="text-[10px] font-black text-indigo-600">Áudio Selecionado</span>
+                          </div>
+                        )}
+                        {newCampaign.mediaType === 'PDF' && (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50/50">
+                            <i className="fas fa-file-pdf text-rose-400 text-3xl mb-2"></i>
+                            <span className="text-[10px] font-black text-rose-600">PDF Selecionado</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <i className="fas fa-sync-alt text-xl"></i>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 group-hover:text-blue-500 group-hover:scale-110 transition-all shadow-sm">
+                          <i className="fas fa-cloud-arrow-up text-xl"></i>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-black text-slate-700 uppercase tracking-tight">Clique para carregar</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">PDF, IMAGEM, ÁUDIO OU VÍDEO</p>
+                        </div>
+                      </>
                     )}
                   </div>
+
                   <input
                     type="file"
                     ref={campaignFileRef}
                     className="hidden"
-                    accept={
-                      newCampaign.mediaType === 'IMAGE' ? 'image/*' :
-                        newCampaign.mediaType === 'PDF' ? 'application/pdf' :
-                          newCampaign.mediaType === 'AUDIO' ? 'audio/*' :
-                            newCampaign.mediaType === 'VIDEO' ? 'video/*' : '*'
-                    }
+                    accept="image/*,video/*,audio/*,application/pdf"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) setCampaignMediaBlob(file);
+                      if (file) {
+                        setCampaignMediaBlob(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setCampaignMediaFile(reader.result as string);
+
+                          // Detecção automática do tipo para o preview
+                          const mime = file.type;
+                          let type: Campaign['mediaType'] = 'NONE';
+                          if (mime.startsWith('image/')) type = 'IMAGE';
+                          else if (mime === 'application/pdf') type = 'PDF';
+                          else if (mime.startsWith('audio/')) type = 'AUDIO';
+                          else if (mime.startsWith('video/')) type = 'VIDEO';
+
+                          setNewCampaign(prev => ({ ...prev, mediaType: type }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
                     }}
                   />
                   {campaignMediaBlob && (
-                    <p className="text-[9px] font-bold text-gray-400 mt-1 ml-1 truncate italic">
-                      Arquivo selecionado: {campaignMediaBlob.name}
-                    </p>
+                    <div className="flex items-center justify-between px-2">
+                      <p className="text-[9px] font-bold text-emerald-600 truncate italic">
+                        <i className="fas fa-check-circle mr-1"></i> {campaignMediaBlob.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { setCampaignMediaBlob(null); setCampaignMediaFile(null); setNewCampaign(p => ({ ...p, mediaType: 'NONE' })) }}
+                        className="text-[9px] font-black text-rose-500 uppercase hover:underline"
+                      >
+                        Remover
+                      </button>
+                    </div>
                   )}
                 </div>
 
