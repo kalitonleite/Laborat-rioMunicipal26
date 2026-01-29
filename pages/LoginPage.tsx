@@ -46,13 +46,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     try {
       const cleanId = identification.replace(/\D/g, '');
 
+      console.log('Tentando login com ID:', cleanId, 'Role:', UserRole.PATIENT);
       const { data, error: rpcError } = await supabase.rpc('get_email_by_identification', {
         p_id: cleanId,
         p_role: UserRole.PATIENT
       });
 
       if (rpcError || !data || data.length === 0) {
-        alert('Identificação não encontrada ou não cadastrada.');
+        console.error('Erro na RPC ou dado vazio:', rpcError, data);
+        alert(`Identificação não encontrada. Detalhes: ${rpcError?.message || 'Nenhum registro encontrado para este CPF/SUS.'}`);
         return;
       }
 

@@ -22,13 +22,15 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin }) => {
     e.preventDefault();
     try {
       const cleanCPF = cpf.replace(/\D/g, '');
+      console.log('Admin login with CPF:', cleanCPF);
       const { data, error: rpcError } = await supabase.rpc('get_email_by_cpf', {
         p_cpf: cleanCPF,
         p_role: UserRole.ADMIN
       });
 
       if (rpcError || !data || data.length === 0) {
-        alert('CPF administrativo não encontrado.');
+        console.error('Admin RPC error or empty:', rpcError, data);
+        alert(`CPF administrativo não encontrado. Detalhes: ${rpcError?.message || 'Nenhum gestor com este CPF.'}`);
         return;
       }
 
