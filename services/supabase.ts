@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Fallback values for the production environment (Project: vmbwqmsfjeveeghgitoq)
-const FALLBACK_URL = 'https://vmbwqmsfjeveeghgitoq.supabase.co';
-// Using the legacy JWT anon key for maximum compatibility with all browsers/environments
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtYndxbXNmamV2ZWVnaGdpdG9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkxOTczNjAsImV4cCI6MjA4NDc3MzM2MH0.I3P08ZIOspdh_pt4swfc_1Mvg8bFSkMaTVEjnOTJLwI';
+// Fallback values for the production environment (Project: LaboratorioMunicipal2026)
+const FALLBACK_URL = 'https://wuqqnlocnuwgczvmwkrh.supabase.co';
+// Using the legacy JWT anon key for compatibility
+const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1cXFubG9jbnV3Z2N6dm13a3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjk1MzMsImV4cCI6MjA4NzcwNTUzM30.cQmkPtToIsTcf40taJAZO5VErzQvoJGHdLxPqJNLync';
 
 // Helper to get environment variables with robust validation
 const getEnv = (name: string, fallback: string): string => {
