@@ -434,23 +434,13 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
 
     setUploading(true);
     try {
-      // O path de storage pode ser extraído da URL ou buscado no banco
-      const { data: meta } = await supabase
-        .from('file_attachments')
-        .select('storage_path')
-        .eq('patient_cpf', selectedExam.patientCpf)
-        .like('storage_path', `%${selectedExam.id}%`)
-        .single();
+      // Limpar a URL no exame e o resultado extraído
+      const { error: clearErr } = await supabase
+        .from('exams')
+        .update({ file_url: null, result_data: null })
+        .eq('id', selectedExam.id);
 
-      if (meta?.storage_path) {
-        // Remover do Storage
-        await supabase.storage.from('lab-files').remove([meta.storage_path]);
-        // Remover metadados
-        await supabase.from('file_attachments').delete().eq('storage_path', meta.storage_path);
-      }
-
-      // Limpar a URL no exame
-      await supabase.from('exams').update({ file_url: null }).eq('id', selectedExam.id);
+      if (clearErr) throw clearErr;
 
       // Atualizar estado
       setAllExams(prev => prev.map(ex =>
@@ -516,7 +506,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         );
       }
 
-      const glic = extractValue('glicemia|glic');
+      const glic = extractValue('glicose|glicemia|glic');
       if (glic !== null && glic > 125) {
         alerts.push(
           <div key="glic" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
