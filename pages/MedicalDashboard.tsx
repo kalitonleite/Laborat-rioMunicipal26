@@ -481,19 +481,75 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
   };
 
   const getExamAlerts = (exam: ExamResult) => {
-    let alerts = [];
+    const alerts: React.ReactNode[] = [];
 
     if (exam.resultData) {
-      const lowerResult = exam.resultData.toLowerCase();
+      const text = exam.resultData;
+      const lower = text.toLowerCase();
 
-      // Tenta encontrar valores próximos às palavras-chave
-      const extractValue = (keyword: string) => {
-        const regex = new RegExp(`(?:${keyword})[^\\d]*([\\d.,]+)`);
-        const match = lowerResult.match(regex);
-        return match && match[1] ? parseFloat(match[1].replace(',', '.')) : null;
+      /**
+       * Section-aware value extraction.
+       * Splits the text into parameter sections and locates a numeric value
+       * immediately following "resultado" within the correct section.
+       * This prevents false matches from reference range numbers
+       * (e.g. "Desejável < 150") that come after the parameter keyword.
+       *
+       * Strategy:
+       * 1. Find the section that starts with the parameter keyword.
+       * 2. Within that section, find "resultado" and the first number after it.
+       * 3. Return null if no valid number is found.
+       *
+       * Fallback: if "resultado" is not present (manual text entry), use the
+       * first number after the keyword.
+       */
+      const extractResultValue = (keyword: string): number | null => {
+        // Known subsequent section headers – used to bound the current section
+        const headers = [
+          'glicose', 'glicemia', 'colesterol', 'triglicérides', 'triglicerideos',
+          'ureia', 'uréia', 'creatinina', 'hemoglobina', 'hematócrito', 'leucócitos',
+          'plaquetas', 'ácido úrico', 'ast', 'alt', 'tgo', 'tgp', 'bilirrubina',
+          'proteínas', 'albumina', 'ferritina', 'ferro', 'psa', 'tsh', 't4'
+        ];
+
+        const keywordRegex = new RegExp(`(?:${keyword})`);
+        const kwMatch = lower.match(keywordRegex);
+        if (!kwMatch || kwMatch.index === undefined) return null;
+
+        const sectionStart = kwMatch.index;
+
+        // Find end of section (start of next parameter)
+        let sectionEnd = lower.length;
+        for (const h of headers) {
+          if (h === keyword.split('|')[0]) continue; // skip self
+          const idx = lower.indexOf(h, sectionStart + keyword.split('|')[0].length);
+          if (idx !== -1 && idx < sectionEnd) sectionEnd = idx;
+        }
+
+        const section = lower.slice(sectionStart, sectionEnd);
+
+        // Try: find "resultado" then first number after it in this section
+        const resultadoIdx = section.indexOf('resultado');
+        if (resultadoIdx !== -1) {
+          const afterResultado = section.slice(resultadoIdx + 9); // after "resultado"
+          // skip dots, dashes, spaces, ellipsis (but NOT digits)
+          const numMatch = afterResultado.match(/[^\d]*?([\d]+[.,]?[\d]*)/);
+          if (numMatch && numMatch[1]) {
+            const val = parseFloat(numMatch[1].replace(',', '.'));
+            if (!isNaN(val)) return val;
+          }
+        }
+
+        // Fallback: No "resultado" found (manual text). Take first number in section.
+        const fallbackMatch = section.match(/[\d]+[.,]?[\d]*/);
+        if (fallbackMatch) {
+          const val = parseFloat(fallbackMatch[0].replace(',', '.'));
+          if (!isNaN(val)) return val;
+        }
+
+        return null;
       };
 
-      const hg = extractValue('hg|hemoglobina');
+      const hg = extractResultValue('hemoglobina|hg\\b');
       if (hg !== null && hg < 10 && hg > 0) {
         alerts.push(
           <div key="hg" className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3 animate-pulse">
@@ -506,7 +562,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         );
       }
 
-      const glic = extractValue('glicose|glicemia|glic');
+      const glic = extractResultValue('glicose|glicemia|glic');
       if (glic !== null && glic > 125) {
         alerts.push(
           <div key="glic" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
@@ -519,7 +575,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         );
       }
 
-      const col = extractValue('colesterol total|colesterol');
+      const col = extractResultValue('colesterol total|colesterol');
       if (col !== null && col >= 200) {
         alerts.push(
           <div key="col" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
@@ -532,7 +588,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         );
       }
 
-      const tri = extractValue('triglicérides|triglicerideos|triglic');
+      const tri = extractResultValue('triglicérides|triglicerideos|triglic');
       if (tri !== null && tri >= 150) {
         alerts.push(
           <div key="tri" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
@@ -545,7 +601,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         );
       }
 
-      const urico = extractValue('ácido úrico|urico');
+      const urico = extractResultValue('ácido úrico|acido urico|urico');
       if (urico !== null && urico >= 7) {
         alerts.push(
           <div key="urico" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
@@ -558,7 +614,20 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         );
       }
 
-      if (lowerResult.includes('crítico')) {
+      const creat = extractResultValue('creatinina');
+      if (creat !== null && creat > 1.2) {
+        alerts.push(
+          <div key="creat" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+            <i className="fas fa-kidneys text-amber-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Creatinina</p>
+              <p className="text-xs font-bold text-amber-600">Creatinina elevada ({creat}mg/dL).</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (lower.includes('crítico') || lower.includes('critico')) {
         alerts.push(
           <div key="crit" className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3">
             <i className="fas fa-radiation text-red-500 text-lg"></i>
