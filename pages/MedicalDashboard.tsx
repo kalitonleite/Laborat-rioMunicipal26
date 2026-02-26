@@ -478,6 +478,58 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
     }
   };
 
+  const getExamAlerts = (exam: ExamResult) => {
+    if (!exam.resultData) return null;
+    const lowerResult = exam.resultData.toLowerCase();
+    const numericValue = parseFloat(exam.resultData.match(/[\d.,]+/)?.[0]?.replace(',', '.') || '0');
+
+    if (lowerResult.includes('hg') && numericValue < 10 && numericValue > 0) {
+      return (
+        <div className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3 animate-pulse">
+          <i className="fas fa-triangle-exclamation text-red-500 text-lg"></i>
+          <div>
+            <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Alerta Crítico: Hemoglobina</p>
+            <p className="text-xs font-bold text-red-600">Anemia severa detectada ({numericValue}g/dL). Requer conduta imediata.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (lowerResult.includes('glic') && numericValue > 125) {
+      return (
+        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+          <i className="fas fa-circle-exclamation text-amber-500 text-lg"></i>
+          <div>
+            <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Glicemia</p>
+            <p className="text-xs font-bold text-amber-600">Nível de jejum elevado ({numericValue}mg/dL). Sugestivo de Diabetes/Pré-diabetes.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (lowerResult.includes('crítico')) {
+      return (
+        <div className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3">
+          <i className="fas fa-radiation text-red-500 text-lg"></i>
+          <div>
+            <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Alerta Sistêmico</p>
+            <p className="text-xs font-bold text-red-600">Valor de pânico detectado pelo laboratório. Prioridade máxima.</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
+        <i className="fas fa-shield-check text-emerald-500 text-lg"></i>
+        <div>
+          <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Parâmetros Estáveis</p>
+          <p className="text-xs font-bold text-emerald-600">Nenhuma alteração crítica detectada pela heurística automática.</p>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="w-fit">
@@ -491,9 +543,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         />
       </div>
 
-      {activeTab === 'trabalho' ? (
+      {activeTab === 'trabalho' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
           {/* Coluna de Busca */}
           <div className="lg:col-span-1 space-y-4">
             <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100">
@@ -645,30 +696,30 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                     <p className="text-gray-400 text-xs font-bold">Nenhum paciente encontrado.</p>
                   </div>
                 )}
+              </div>
 
-                {/* Painel de Alertas Inteligentes (Sticky at bottom of search) */}
-                <div className="mt-6 p-5 bg-amber-50 rounded-[24px] border border-amber-100 shadow-sm animate-in fade-in slide-in-from-bottom-2">
-                  <h4 className="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <i className="fas fa-bell animate-bounce"></i> Painel de Alertas
-                  </h4>
-                  <div className="space-y-2">
-                    {allExams.filter(e => e.status === 'READY' && e.resultData?.toLowerCase().includes('crítico')).slice(0, 3).map(e => (
-                      <div key={e.id} className="p-2 bg-white rounded-lg flex items-center gap-2 border border-amber-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-                        <p className="text-[9px] font-bold text-slate-700 truncate flex-1">
-                          CRÍTICO: {e.patientName} ({e.examName})
-                        </p>
-                      </div>
-                    ))}
-                    {allExams.filter(e => e.status === 'PENDING').length > 0 && (
-                      <div className="p-2 bg-white rounded-lg flex items-center gap-2 border border-amber-200">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                        <p className="text-[9px] font-bold text-slate-700">
-                          {allExams.filter(e => e.status === 'PENDING').length} Exames Pendentes
-                        </p>
-                      </div>
-                    )}
-                  </div>
+              {/* Painel de Alertas Inteligentes (Sticky at bottom of search) */}
+              <div className="mt-6 p-5 bg-amber-50 rounded-[24px] border border-amber-100 shadow-sm animate-in fade-in slide-in-from-bottom-2">
+                <h4 className="text-[10px] font-black text-amber-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <i className="fas fa-bell animate-bounce"></i> Painel de Alertas
+                </h4>
+                <div className="space-y-2">
+                  {allExams.filter(e => e.status === 'READY' && e.resultData?.toLowerCase().includes('crítico')).slice(0, 3).map(e => (
+                    <div key={e.id} className="p-2 bg-white rounded-lg flex items-center gap-2 border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                      <p className="text-[9px] font-bold text-slate-700 truncate flex-1">
+                        CRÍTICO: {e.patientName} ({e.examName})
+                      </p>
+                    </div>
+                  ))}
+                  {allExams.filter(e => e.status === 'PENDING').length > 0 && (
+                    <div className="p-2 bg-white rounded-lg flex items-center gap-2 border border-amber-200">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <p className="text-[9px] font-bold text-slate-700">
+                        {allExams.filter(e => e.status === 'PENDING').length} Exames Pendentes
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -755,7 +806,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                         className="bg-white w-full"
                         style={{ height: '800px' }}
                         title="Visualização do Laudo"
-                      />
+                      ></iframe>
                     </div>
                   )}
 
@@ -774,7 +825,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                         placeholder="Digite os valores observados, referências e observações médicas..."
                         value={resultInput}
                         onChange={(e) => setResultInput(e.target.value)}
-                      />
+                      ></textarea>
                     </>
                   )}
                 </div>
@@ -893,18 +944,10 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                           <i className="fas fa-microscope text-indigo-600"></i>
                           <h3 className="text-[10px] font-black text-indigo-800 uppercase tracking-widest">Sugestão Laboratorial Automática</h3>
                         </div>
-                        <span className="text-[8px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-black uppercase">Alpha Beta</span>
+                        <span className="text-[8px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-black uppercase">Sistema Heurístico</span>
                       </div>
-                      <div className="space-y-3">
-                        <div className="p-4 bg-white rounded-2xl border border-indigo-100 shadow-sm">
-                          <p className="text-xs font-bold text-slate-700 leading-relaxed">
-                            {selectedExam.resultData?.toLowerCase().includes('hg') && parseFloat(selectedExam.resultData.match(/[\d.,]+/)?.[0] || '12') < 10
-                              ? '🚩 Perfil compatível com anemia severa. Sugere-se avaliação de cinética de ferro e reticulócitos.'
-                              : selectedExam.resultData?.toLowerCase().includes('glic') && parseFloat(selectedExam.resultData.match(/[\d.,]+/)?.[0] || '90') > 125
-                                ? '🚩 Nível glicêmico compatível com critério para Diabetes Mellitus. Recomenda-se Hemoglobina Glicada.'
-                                : '✅ Resultado dentro dos parâmetros de normalidade para as heurísticas básicas estabelecidas.'}
-                          </p>
-                        </div>
+                      <div className="space-y-4">
+                        {getExamAlerts(selectedExam)}
                         <p className="text-[8px] text-gray-400 font-bold italic flex items-center gap-1">
                           <i className="fas fa-circle-info"></i>
                           Aviso: Esta é uma sugestão baseada em algoritmos e não substitui de forma alguma a soberania do diagnóstico médico.
@@ -927,276 +970,279 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                     </div>
                   )}
                 </div>
-                ) : (
-                <div className="bg-white border border-gray-100 rounded-[40px] h-full min-h-[600px] flex flex-col items-center justify-center text-center p-12">
-                  <div className="w-24 h-24 rounded-[32px] bg-gray-50 flex items-center justify-center text-gray-200 mb-6 border border-gray-100">
-                    <i className="fas fa-id-card-clip text-5xl"></i>
-                  </div>
-                  <h3 className="text-xl font-black text-slate-800 mb-2">Aguardando Seleção</h3>
-                  <p className="text-gray-400 text-sm max-w-xs leading-relaxed font-medium">
-                    Use a barra lateral para buscar um paciente e escolha entre visualizar o laudo ou baixar o arquivo PDF.
-                  </p>
-                </div>
-            )}
               </div>
+            ) : (
+              <div className="bg-white border border-gray-100 rounded-[40px] h-full min-h-[600px] flex flex-col items-center justify-center text-center p-12">
+                <div className="w-24 h-24 rounded-[32px] bg-gray-50 flex items-center justify-center text-gray-200 mb-6 border border-gray-100">
+                  <i className="fas fa-id-card-clip text-5xl"></i>
+                </div>
+                <h3 className="text-xl font-black text-slate-800 mb-2">Aguardando Seleção</h3>
+                <p className="text-gray-400 text-sm max-w-xs leading-relaxed font-medium">
+                  Use a barra lateral para buscar um paciente e escolha entre visualizar o laudo ou baixar o arquivo PDF.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-          ) : (
-          <ProfileTab user={user} onUpdateUser={onUpdateUser} />
       )}
 
-          {viewingExam && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-              <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="bg-[#1e40af] p-8 text-white relative">
-                  <h2 className="text-2xl font-black">Visualização do Laudo</h2>
-                  <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Documento Oficial</p>
+      {activeTab === 'perfil' && (
+        <ProfileTab user={user} onUpdateUser={onUpdateUser} />
+      )}
+
+      {viewingExam && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-[#1e40af] p-8 text-white relative">
+              <h2 className="text-2xl font-black">Visualização do Laudo</h2>
+              <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Documento Oficial</p>
+            </div>
+
+            <div className="p-8 space-y-6 relative">
+              <button
+                onClick={() => setViewingExam(null)}
+                className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pr-12">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Paciente</p>
+                  <p className="text-sm font-black text-slate-800">{viewingExam.patientName}</p>
                 </div>
-
-                <div className="p-8 space-y-6 relative">
-                  <button
-                    onClick={() => setViewingExam(null)}
-                    className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pr-12">
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Paciente</p>
-                      <p className="text-sm font-black text-slate-800">{viewingExam.patientName}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CPF</p>
-                      <p className="text-sm font-black text-slate-800">{viewingExam.patientCpf || '---'}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Exame</p>
-                      <p className="text-sm font-black text-blue-600 uppercase tracking-tight">{viewingExam.examName}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data</p>
-                      <p className="text-sm font-black text-slate-800">{viewingExam.date}</p>
-                    </div>
-                  </div>
-
-                  {viewingExam.fileUrl && (
-                    <div className="w-full h-[70vh] rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
-                      <iframe src={viewingExam.fileUrl} className="w-full h-full" title="Laudo do Exame"></iframe>
-                    </div>
-                  )}
-
-                  <div className="flex gap-4 mt-6">
-                    <button
-                      onClick={() => {
-                        fetchPatientHistory(viewingExam.patientCpf || '');
-                        setHistoryModalOpen(true);
-                      }}
-                      className="flex-1 bg-slate-100 text-slate-800 font-black py-4 rounded-xl hover:bg-slate-200 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
-                    >
-                      <i className="fas fa-clock-rotate-left"></i>
-                      Histórico
-                    </button>
-                    <button
-                      onClick={() => {
-                        fetchPatientHistory(viewingExam.patientCpf || '');
-                        setGraphModalOpen(true);
-                      }}
-                      className="flex-1 bg-indigo-50 text-indigo-700 font-black py-4 rounded-xl hover:bg-indigo-100 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
-                    >
-                      <i className="fas fa-chart-line"></i>
-                      Gráfico de Evolução
-                    </button>
-                  </div>
-
-                  <button
-                    onClick={() => setViewingExam(null)}
-                    className="w-full bg-slate-900 text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-black transition-all uppercase tracking-widest text-xs mt-4"
-                  >
-                    Fechar Visualização
-                  </button>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CPF</p>
+                  <p className="text-sm font-black text-slate-800">{viewingExam.patientCpf || '---'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Exame</p>
+                  <p className="text-sm font-black text-blue-600 uppercase tracking-tight">{viewingExam.examName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data</p>
+                  <p className="text-sm font-black text-slate-800">{viewingExam.date}</p>
                 </div>
               </div>
-            </div>
-          )}
 
-          {historyModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-              <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="bg-slate-800 p-8 text-white flex justify-between items-center relative">
-                  <div>
-                    <h2 className="text-2xl font-black">Histórico do Paciente</h2>
-                    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{selectedExam?.patientName}</p>
-                  </div>
+              {viewingExam.fileUrl && (
+                <div className="w-full h-[70vh] rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
+                  <iframe src={viewingExam.fileUrl} className="w-full h-full" title="Laudo do Exame"></iframe>
                 </div>
+              )}
 
-                <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar relative">
-                  <button
-                    onClick={() => setHistoryModalOpen(false)}
-                    className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                  {loadingHistory ? (
-                    <div className="py-20 text-center">
-                      <i className="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
-                      <p className="font-bold text-gray-400">Carregando histórico...</p>
-                    </div>
-                  ) : patientHistory.length > 0 ? (
-                    <div className="space-y-4">
-                      {patientHistory.slice().reverse().map(exam => (
-                        <div key={exam.id} className="p-6 rounded-3xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all group">
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{exam.examName}</span>
-                              <h4 className="text-lg font-black text-slate-800">{exam.date}</h4>
-                            </div>
-                            <button
-                              onClick={() => handleDownloadPatientPDF(exam)}
-                              className="p-2 text-gray-400 hover:text-red-500 transition-all"
-                            >
-                              <i className="fas fa-file-pdf"></i>
-                            </button>
-                          </div>
-                          <div className="bg-white p-4 rounded-2xl border border-gray-100 text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
-                            {exam.resultData || 'Sem dados de resultado registrados.'}
-                          </div>
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => {
+                    fetchPatientHistory(viewingExam.patientCpf || '');
+                    setHistoryModalOpen(true);
+                  }}
+                  className="flex-1 bg-slate-100 text-slate-800 font-black py-4 rounded-xl hover:bg-slate-200 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-clock-rotate-left"></i>
+                  Histórico
+                </button>
+                <button
+                  onClick={() => {
+                    fetchPatientHistory(viewingExam.patientCpf || '');
+                    setGraphModalOpen(true);
+                  }}
+                  className="flex-1 bg-indigo-50 text-indigo-700 font-black py-4 rounded-xl hover:bg-indigo-100 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-chart-line"></i>
+                  Gráfico de Evolução
+                </button>
+              </div>
+
+              <button
+                onClick={() => setViewingExam(null)}
+                className="w-full bg-slate-900 text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-black transition-all uppercase tracking-widest text-xs mt-4"
+              >
+                Fechar Visualização
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {historyModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-slate-800 p-8 text-white flex justify-between items-center relative">
+              <div>
+                <h2 className="text-2xl font-black">Histórico do Paciente</h2>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{selectedExam?.patientName}</p>
+              </div>
+            </div>
+
+            <div className="p-8 max-h-[70vh] overflow-y-auto no-scrollbar relative">
+              <button
+                onClick={() => setHistoryModalOpen(false)}
+                className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+              {loadingHistory ? (
+                <div className="py-20 text-center">
+                  <i className="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                  <p className="font-bold text-gray-400">Carregando histórico...</p>
+                </div>
+              ) : patientHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {patientHistory.slice().reverse().map(exam => (
+                    <div key={exam.id} className="p-6 rounded-3xl border border-gray-100 bg-gray-50/50 hover:bg-white hover:shadow-md transition-all group">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{exam.examName}</span>
+                          <h4 className="text-lg font-black text-slate-800">{exam.date}</h4>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="py-20 text-center">
-                      <i className="fas fa-folder-open text-4xl text-gray-100 mb-4"></i>
-                      <p className="text-gray-400 font-bold">Nenhum exame anterior encontrado.</p>
-                    </div>
-                  )}
-                </div>
-                <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
-                  <button onClick={() => setHistoryModalOpen(false)} className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl">Fechar Histórico</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {graphModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-              <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="bg-indigo-600 p-8 text-white flex justify-between items-center">
-                  <div>
-                    <h2 className="text-2xl font-black">Evolução de Exames</h2>
-                    <p className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{selectedExam?.patientName}</p>
-                  </div>
-                </div>
-
-                <div className="p-8 relative">
-                  <button
-                    onClick={() => setGraphModalOpen(false)}
-                    className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
-                  >
-                    <i className="fas fa-times"></i>
-                  </button>
-                  <div className="flex flex-wrap items-center justify-between gap-6 mb-8 pr-16">
-                    <div className="flex items-center gap-4">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parâmetro Analisado</label>
-                        <select
-                          className="block w-64 p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
-                          value={selectedParam}
-                          onChange={(e) => setSelectedParam(e.target.value)}
-                        >
-                          {availableParams.length > 0 ? availableParams.map(p => (
-                            <option key={p} value={p}>{p}</option>
-                          )) : <option value="">Nenhum dado numérico encontrado</option>}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
-                      {[30, 90, 180].map(days => (
                         <button
-                          key={days}
-                          onClick={() => setGraphTimeRange(days as any)}
-                          className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${graphTimeRange === days ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                          onClick={() => handleDownloadPatientPDF(exam)}
+                          className="p-2 text-gray-400 hover:text-red-500 transition-all"
                         >
-                          {days} Dias
+                          <i className="fas fa-file-pdf"></i>
                         </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="h-[400px] w-full bg-slate-50 rounded-3xl p-6 border border-gray-100 shadow-inner">
-                    {graphData.length >= 2 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={graphData}>
-                          <defs>
-                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
-                              <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis
-                            dataKey="date"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                            dy={10}
-                          />
-                          <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                            dx={-10}
-                          />
-                          <Tooltip
-                            contentStyle={{
-                              borderRadius: '16px',
-                              border: 'none',
-                              boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                              fontSize: '12px',
-                              fontWeight: 'bold'
-                            }}
-                          />
-                          <Area
-                            type="monotone"
-                            dataKey="value"
-                            name={selectedParam}
-                            stroke="#4f46e5"
-                            strokeWidth={4}
-                            fillOpacity={1}
-                            fill="url(#colorValue)"
-                            dot={{ r: 6, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
-                            activeDot={{ r: 8, strokeWidth: 0 }}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-center px-12">
-                        <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-indigo-200 mb-4 shadow-sm">
-                          <i className="fas fa-chart-area text-3xl"></i>
-                        </div>
-                        <h4 className="text-slate-800 font-black mb-1">Dados Insuficientes</h4>
-                        <p className="text-gray-400 text-xs font-medium leading-relaxed">
-                          São necessários pelo menos 2 exames com resultados numéricos para gerar o gráfico de evolução.
-                        </p>
                       </div>
-                    )}
-                  </div>
+                      <div className="bg-white p-4 rounded-2xl border border-gray-100 text-sm text-slate-600 font-medium whitespace-pre-wrap leading-relaxed">
+                        {exam.resultData || 'Sem dados de resultado registrados.'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-20 text-center">
+                  <i className="fas fa-folder-open text-4xl text-gray-100 mb-4"></i>
+                  <p className="text-gray-400 font-bold">Nenhum exame anterior encontrado.</p>
+                </div>
+              )}
+            </div>
+            <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
+              <button onClick={() => setHistoryModalOpen(false)} className="px-10 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl">Fechar Histórico</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-                  <div className="mt-6 flex items-start gap-3 bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                    <i className="fas fa-lightbulb text-blue-500 mt-0.5"></i>
-                    <p className="text-[10px] text-blue-700 font-bold leading-relaxed">
-                      DICA: O sistema extrai automaticamente o primeiro valor numérico de cada linha do resultado.
-                      Certifique-se de manter o formato "Parâmetro: Valor" para melhor precisão.
+      {graphModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-indigo-600 p-8 text-white flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-black">Evolução de Exames</h2>
+                <p className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{selectedExam?.patientName}</p>
+              </div>
+            </div>
+
+            <div className="p-8 relative">
+              <button
+                onClick={() => setGraphModalOpen(false)}
+                className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
+              >
+                <i className="fas fa-times"></i>
+              </button>
+              <div className="flex flex-wrap items-center justify-between gap-6 mb-8 pr-16">
+                <div className="flex items-center gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parâmetro Analisado</label>
+                    <select
+                      className="block w-64 p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                      value={selectedParam}
+                      onChange={(e) => setSelectedParam(e.target.value)}
+                    >
+                      {availableParams.length > 0 ? availableParams.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      )) : <option value="">Nenhum dado numérico encontrado</option>}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+                  {[30, 90, 180].map(days => (
+                    <button
+                      key={days}
+                      onClick={() => setGraphTimeRange(days as any)}
+                      className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${graphTimeRange === days ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                      {days} Dias
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="h-[400px] w-full bg-slate-50 rounded-3xl p-6 border border-gray-100 shadow-inner">
+                {graphData.length >= 2 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={graphData}>
+                      <defs>
+                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                      <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
+                        dx={-10}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: '16px',
+                          border: 'none',
+                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        name={selectedParam}
+                        stroke="#4f46e5"
+                        strokeWidth={4}
+                        fillOpacity={1}
+                        fill="url(#colorValue)"
+                        dot={{ r: 6, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
+                        activeDot={{ r: 8, strokeWidth: 0 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center text-center px-12">
+                    <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-indigo-200 mb-4 shadow-sm">
+                      <i className="fas fa-chart-area text-3xl"></i>
+                    </div>
+                    <h4 className="text-slate-800 font-black mb-1">Dados Insuficientes</h4>
+                    <p className="text-gray-400 text-xs font-medium leading-relaxed">
+                      São necessários pelo menos 2 exames com resultados numéricos para gerar o gráfico de evolução.
                     </p>
                   </div>
-                </div>
-                <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
-                  <button onClick={() => setGraphModalOpen(false)} className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-all shadow-xl">Concluído</button>
-                </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex items-start gap-3 bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                <i className="fas fa-lightbulb text-blue-500 mt-0.5"></i>
+                <p className="text-[10px] text-blue-700 font-bold leading-relaxed">
+                  DICA: O sistema extrai automaticamente o primeiro valor numérico de cada linha do resultado.
+                  Certifique-se de manter o formato "Parâmetro: Valor" para melhor precisão.
+                </p>
               </div>
             </div>
-          )}
+            <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
+              <button onClick={() => setGraphModalOpen(false)} className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-all shadow-xl">Concluído</button>
+            </div>
+          </div>
         </div>
-      );
+      )}
+    </div>
+  );
 };
 
-      export default MedicalDashboard;
+export default MedicalDashboard;
