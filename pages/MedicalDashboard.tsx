@@ -479,55 +479,121 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
   };
 
   const getExamAlerts = (exam: ExamResult) => {
-    if (!exam.resultData) return null;
-    const lowerResult = exam.resultData.toLowerCase();
-    const numericValue = parseFloat(exam.resultData.match(/[\d.,]+/)?.[0]?.replace(',', '.') || '0');
+    let alerts = [];
 
-    if (lowerResult.includes('hg') && numericValue < 10 && numericValue > 0) {
-      return (
-        <div className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3 animate-pulse">
-          <i className="fas fa-triangle-exclamation text-red-500 text-lg"></i>
-          <div>
-            <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Alerta Crítico: Hemoglobina</p>
-            <p className="text-xs font-bold text-red-600">Anemia severa detectada ({numericValue}g/dL). Requer conduta imediata.</p>
+    if (exam.resultData) {
+      const lowerResult = exam.resultData.toLowerCase();
+
+      // Tenta encontrar valores próximos às palavras-chave
+      const extractValue = (keyword: string) => {
+        const regex = new RegExp(`(?:${keyword})[^\\d]*([\\d.,]+)`);
+        const match = lowerResult.match(regex);
+        return match && match[1] ? parseFloat(match[1].replace(',', '.')) : null;
+      };
+
+      const hg = extractValue('hg|hemoglobina');
+      if (hg !== null && hg < 10 && hg > 0) {
+        alerts.push(
+          <div key="hg" className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3 animate-pulse">
+            <i className="fas fa-triangle-exclamation text-red-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Alerta: Hemoglobina</p>
+              <p className="text-xs font-bold text-red-600">Anemia severa detectada ({hg}g/dL).</p>
+            </div>
           </div>
-        </div>
-      );
+        );
+      }
+
+      const glic = extractValue('glicemia|glic');
+      if (glic !== null && glic > 125) {
+        alerts.push(
+          <div key="glic" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+            <i className="fas fa-circle-exclamation text-amber-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Glicemia</p>
+              <p className="text-xs font-bold text-amber-600">Glicemia elevada ({glic}mg/dL).</p>
+            </div>
+          </div>
+        );
+      }
+
+      const col = extractValue('colesterol total|colesterol');
+      if (col !== null && col >= 200) {
+        alerts.push(
+          <div key="col" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+            <i className="fas fa-heart-pulse text-amber-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Colesterol</p>
+              <p className="text-xs font-bold text-amber-600">Colesterol Total elevado ({col}mg/dL).</p>
+            </div>
+          </div>
+        );
+      }
+
+      const tri = extractValue('triglicérides|triglicerideos|triglic');
+      if (tri !== null && tri >= 150) {
+        alerts.push(
+          <div key="tri" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+            <i className="fas fa-flask text-amber-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Triglicérides</p>
+              <p className="text-xs font-bold text-amber-600">Triglicérides elevado ({tri}mg/dL).</p>
+            </div>
+          </div>
+        );
+      }
+
+      const urico = extractValue('ácido úrico|urico');
+      if (urico !== null && urico >= 7) {
+        alerts.push(
+          <div key="urico" className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
+            <i className="fas fa-vial text-amber-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Ácido Úrico</p>
+              <p className="text-xs font-bold text-amber-600">Ácido Úrico elevado ({urico}mg/dL).</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (lowerResult.includes('crítico')) {
+        alerts.push(
+          <div key="crit" className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3">
+            <i className="fas fa-radiation text-red-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Alerta Sistêmico</p>
+              <p className="text-xs font-bold text-red-600">Valor de pânico reportado.</p>
+            </div>
+          </div>
+        );
+      }
     }
 
-    if (lowerResult.includes('glic') && numericValue > 125) {
-      return (
-        <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100 flex items-center gap-3">
-          <i className="fas fa-circle-exclamation text-amber-500 text-lg"></i>
-          <div>
-            <p className="text-[10px] font-black text-amber-800 uppercase tracking-widest">Alerta: Glicemia</p>
-            <p className="text-xs font-bold text-amber-600">Nível de jejum elevado ({numericValue}mg/dL). Sugestivo de Diabetes/Pré-diabetes.</p>
+    if (alerts.length === 0) {
+      if (!exam.resultData) {
+        alerts.push(
+          <div key="nodata" className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-3">
+            <i className="fas fa-file-pdf text-slate-400 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Análise por PDF</p>
+              <p className="text-xs font-bold text-slate-400">Verifique o documento original abaixo.</p>
+            </div>
           </div>
-        </div>
-      );
+        );
+      } else {
+        alerts.push(
+          <div key="stable" className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
+            <i className="fas fa-shield-check text-emerald-500 text-lg"></i>
+            <div>
+              <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Parâmetros Estáveis</p>
+              <p className="text-xs font-bold text-emerald-600">Sem alterações detectadas.</p>
+            </div>
+          </div>
+        );
+      }
     }
 
-    if (lowerResult.includes('crítico')) {
-      return (
-        <div className="p-4 bg-red-50 rounded-2xl border border-red-100 flex items-center gap-3">
-          <i className="fas fa-radiation text-red-500 text-lg"></i>
-          <div>
-            <p className="text-[10px] font-black text-red-800 uppercase tracking-widest">Alerta Sistêmico</p>
-            <p className="text-xs font-bold text-red-600">Valor de pânico detectado pelo laboratório. Prioridade máxima.</p>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
-        <i className="fas fa-shield-check text-emerald-500 text-lg"></i>
-        <div>
-          <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Parâmetros Estáveis</p>
-          <p className="text-xs font-bold text-emerald-600">Nenhuma alteração crítica detectada pela heurística automática.</p>
-        </div>
-      </div>
-    );
+    return <>{alerts}</>;
   };
 
   return (
@@ -758,28 +824,30 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                 </div>
 
                 {/* Alertas Inteligentes do Paciente */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3">
-                    <i className="fas fa-triangle-exclamation text-red-500"></i>
-                    <div>
-                      <p className="text-[9px] font-black text-red-800 uppercase tracking-widest">Exame Crítico</p>
-                      <p className="text-[10px] font-bold text-red-600">Possível Anemia Severa</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {getExamAlerts(selectedExam)}
+
+                  {/* Alerta de Histórico (Baseado no histórico real carregado) */}
+                  {patientHistory.some(e => e.resultData?.toLowerCase().includes('glic') && parseFloat(e.resultData.match(/[\d.,]+/)?.[0]?.replace(',', '.') || '0') > 125) && (
+                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3">
+                      <i className="fas fa-notes-medical text-blue-500"></i>
+                      <div>
+                        <p className="text-[9px] font-black text-blue-800 uppercase tracking-widest">Histórico Relevante</p>
+                        <p className="text-[10px] font-bold text-blue-600">Acompanhamento de Glicemia Alterada</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-3">
-                    <i className="fas fa-chart-line text-amber-500"></i>
-                    <div>
-                      <p className="text-[9px] font-black text-amber-800 uppercase tracking-widest">Resultado Alterado</p>
-                      <p className="text-[10px] font-bold text-amber-600">Glicemia em Jejum: 126 mg/dL</p>
+                  )}
+
+                  {/* Alerta de Idade/Risco (Exemplo de lógica dinâmica por perfil) */}
+                  {patientProfile?.age && parseInt(patientProfile.age) > 60 && (
+                    <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center gap-3">
+                      <i className="fas fa-user-clock text-indigo-500"></i>
+                      <div>
+                        <p className="text-[9px] font-black text-indigo-800 uppercase tracking-widest">Protocolo Idoso</p>
+                        <p className="text-[10px] font-bold text-indigo-600">Considerar valores de referência para &gt;60 anos</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center gap-3">
-                    <i className="fas fa-notes-medical text-blue-500"></i>
-                    <div>
-                      <p className="text-[9px] font-black text-blue-800 uppercase tracking-widest">Histórico Relevante</p>
-                      <p className="text-[10px] font-bold text-blue-600">Acompanhamento Pré-Diabetes</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="space-y-3">
