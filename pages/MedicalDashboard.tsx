@@ -6,6 +6,7 @@ import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import { maskCPF } from '../services/masks';
 import { supabase } from '../services/supabase';
+import { extractTextFromPDF } from '../services/pdfOcr';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   AreaChart, Area
@@ -392,19 +393,30 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
 
       if (metaError) throw metaError;
 
+      // OCR Extraction
+      let extractedText = selectedExam.resultData || '';
+      if (file.type === 'application/pdf') {
+        try {
+          const newText = await extractTextFromPDF(file);
+          if (newText) extractedText = newText;
+        } catch (ocrErr) {
+          console.error("Falha ao extrair texto com OCR", ocrErr);
+        }
+      }
+
       // 4. Atualizar o exame com o link
       const { error: examUpdateError } = await supabase
         .from('exams')
-        .update({ file_url: publicUrl, status: 'READY' })
+        .update({ file_url: publicUrl, status: 'READY', result_data: extractedText })
         .eq('id', selectedExam.id);
 
       if (examUpdateError) throw examUpdateError;
 
       // 5. Atualizar estado local
       setAllExams(prev => prev.map(ex =>
-        ex.id === selectedExam.id ? { ...ex, fileUrl: publicUrl, status: 'READY' } : ex
+        ex.id === selectedExam.id ? { ...ex, fileUrl: publicUrl, status: 'READY', resultData: extractedText } : ex
       ));
-      setSelectedExam(prev => prev ? { ...prev, fileUrl: publicUrl, status: 'READY' } : null);
+      setSelectedExam(prev => prev ? { ...prev, fileUrl: publicUrl, status: 'READY', resultData: extractedText } : null);
 
       alert('Laudo digital anexado com sucesso!');
 

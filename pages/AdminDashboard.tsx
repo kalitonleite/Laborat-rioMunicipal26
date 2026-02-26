@@ -8,6 +8,7 @@ import { maskCPF } from '../services/masks';
 import { supabase } from '../services/supabase';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
+import { extractTextFromPDF } from '../services/pdfOcr';
 
 interface AdminDashboardProps {
   user: User;
@@ -45,7 +46,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     patientCpf: '',
     examName: '',
     date: new Date().toISOString().split('T')[0],
-    status: 'READY' as ExamResult['status']
+    status: 'READY' as ExamResult['status'],
+    resultData: ''
   });
 
   const [newCampaign, setNewCampaign] = useState({
@@ -191,6 +193,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           date: dateFormatted,
           status: newExam.status,
         };
+        if (newExam.resultData) {
+          updatePayload.result_data = newExam.resultData;
+        }
         if (selectedFileBlob) {
           const { data: storageData, error: storageError } = await supabase.storage
             .from('lab-files')
@@ -235,7 +240,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               patient_cpf: cleanCPF,  // Save clean CPF for matching
               exam_name: newExam.examName,
               date: dateFormatted,
-              status: newExam.status
+              status: newExam.status,
+              result_data: newExam.resultData
             }
           ])
           .select();
@@ -455,16 +461,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     fileInputRef.current?.click();
   };
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFileBlob(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedFile(reader.result as string);
-        alert(`Laudo "${file.name}" preparado para upload.`);
+        alert(`Laudo "${file.name}" preparado para upload. Processando leitura do PDF...`);
       };
       reader.readAsDataURL(file);
+
+      if (file.type === 'application/pdf') {
+        try {
+          const text = await extractTextFromPDF(file);
+          if (text) {
+            setNewExam(prev => ({ ...prev, resultData: text }));
+            console.log("Texto extraído com sucesso do PDF.");
+          }
+        } catch (err) {
+          console.error("Falha ao processar OCR do PDF", err);
+        }
+      }
     }
   };
 
