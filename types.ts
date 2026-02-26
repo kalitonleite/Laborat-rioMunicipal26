@@ -13,6 +13,8 @@ export interface User {
   sus_number?: string;
   role: UserRole;
   avatar?: string;
+  age?: number;
+  gender?: string;
 }
 
 export interface Campaign {
@@ -30,13 +32,25 @@ export interface ExamResult {
   id: string;
   patientId: string;
   patientName: string;
-  patientCpf?: string;
+  patientCpf: string;
   examName: string;
   date: string;
   status: 'PENDING' | 'READY' | 'ANALYZED';
   resultData?: string;
   aiAnalysis?: string;
-  fileUrl?: string; // Base64 da PDF
+  fileUrl?: string;
+  category?: string;
+  requestingUnit?: string;
+  previousValue?: string;
+}
+
+export interface DoctorNote {
+  id: string;
+  doctorId: string;
+  patientCpf: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Appointment {
