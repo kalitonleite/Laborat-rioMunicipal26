@@ -208,6 +208,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             .getPublicUrl(storageData.path);
 
           updatePayload.file_url = publicUrl;
+        } else if (selectedFile === null) {
+          updatePayload.file_url = null;
+          updatePayload.result_data = null;
         }
 
         const { error } = await supabase
@@ -226,7 +229,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             examName: newExam.examName,
             date: dateFormatted,
             status: newExam.status,
-            fileUrl: updatePayload.file_url || item.fileUrl
+            fileUrl: 'file_url' in updatePayload ? updatePayload.file_url : item.fileUrl,
+            resultData: 'result_data' in updatePayload ? updatePayload.result_data : item.resultData
           } : item
         ));
         alert('Exame atualizado com sucesso!');
@@ -1074,13 +1078,35 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                 </div>
 
                 <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
-                <button
-                  type="button"
-                  onClick={handleImportLaudo}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 border border-slate-200"
-                >
-                  <i className="fas fa-cloud-arrow-up"></i> Importar Laudo
-                </button>
+
+                {selectedFile ? (
+                  <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <i className="fas fa-file-pdf"></i>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Laudo Anexado</p>
+                        <p className="text-xs font-bold text-emerald-600">Arquivo pronto</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedFile(null); setSelectedFileBlob(null); setNewExam(prev => ({ ...prev, resultData: '' })) }}
+                      className="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest px-3 py-2 hover:bg-rose-50 rounded-lg transition-all"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleImportLaudo}
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 border border-slate-200"
+                  >
+                    <i className="fas fa-cloud-arrow-up"></i> Importar Laudo
+                  </button>
+                )}
 
                 <button type="submit" className="w-full bg-[#059669] text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-emerald-700 transition-all uppercase tracking-[0.2em] text-xs mt-2">
                   Confirmar Cadastro
