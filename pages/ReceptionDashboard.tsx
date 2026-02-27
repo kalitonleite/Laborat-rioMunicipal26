@@ -27,6 +27,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isListViewOpen, setIsListViewOpen] = useState(false);
   const [newApp, setNewApp] = useState({ patientName: '', patientCpf: '', date: '', time: '' });
 
   useEffect(() => {
@@ -389,6 +390,10 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   }}
                 />
               </div>
+              <button onClick={() => setIsListViewOpen(true)} className="bg-emerald-50 text-emerald-600 px-4 py-3 rounded-xl hover:bg-emerald-100 transition-all flex items-center gap-2">
+                <i className="fas fa-eye"></i>
+                <span className="text-xs font-bold">Visualizar Lista</span>
+              </button>
               <button onClick={handleDownloadList} className="bg-blue-50 text-blue-600 px-4 py-3 rounded-xl hover:bg-blue-100 transition-all flex items-center gap-2">
                 <i className="fas fa-download"></i>
                 <span className="text-xs font-bold">Baixar Lista</span>
@@ -712,6 +717,56 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 </div>
                 <button type="submit" className="w-full bg-emerald-600 text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-emerald-700 transition-all uppercase tracking-widest text-xs mt-4">Confirmar Agendamento</button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL VISUALIZAR LISTA */}
+      {isListViewOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-[40px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95">
+            <div className="bg-[#1e3a8a] p-8 text-white flex justify-between items-center">
+              <div>
+                <h3 className="text-2xl font-black">Lista de Atendimentos</h3>
+                <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Conferência de agendamentos filtrados</p>
+              </div>
+              <button onClick={() => setIsListViewOpen(false)} className="text-white/60 hover:text-white transition-all">
+                <i className="fas fa-times text-2xl"></i>
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8">
+              <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <span>Horário</span>
+                <span>Paciente</span>
+                <span>CPF</span>
+                <span>Exame</span>
+              </div>
+
+              <div className="space-y-4">
+                {filtered.length > 0 ? filtered.map(app => (
+                  <div key={app.id} className="grid grid-cols-4 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
+                    <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
+                    <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
+                    <span className="text-xs font-medium text-slate-500">{app.patientCpf || '-'}</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 w-fit px-2 py-1 rounded-md">{app.examType}</span>
+                  </div>
+                )) : (
+                  <div className="py-12 text-center text-gray-400 italic">
+                    Nenhum agendamento para exibir com os filtros atuais.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="p-8 border-t border-gray-50 flex justify-between items-center bg-gray-50/30">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total de registros: {filtered.length}</p>
+              <button
+                onClick={() => setIsListViewOpen(false)}
+                className="bg-slate-900 text-white px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all"
+              >
+                Fechar Visualização
+              </button>
             </div>
           </div>
         </div>

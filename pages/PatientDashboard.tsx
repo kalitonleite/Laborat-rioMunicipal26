@@ -308,7 +308,8 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     e.preventDefault();
     if (!newApp.date || !newApp.time || !newApp.examType) return alert("Preencha todos os campos.");
 
-    const hasActiveAppointment = appointments.some(a => a.patientId === user.id);
+    const cleanCPF = (user.cpf || '').replace(/\D/g, '');
+    const hasActiveAppointment = appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === cleanCPF);
     if (hasActiveAppointment) {
       alert("Você já possui um agendamento ativo. Por favor, conclua seu atendimento atual antes de realizar um novo agendamento.");
       return;
@@ -359,7 +360,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     }
   };
 
-  const monthYearLabel = currentMonthDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+  const monthYearLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
 
   return (
     <div className="space-y-6">
@@ -395,7 +396,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                   {camp.mediaUrl && (
                     <div className="relative z-10 w-full rounded-2xl overflow-hidden bg-white/10 backdrop-blur-sm border border-white/20 group">
                       {camp.mediaType === 'IMAGE' && (
-                        <img src={camp.mediaUrl} alt={camp.title} className="w-full h-32 object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <img src={camp.mediaUrl} alt={camp.title} className="w-full h-auto max-h-[400px] object-contain transition-transform duration-500 group-hover:scale-105" />
                       )}
                       {camp.mediaType === 'PDF' && (
                         <a href={camp.mediaUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-4 bg-white/20 hover:bg-white/30 transition-all">
@@ -475,27 +476,32 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
             </div>
 
             <div className="space-y-3">
-              {appointments.filter(a => a.patientId === user.id).length > 0 ? (
-                appointments.filter(a => a.patientId === user.id).map((app) => (
-                  <div key={app.id} className="flex items-center justify-between p-4 rounded-2xl bg-blue-50 border border-blue-100">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                        <i className="fas fa-calendar-check text-blue-600"></i>
+              {(() => {
+                const cleanCPF = (user.cpf || '').replace(/\D/g, '');
+                const myAppointments = appointments.filter(a => (a.patientCpf || '').replace(/\D/g, '') === cleanCPF);
+
+                return myAppointments.length > 0 ? (
+                  myAppointments.map((app) => (
+                    <div key={app.id} className="flex items-center justify-between p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                          <i className="fas fa-calendar-check text-blue-600"></i>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{app.examType}</p>
+                          <h4 className="font-black text-slate-800 text-sm">Coleta agendada</h4>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{app.examType}</p>
-                        <h4 className="font-black text-slate-800 text-sm">Coleta agendada</h4>
+                      <div className="text-right">
+                        <p className="text-xs font-black text-slate-800">{app.date}</p>
+                        <p className="text-[10px] font-bold text-blue-600">{app.time}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs font-black text-slate-800">{app.date}</p>
-                      <p className="text-[10px] font-bold text-blue-600">{app.time}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-xs text-gray-400 font-medium italic py-4 text-center">Nenhum agendamento futuro encontrado.</p>
-              )}
+                  ))
+                ) : (
+                  <p className="text-xs text-gray-400 font-medium italic py-4 text-center">Nenhum agendamento futuro encontrado.</p>
+                );
+              })()}
             </div>
           </section>
 
@@ -552,8 +558,8 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                             </button>
                             <button
                               onClick={() => handleDownloadPDF(exam)}
-                              className="w-9 h-9 rounded-full bg-white border border-slate-100 text-slate-600 flex items-center justify-center hover:bg-slate-800 hover:text-white hover:border-slate-800 transition-all shadow-sm"
-                              title="Baixar PDF"
+                              className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                              title="Baixar Laudo PDF"
                             >
                               <i className="fas fa-download text-sm"></i>
                             </button>
@@ -591,7 +597,14 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">TIPO DE EXAME</label>
-                  <input required type="text" placeholder="Ex: Hemograma, Glicemia, etc." className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50" value={newApp.examType} onChange={e => setNewApp({ ...newApp, examType: e.target.value })} disabled={appointments.some(a => a.patientId === user.id)} />
+                  <input
+                    required type="text"
+                    placeholder="Ex: Hemograma, Glicemia, etc."
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
+                    value={newApp.examType}
+                    onChange={e => setNewApp({ ...newApp, examType: e.target.value })}
+                    disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
+                  />
                 </div>
 
                 <div className="flex justify-start gap-4 px-1 mb-4">
@@ -614,7 +627,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                 </div>
 
                 {/* INDICADOR DE AGENDAMENTO EXISTENTE */}
-                {appointments.some(a => a.patientId === user.id) && (
+                {appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, '')) && (
                   <div className="mb-4 p-5 rounded-3xl bg-amber-50 border border-amber-100 flex flex-col gap-3 animate-in slide-in-from-top-4 duration-500">
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600 text-xl shadow-inner">
@@ -626,7 +639,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                       </div>
                     </div>
                     <div className="bg-white/50 p-3 rounded-xl border border-amber-100/50">
-                      {appointments.filter(a => a.patientId === user.id).map(a => (
+                      {appointments.filter(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, '')).map(a => (
                         <div key={a.id} className="flex justify-between items-center text-[10px] font-black text-slate-500">
                           <span className="uppercase">{a.examType}</span>
                           <span className="bg-amber-100 px-2 py-0.5 rounded-md text-amber-700">{a.date} às {a.time}</span>
@@ -637,7 +650,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                 )}
 
                 {/* INDICADOR DE VAGAS RESTANTES */}
-                {newApp.date && !appointments.some(a => a.patientId === user.id) && (
+                {newApp.date && !appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, '')) && (
                   <div className={`mb-4 p-4 rounded-2xl border flex items-center justify-between animate-in fade-in slide-in-from-top-2 duration-300 ${remainingSlotsInfo?.isBlocked
                     ? 'bg-red-50 border-red-100 text-red-600'
                     : remainingSlotsInfo?.isFull
@@ -750,7 +763,13 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">HORÁRIO</label>
-                  <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold disabled:opacity-50" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} disabled={appointments.some(a => a.patientId === user.id)} />
+                  <input
+                    required type="time"
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold disabled:opacity-50"
+                    value={newApp.time}
+                    onChange={e => setNewApp({ ...newApp, time: e.target.value })}
+                    disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
+                  />
                 </div>
 
                 <button
@@ -857,12 +876,6 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                 <div className="pt-8 flex flex-col items-center gap-4 text-center">
                   <div className="w-48 h-px bg-gray-200"></div>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Responsável Técnico: Dra. Maria Clara (CRBM 1234)</p>
-                  <button
-                    onClick={() => window.print()}
-                    className="bg-white hover:bg-slate-100 text-blue-600 border border-blue-200 px-6 py-2 rounded-full text-[10px] font-black uppercase transition-all flex items-center gap-2"
-                  >
-                    <i className="fas fa-print"></i> Imprimir Laudo
-                  </button>
                 </div>
               </div>
 
