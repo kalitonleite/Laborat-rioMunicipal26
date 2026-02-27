@@ -57,6 +57,16 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     if (user.cpf) {
       fetchMyExams();
     }
+
+    const examsSubscription = supabase.channel('exams_realtime_patient')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
+        if (user.cpf) fetchMyExams();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(examsSubscription);
+    };
   }, [user.name, user.cpf, activeTab]);
 
   const [viewingSimulated, setViewingSimulated] = useState<ExamResult | null>(null);

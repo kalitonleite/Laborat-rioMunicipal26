@@ -173,6 +173,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       }
     };
     fetchStaff();
+
+    const examsSubscription = supabase.channel('exams_realtime_admin')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
+        fetchExams();
+        fetchPatientStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(examsSubscription);
+    };
   }, []);
 
   // Estado para controle de edição
@@ -451,11 +462,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
   const handleDeleteExam = async (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir este registro de exame?")) {
+      const examToDelete = examsList.find(e => e.id === id);
       const { error } = await supabase.from('exams').delete().eq('id', id);
 
       if (error) {
         alert('Erro ao excluir exame: ' + error.message);
       } else {
+        if (examToDelete?.fileUrl) {
+          try {
+            // Extrair o caminho do arquivo da URL (tudo após 'lab-files/')
+            const filePathMatch = examToDelete.fileUrl.match(/lab-files\/(.+)$/);
+            if (filePathMatch && filePathMatch[1]) {
+              const filePath = filePathMatch[1];
+              const { error: storageError } = await supabase.storage.from('lab-files').remove([filePath]);
+              if (storageError) console.error('Erro ao excluir arquivo de laudo:', storageError);
+            }
+          } catch (e) {
+            console.error('Erro ao processar exclusão do arquivo no storage:', e);
+          }
+        }
         setExamsList(prev => prev.filter(e => e.id !== id));
       }
     }

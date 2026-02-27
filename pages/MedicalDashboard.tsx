@@ -87,6 +87,16 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
       }
     };
     fetchExams();
+
+    const examsSubscription = supabase.channel('exams_realtime_medical')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
+        fetchExams();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(examsSubscription);
+    };
   }, [activeTab]); // Recarrega ao mudar de aba para garantir dados frescos
 
   const [selectedExam, setSelectedExam] = useState<ExamResult | null>(null);
