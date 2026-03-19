@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs, { TabItem } from '../components/DashboardTabs';
 import { maskCPF } from '../services/masks';
-import { supabase } from '../services/supabase';
+import { dbService } from '../services/apiService';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { extractTextFromPDF } from '../services/pdfOcr';
@@ -65,15 +65,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   useEffect(() => {
     // Carregar Exames do Supabase
     const fetchExams = async () => {
-      const { data, error } = await supabase
-        .from('exams')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching exams:', error);
-      } else {
-        // Mapear snake_case (banco) para camelCase (frontend)
+      try {
+        const data = await dbService.from('exams').select({}, { column: 'created_at', ascending: false });
         const mappedExams = (data || []).map((item: any) => ({
           id: item.id,
           patientName: item.patient_name,
@@ -86,63 +79,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           aiAnalysis: item.ai_analysis
         }));
         setExamsList(mappedExams);
+      } catch (error) {
+        console.error('Error fetching exams:', error);
       }
     };
-    // Carregar Estatísticas de Pacientes
+
     const fetchPatientStats = async () => {
       try {
-        // Total atual de pacientes
-        const { count: total, error: totalError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('role', 'PATIENT');
-
-        if (totalError) throw totalError;
-
-        // Total antes do mês atual para calcular crescimento
+        const patients = await dbService.from('profiles').select({ role: 'PATIENT' });
+        const total = patients.length;
+        
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const { count: previousTotal, error: prevError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('role', 'PATIENT')
-          .lt('created_at', startOfMonth.toISOString());
+        const previousTotal = patients.filter((p: any) => new Date(p.created_at) < startOfMonth).length;
 
-        if (prevError) throw prevError;
-
-        const currentTotal = total || 0;
-        const prevTotal = previousTotal || 0;
-
-        // Cálculo de crescimento: (atual - anterior) / anterior
-        // Se anterior for 0, mas atual for > 0, o crescimento é 100%
         let growth = 0;
-        if (prevTotal > 0) {
-          growth = ((currentTotal - prevTotal) / prevTotal) * 100;
-        } else if (currentTotal > 0) {
+        if (previousTotal > 0) {
+          growth = ((total - previousTotal) / previousTotal) * 100;
+        } else if (total > 0) {
           growth = 100;
         }
 
-        setPatientStats({ total: currentTotal, growth: Math.round(growth) });
+        setPatientStats({ total, growth: Math.round(growth) });
       } catch (err) {
         console.error('Erro ao buscar estatísticas de pacientes:', err);
       }
     };
 
-    fetchExams();
-    fetchPatientStats();
-
-    // Carregar Campanhas do Supabase
     const fetchCampaigns = async () => {
-      const { data, error } = await supabase
-        .from('campaigns')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao buscar campanhas:', error);
-      } else {
+      try {
+        const data = await dbService.from('campaigns').select({}, { column: 'created_at', ascending: false });
         const mappedCampaigns = (data || []).map((c: any) => ({
           id: c.id,
           title: c.title,
@@ -154,36 +122,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           mediaType: c.media_type
         }));
         setCampaignsList(mappedCampaigns);
+      } catch (error) {
+        console.error('Erro ao buscar campanhas:', error);
       }
     };
-    fetchCampaigns();
 
-    // Carregar Equipe do Supabase (Admins, Médicos e Recepção)
     const fetchStaff = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('role', ['ADMIN', 'MEDICAL', 'RECEPTION'])
-        .order('name', { ascending: true });
-
-      if (error) {
+      try {
+        const data = await dbService.from('profiles').select(); // In is not easily supported in my basic filter.
+        // For now, I'll filter manually or just fetch all.
+        const staff = (data || []).filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION'].includes(p.role));
+        setAdminsList(staff);
+      } catch (error) {
         console.error('Erro ao buscar equipe:', error);
-      } else {
-        setAdminsList(data || []);
       }
     };
+
+    fetchExams();
+    fetchPatientStats();
+    fetchCampaigns();
     fetchStaff();
-
-    const examsSubscription = supabase.channel('exams_realtime_admin')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
-        fetchExams();
-        fetchPatientStats();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(examsSubscription);
-    };
   }, []);
 
   // Estado para controle de edição
@@ -208,30 +166,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           updatePayload.result_data = newExam.resultData;
         }
         if (selectedFileBlob) {
-          const { data: storageData, error: storageError } = await supabase.storage
-            .from('lab-files')
-            .upload(`${cleanCPF}/${editingId}_${Date.now()}.pdf`, selectedFileBlob);
-
-          if (storageError) throw storageError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('lab-files')
-            .getPublicUrl(storageData.path);
-
-          updatePayload.file_url = publicUrl;
-        } else if (selectedFile === null) {
-          updatePayload.file_url = null;
-          updatePayload.result_data = null;
+          // TODO: Implement Storage in Neon/Vercel
+          alert('Upload de arquivos desativado. Use um serviço compatível (ex: Vercel Blob).');
         }
 
-        const { error } = await supabase
-          .from('exams')
-          .update(updatePayload)
-          .eq('id', editingId);
-
-        if (error) throw error;
-
-        // Atualizar estado local mantendo camelCase
+        await dbService.from('exams').update(updatePayload, { id: editingId });
+        
         setExamsList(prev => prev.map(item =>
           item.id === editingId ? {
             ...item,
@@ -240,44 +180,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             examName: newExam.examName,
             date: dateFormatted,
             status: newExam.status,
-            fileUrl: 'file_url' in updatePayload ? updatePayload.file_url : item.fileUrl,
-            resultData: 'result_data' in updatePayload ? updatePayload.result_data : item.resultData
+            resultData: 'result_data' in updatePayload ? updatePayload.resultData : item.resultData
           } : item
         ));
         alert('Exame atualizado com sucesso!');
       } else {
-        // ID: INSERT new exam
-        const { data, error } = await supabase
-          .from('exams')
-          .insert([
-            {
-              patient_name: newExam.patientName,
-              patient_cpf: cleanCPF,  // Save clean CPF for matching
-              exam_name: newExam.examName,
-              date: dateFormatted,
-              status: newExam.status,
-              result_data: newExam.resultData
-            }
-          ])
-          .select();
-
-        if (error) throw error;
+        const data = await dbService.from('exams').insert({
+          patient_name: newExam.patientName,
+          patient_cpf: cleanCPF,
+          exam_name: newExam.examName,
+          date: dateFormatted,
+          status: newExam.status,
+          result_data: newExam.resultData
+        });
 
         if (data && data[0]) {
-          let updatedUrl = undefined;
           if (selectedFileBlob) {
-            const { data: storageData, error: storageError } = await supabase.storage
-              .from('lab-files')
-              .upload(`${cleanCPF}/${data[0].id}_${Date.now()}.pdf`, selectedFileBlob);
-
-            if (storageError) throw storageError;
-
-            const { data: { publicUrl } } = supabase.storage
-              .from('lab-files')
-              .getPublicUrl(storageData.path);
-
-            updatedUrl = publicUrl;
-            await supabase.from('exams').update({ file_url: updatedUrl }).eq('id', data[0].id);
+             alert('Upload de arquivos desativado. O registro foi criado sem o laudo digital.');
           }
 
           const newMappedExam = {
@@ -287,7 +206,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             examName: data[0].exam_name,
             date: data[0].date,
             status: data[0].status,
-            fileUrl: updatedUrl,
+            fileUrl: undefined,
             resultData: data[0].result_data,
             aiAnalysis: data[0].ai_analysis
           };
@@ -327,60 +246,20 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   };
 
   const handleRegisterCampaign = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCampaign.title || !newCampaign.description) {
-      alert("Por favor, preencha o título e a descrição.");
-      return;
-    }
-
-    setUploading(true);
     try {
-      let mediaUrl = undefined;
-      let finalMediaType = newCampaign.mediaType;
-
-      // Se houver arquivo para upload
       if (campaignMediaBlob) {
-        const fileExt = campaignMediaBlob.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `campaigns/${fileName}`;
-
-        // Detectar tipo de mídia se estiver NONE ou AUTO
-        const mimeType = campaignMediaBlob.type;
-        if (mimeType.startsWith('image/')) finalMediaType = 'IMAGE';
-        else if (mimeType === 'application/pdf') finalMediaType = 'PDF';
-        else if (mimeType.startsWith('audio/')) finalMediaType = 'AUDIO';
-        else if (mimeType.startsWith('video/')) finalMediaType = 'VIDEO';
-        else finalMediaType = 'NONE';
-
-        const { error: uploadError } = await supabase.storage
-          .from('lab-files')
-          .upload(filePath, campaignMediaBlob);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('lab-files')
-          .getPublicUrl(filePath);
-
-        mediaUrl = publicUrl;
+        alert('Upload de mídia para campanhas está temporariamente desativado.');
       }
 
-      const { data, error } = await supabase
-        .from('campaigns')
-        .insert([
-          {
-            title: newCampaign.title,
-            description: newCampaign.description,
-            type: newCampaign.type,
-            date: newCampaign.date,
-            active: true,
-            media_url: mediaUrl,
-            media_type: finalMediaType
-          }
-        ])
-        .select();
-
-      if (error) throw error;
+      const data = await dbService.from('campaigns').insert({
+        title: newCampaign.title,
+        description: newCampaign.description,
+        type: newCampaign.type,
+        date: newCampaign.date,
+        active: true,
+        media_url: null,
+        media_type: 'NONE'
+      });
 
       if (data && data[0]) {
         const newItem: Campaign = {
@@ -410,12 +289,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
   const toggleCampaignStatus = async (id: string, currentStatus: boolean) => {
     try {
-      const { error } = await supabase
-        .from('campaigns')
-        .update({ active: !currentStatus })
-        .eq('id', id);
-
-      if (error) throw error;
+      await dbService.from('campaigns').update({ active: !currentStatus }, { id });
       setCampaignsList(prev => prev.map(c => c.id === id ? { ...c, active: !currentStatus } : c));
     } catch (err: any) {
       alert('Erro ao atualizar status: ' + err.message);
@@ -425,12 +299,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   const deleteCampaign = async (id: string) => {
     if (window.confirm("Deseja excluir esta campanha permanentemente?")) {
       try {
-        const { error } = await supabase
-          .from('campaigns')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
+        await dbService.from('campaigns').delete({ id });
         setCampaignsList(prev => prev.filter(c => c.id !== id));
       } catch (err: any) {
         alert('Erro ao excluir: ' + err.message);
@@ -445,13 +314,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     }
     if (window.confirm("Deseja revogar o acesso deste administrador?")) {
       try {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ role: UserRole.PATIENT })
-          .eq('id', id);
-
-        if (error) throw error;
-
+        await dbService.from('profiles').update({ role: UserRole.PATIENT }, { id });
         setAdminsList(prev => prev.filter(a => a.id !== id));
         alert("Acesso administrativo revogado com sucesso.");
       } catch (err: any) {
@@ -462,26 +325,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
   const handleDeleteExam = async (id: string) => {
     if (window.confirm("Tem certeza que deseja excluir este registro de exame?")) {
-      const examToDelete = examsList.find(e => e.id === id);
-      const { error } = await supabase.from('exams').delete().eq('id', id);
-
-      if (error) {
-        alert('Erro ao excluir exame: ' + error.message);
-      } else {
-        if (examToDelete?.fileUrl) {
-          try {
-            // Extrair o caminho do arquivo da URL (tudo após 'lab-files/')
-            const filePathMatch = examToDelete.fileUrl.match(/lab-files\/(.+)$/);
-            if (filePathMatch && filePathMatch[1]) {
-              const filePath = filePathMatch[1];
-              const { error: storageError } = await supabase.storage.from('lab-files').remove([filePath]);
-              if (storageError) console.error('Erro ao excluir arquivo de laudo:', storageError);
-            }
-          } catch (e) {
-            console.error('Erro ao processar exclusão do arquivo no storage:', e);
-          }
-        }
+      try {
+        await dbService.from('exams').delete({ id });
         setExamsList(prev => prev.filter(e => e.id !== id));
+      } catch (err: any) {
+        alert('Erro ao excluir exame: ' + err.message);
       }
     }
   };

@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
-import { supabase } from '../services/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
@@ -33,51 +33,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     return regex.test(pass);
   };
 
+  const { login } = useAuth();
+
   const handleAuth = async (role: UserRole) => {
     if (role === UserRole.ADMIN) { navigate('/admin/login'); return; }
     if (role === UserRole.MEDICAL) { navigate('/medical/login'); return; }
     if (role === UserRole.RECEPTION) { navigate('/reception/login'); return; }
 
-    if (password && !validatePassword(password)) {
-      alert('A senha deve ter exatamente 6 caracteres, contendo letras e números.');
+    if (!identification || !password) {
+      alert('Preencha CPF e Senha.');
       return;
     }
 
     try {
       const cleanId = identification.replace(/\D/g, '');
-
-      console.log('Tentando login com ID:', cleanId, 'Role:', UserRole.PATIENT);
-      const { data, error: rpcError } = await supabase.rpc('get_email_by_identification', {
-        p_id: cleanId,
-        p_role: UserRole.PATIENT
-      });
-
-      if (rpcError || !data || data.length === 0) {
-        console.error('Erro na RPC ou dado vazio:', rpcError, data);
-        alert(`Identificação não encontrada. Detalhes: ${rpcError?.message || 'Nenhum registro encontrado para este CPF/SUS.'}`);
-        return;
-      }
-
-      const realEmail = data[0].email;
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email: realEmail,
-        password: password
-      });
-
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          alert('CPF ou senha incorretos.');
-        } else {
-          alert(error.message);
-        }
-        return;
-      }
-
+      await login(cleanId, password);
       navigate('/patient');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      alert('Erro inesperado ao realizar login.');
+      alert(err.message || 'Erro ao realizar login. Verifique seus dados.');
     }
   };
 

@@ -4,7 +4,7 @@ import { User, ExamResult, Campaign, Appointment } from '../types';
 import { analyzeLabResult } from '../services/geminiService';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
-import { supabase } from '../services/supabase';
+import { dbService } from '../services/apiService';
 import { jsPDF } from 'jspdf';
 
 interface PatientDashboardProps {
@@ -26,21 +26,12 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
   useEffect(() => {
     const fetchMyExams = async () => {
-      // Clean mask from current user CPF for matching
       const cleanCPF = (user.cpf || '').replace(/\D/g, '');
-
-      const { data, error } = await supabase
-        .from('exams')
-        .select('*')
-        .eq('patient_cpf', cleanCPF)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching patient exams:', error);
-      } else {
+      try {
+        const data = await dbService.from('exams').select({ patient_cpf: cleanCPF }, { column: 'created_at', ascending: false });
         const mappedExams = (data || []).map((e: any) => ({
           id: e.id,
-          patientId: e.patient_id || user.id, // Fallback to current user ID if redundant
+          patientId: e.patient_id || user.id,
           patientName: e.patient_name,
           patientCpf: e.patient_cpf,
           examName: e.exam_name,
@@ -51,22 +42,14 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
           fileUrl: e.file_url
         }));
         setExams(mappedExams);
+      } catch (error) {
+        console.error('Error fetching patient exams:', error);
       }
     };
 
     if (user.cpf) {
       fetchMyExams();
     }
-
-    const examsSubscription = supabase.channel('exams_realtime_patient')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
-        if (user.cpf) fetchMyExams();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(examsSubscription);
-    };
   }, [user.name, user.cpf, activeTab]);
 
   const [viewingSimulated, setViewingSimulated] = useState<ExamResult | null>(null);
@@ -75,15 +58,8 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
   useEffect(() => {
     const fetchCampaigns = async () => {
-      const { data, error } = await supabase
-        .from('campaigns')
-        .select('*')
-        .eq('active', true)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching campaigns:', error);
-      } else {
+      try {
+        const data = await dbService.from('campaigns').select({ active: true }, { column: 'created_at', ascending: false });
         const mappedCampaigns = (data || []).map((c: any) => ({
           id: c.id,
           title: c.title,
@@ -95,19 +71,15 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
           mediaType: c.media_type
         }));
         setCampaigns(mappedCampaigns);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
       }
     };
     fetchCampaigns();
 
     const fetchAppointments = async () => {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching appointments:', error);
-      } else {
+      try {
+        const data = await dbService.from('appointments').select({}, { column: 'date', ascending: true });
         const mappedAppointments = (data || []).map((a: any) => ({
           id: a.id,
           patientId: a.patient_id,
@@ -118,51 +90,28 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
           examType: a.exam_type
         }));
         setAppointments(mappedAppointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
       }
     };
 
     fetchAppointments();
 
     const loadCalendarSettings = async () => {
-      const { data, error } = await supabase
-        .from('lab_settings')
-        .select('*');
-
-      if (error) {
-        console.error('Error fetching lab settings:', error);
-        // Fallback to localStorage
-        const savedBlocked = localStorage.getItem('lab_blocked_dates');
-        if (savedBlocked) setBlockedDates(JSON.parse(savedBlocked));
-        const savedLimit = localStorage.getItem('lab_daily_limit');
-        if (savedLimit) setDailyLimit(parseInt(savedLimit));
-        const savedSpecific = localStorage.getItem('lab_specific_limits');
-        if (savedSpecific) setSpecificLimits(JSON.parse(savedSpecific));
-      } else {
-        data?.forEach(setting => {
+      try {
+        const data = await dbService.from('lab_settings').select();
+        data?.forEach((setting: any) => {
           if (setting.key === 'blocked_dates') setBlockedDates(setting.value);
           if (setting.key === 'daily_limit') setDailyLimit(Number(setting.value));
           if (setting.key === 'specific_limits') setSpecificLimits(setting.value);
           localStorage.setItem(`lab_${setting.key}`, JSON.stringify(setting.value));
         });
+      } catch (error) {
+        console.error('Error fetching lab settings:', error);
       }
     };
 
     loadCalendarSettings();
-
-    // Subscribe to changes in appointments and lab_settings
-    const settingsChannel = supabase
-      .channel('calendar_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lab_settings' }, payload => {
-        const { key, value } = payload.new as any;
-        if (key === 'blocked_dates') setBlockedDates(value);
-        if (key === 'daily_limit') setDailyLimit(Number(value));
-        if (key === 'specific_limits') setSpecificLimits(value);
-        localStorage.setItem(`lab_${key}`, JSON.stringify(value));
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
-        fetchAppointments(); // Re-fetch counts when appointments change
-      })
-      .subscribe();
 
     const handleCalendarUpdate = (e: CustomEvent) => {
       if (e.detail?.blockedDates) setBlockedDates(e.detail.blockedDates);
@@ -173,7 +122,6 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     window.addEventListener('calendarUpdate', handleCalendarUpdate as EventListener);
 
     return () => {
-      supabase.removeChannel(settingsChannel);
       window.removeEventListener('calendarUpdate', handleCalendarUpdate as EventListener);
     };
   }, []); // Only once on mount
@@ -328,23 +276,16 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
       return;
     }
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .insert([
-        {
-          patient_id: user.id,
-          patient_name: user.name,
-          patient_cpf: user.cpf,
-          date: newApp.date,
-          time: newApp.time,
-          exam_type: newApp.examType
-        }
-      ])
-      .select();
+    try {
+      const data = await dbService.from('appointments').insert({
+        patient_id: user.id,
+        patient_name: user.name,
+        patient_cpf: user.cpf,
+        date: newApp.date,
+        time: newApp.time,
+        exam_type: newApp.examType
+      });
 
-    if (error) {
-      alert('Erro ao agendar: ' + error.message);
-    } else {
       const newAppointment = {
         id: data[0].id,
         patientId: data[0].patient_id,
@@ -357,6 +298,8 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
       setAppointments(prev => [...prev, newAppointment]);
       alert("Agendado com sucesso!");
       setActiveTab('dashboard');
+    } catch (error: any) {
+      alert('Erro ao agendar: ' + error.message);
     }
   };
 

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { User } from '../types';
-import { supabase } from '../services/supabase';
+import { authService } from '../services/apiService';
 
 interface ProfileTabProps {
   user: User;
@@ -41,19 +41,13 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
     }
 
     try {
-      const { error } = await supabase.auth.updateUser({ password: pwdData.new });
-
-      if (error) {
-        console.error('Error changing password:', error);
-        alert(`Erro ao alterar senha: ${error.message}`);
-      } else {
-        alert("Senha alterada com sucesso!");
-        setShowPasswordModal(false);
-        setPwdData({ new: '', confirm: '' });
-      }
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      alert("Erro inesperado ao alterar senha.");
+      await authService.updatePassword(pwdData.new);
+      alert("Senha alterada com sucesso!");
+      setShowPasswordModal(false);
+      setPwdData({ new: '', confirm: '' });
+    } catch (err: any) {
+      console.error('Error changing password:', err);
+      alert(`Erro ao alterar senha: ${err.message}`);
     }
   };
 

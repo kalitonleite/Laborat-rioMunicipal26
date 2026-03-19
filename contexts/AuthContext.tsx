@@ -1,87 +1,85 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '../services/supabase';
 import { User, UserRole } from '../types';
-import { Session } from '@supabase/supabase-js';
+import { authService, dbService } from '../services/apiService';
 
 interface AuthContextType {
     user: User | null;
-    session: Session | null;
     loading: boolean;
+    login: (cpf: string, password?: string) => Promise<void>;
     signOut: () => Promise<void>;
     fetchProfile: (userId: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
     user: null,
-    session: null,
     loading: true,
+    login: async () => { },
     signOut: async () => { },
     fetchProfile: async () => { },
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
-    const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            if (session?.user) {
-                fetchProfile(session.user.id);
-            } else {
-                setLoading(false);
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('user_data');
+        
+        if (storedToken && storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Error parsing stored user", e);
             }
-        });
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            if (session?.user) {
-                fetchProfile(session.user.id);
-            } else {
-                setUser(null);
-                setLoading(false);
-            }
-        });
-
-        return () => subscription.unsubscribe();
+        }
+        setLoading(false);
     }, []);
 
     const fetchProfile = async (userId: string) => {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
-
-            if (error) throw error;
-            if (data) {
-                setUser({
-                    id: data.id,
-                    name: data.name,
-                    cpf: data.cpf,
-                    sus_number: data.sus_number,
-                    role: (data.role || '').trim().toUpperCase() as UserRole,
-                    avatar: data.avatar,
-                });
+            const data = await dbService.from('profiles').select({ id: userId });
+            
+            if (data && data.length > 0) {
+                const profile = data[0];
+                const mappedUser: User = {
+                    id: profile.id,
+                    name: profile.name,
+                    cpf: profile.cpf,
+                    sus_number: profile.sus_number,
+                    role: (profile.role || '').trim().toUpperCase() as UserRole,
+                    avatar: profile.avatar,
+                };
+                setUser(mappedUser);
+                localStorage.setItem('user_data', JSON.stringify(mappedUser));
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
-        } finally {
-            setLoading(false);
+        }
+    };
+
+    const login = async (cpf: string, password?: string) => {
+        try {
+            const result = await authService.login(cpf, password);
+            if (result.token) {
+                localStorage.setItem('auth_token', result.token);
+                localStorage.setItem('user_data', JSON.stringify(result.user));
+                setUser(result.user);
+            }
+        } catch (error) {
+            throw error;
         }
     };
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, signOut, fetchProfile }}>
+        <AuthContext.Provider value={{ user, loading, login, signOut, fetchProfile }}>
             {children}
         </AuthContext.Provider>
     );

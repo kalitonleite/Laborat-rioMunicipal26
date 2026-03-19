@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserRole } from '../types';
-import { supabase } from '../services/supabase';
+import { authService } from '../services/apiService';
 
 interface ForgotPasswordModalProps {
     role: UserRole;
@@ -37,21 +37,15 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ role, onClose
     const handleFinalReset = async () => {
         setLoading(true);
         try {
-            const { data, error } = await supabase.rpc('delete_user_by_cpf', {
-                p_cpf: cpf.replace(/\D/g, ''),
-                p_role: role
-            });
-
-            if (error) {
-                alert('Erro ao processar reset: ' + error.message);
-            } else if (!data) {
+            await authService.resetByCpf(cpf.replace(/\D/g, ''), role);
+            setStep('success');
+        } catch (err: any) {
+            if (err.message.includes('not found')) {
                 alert('CPF não encontrado para este acesso.');
                 setStep('input');
             } else {
-                setStep('success');
+                alert('Erro inesperado: ' + err.message);
             }
-        } catch (err: any) {
-            alert('Erro inesperado: ' + err.message);
         } finally {
             setLoading(false);
         }

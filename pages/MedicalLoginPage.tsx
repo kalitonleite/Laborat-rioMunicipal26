@@ -5,7 +5,7 @@ import { User, UserRole } from '../types';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import { maskCPF } from '../services/masks';
 
-import { supabase } from '../services/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface MedicalLoginPageProps {
   onLogin: (user: User) => void;
@@ -18,36 +18,17 @@ const MedicalLoginPage: React.FC<MedicalLoginPageProps> = ({ onLogin }) => {
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const { login } = useAuth();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const cleanCPF = cpf.replace(/\D/g, '');
-      const { data, error: rpcError } = await supabase.rpc('get_email_by_cpf', {
-        p_cpf: cleanCPF,
-        p_role: UserRole.MEDICAL
-      });
-
-      if (rpcError || !data || data.length === 0) {
-        alert('CPF médico não encontrado.');
-        return;
-      }
-
-      const realEmail = data[0].email;
-
-      const { error } = await supabase.auth.signInWithPassword({
-        email: realEmail,
-        password: password
-      });
-
-      if (error) {
-        alert('CPF ou senha incorretos.');
-        return;
-      }
-
+      await login(cleanCPF, password);
       navigate('/medical');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      alert('Erro inesperado ao realizar login.');
+      alert(err.message || 'Erro ao realizar login. Verifique seus dados.');
     }
   };
 

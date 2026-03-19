@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 
-import { supabase } from '../services/supabase';
+import { authService, dbService } from '../services/apiService';
 
 interface MedicalRegisterPageProps {
   onLogin: (user: User) => void;
@@ -16,12 +16,8 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
     cpf: '',
     unitCode: '',
     email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
+    phone: ''
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const maskCPF = (value: string) => {
     return value
@@ -42,49 +38,32 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem!');
-      return;
-    }
 
     try {
-      // Validar código via banco de dados
-      const { data: codeData, error: codeError } = await supabase
-        .from('authorization_codes')
-        .select('code')
-        .eq('code', formData.unitCode.trim().toUpperCase())
-        .eq('role', UserRole.MEDICAL)
-        .maybeSingle();
+      const unitCode = formData.unitCode.trim().toUpperCase();
+      const codeData = await dbService.from('authorization_codes').select({
+        code: unitCode,
+        role: UserRole.MEDICAL
+      });
 
-      if (codeError || !codeData) {
+      if (!codeData || codeData.length === 0) {
         alert('Código de autorização da unidade inválido!');
         return;
       }
 
       const cleanCPF = formData.cpf.replace(/\D/g, '');
 
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            cpf: cleanCPF,
-            role: UserRole.MEDICAL
-          }
-        }
+      await authService.register({
+        cpf: cleanCPF,
+        name: formData.name,
+        role: UserRole.MEDICAL
       });
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      alert('Cadastro médico realizado com sucesso! Você já pode acessar sua conta.');
+      alert(`Cadastro médico realizado com sucesso! Sua senha de acesso inicial são os primeiros 6 dígitos do seu CPF (${cleanCPF.substring(0, 6)}). Você poderá alterá-la no seu painel.`);
       navigate('/medical/login');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error:', err);
-      alert('Erro inesperado ao realizar cadastro.');
+      alert(err.message || 'Erro inesperado ao realizar cadastro.');
     }
   };
 
@@ -116,6 +95,15 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </p>
             </div>
 
+            <div className="mt-auto bg-blue-50 p-6 rounded-[32px] border border-blue-100 relative overflow-hidden group">
+              <div className="flex items-center gap-3 text-blue-600 mb-2">
+                <i className="fas fa-key text-lg"></i>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Senha Automática</span>
+              </div>
+              <p className="text-[11px] text-blue-900/70 leading-relaxed font-semibold">
+                Sua senha inicial será gerada com os <strong>6 primeiros dígitos do seu CPF</strong>.
+              </p>
+            </div>
           </div>
 
           {/* Lado Direito - Form */}
@@ -158,32 +146,14 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Senha (6 dígitos)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Telefone / WhatsApp</label>
                 <div className="relative group">
-                  <i className="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors"></i>
+                  <i className="fas fa-phone absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors"></i>
                   <input
-                    required type={showPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
-                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    type="tel" placeholder="(00) 00000-0000"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-600">
-                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
-                <div className="relative group">
-                  <i className="fas fa-check-double absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-600 transition-colors"></i>
-                  <input
-                    required type={showConfirmPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
-                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-600">
-                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
                 </div>
               </div>
 
@@ -200,7 +170,7 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
               </div>
 
               <button type="submit" className="md:col-span-2 w-full bg-[#1e3a8a] text-white font-extrabold py-5 rounded-3xl shadow-2xl hover:bg-blue-900 hover:-translate-y-0.5 transition-all mt-6 uppercase tracking-widest text-xs flex items-center justify-center gap-4 active:scale-95">
-                Cadastrar
+                Confirmar Registro Médico
                 <i className="fas fa-check-circle text-[10px]"></i>
               </button>
             </form>

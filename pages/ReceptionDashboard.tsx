@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import { maskCPF } from '../services/masks';
-import { supabase } from '../services/supabase';
+import { dbService } from '../services/apiService';
 
 interface ReceptionDashboardProps {
   user: User;
@@ -32,14 +32,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('date', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching appointments:', error);
-      } else {
+      try {
+        const data = await dbService.from('appointments').select({}, { column: 'date', ascending: true });
         const mappedAppointments = (data || []).map((a: any) => ({
           id: a.id,
           patientId: a.patient_id,
@@ -50,65 +44,35 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           examType: a.exam_type
         }));
         setAppointments(mappedAppointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
       }
     };
     fetchAppointments();
 
     const loadSettings = async () => {
-      const { data, error } = await supabase
-        .from('lab_settings')
-        .select('*');
-
-      if (error) {
-        console.error('Error fetching lab settings:', error);
-        // Fallback to localStorage if offline or error
-        const savedBlocked = localStorage.getItem('lab_blocked_dates');
-        if (savedBlocked) setBlockedDates(JSON.parse(savedBlocked));
-        const savedLimit = localStorage.getItem('lab_daily_limit');
-        if (savedLimit) setDailyLimit(parseInt(savedLimit));
-        const savedSpecific = localStorage.getItem('lab_specific_limits');
-        if (savedSpecific) setSpecificLimits(JSON.parse(savedSpecific));
-      } else {
-        data?.forEach(setting => {
+      try {
+        const data = await dbService.from('lab_settings').select();
+        data?.forEach((setting: any) => {
           if (setting.key === 'blocked_dates') setBlockedDates(setting.value);
           if (setting.key === 'daily_limit') setDailyLimit(Number(setting.value));
           if (setting.key === 'specific_limits') setSpecificLimits(setting.value);
-
-          // Sync local storage as cache
           localStorage.setItem(`lab_${setting.key}`, JSON.stringify(setting.value));
         });
+      } catch (error) {
+        console.error('Error fetching lab settings:', error);
       }
     };
     loadSettings();
-
-    // Subscribe to changes in lab_settings
-    const channel = supabase
-      .channel('lab_settings_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'lab_settings' }, payload => {
-        const { key, value } = payload.new;
-        if (key === 'blocked_dates') setBlockedDates(value);
-        if (key === 'daily_limit') setDailyLimit(Number(value));
-        if (key === 'specific_limits') setSpecificLimits(value);
-        localStorage.setItem(`lab_${key}`, JSON.stringify(value));
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
-        fetchAppointments();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []); // Only once on mount
 
   const handleSaveLimit = async (limit: number) => {
     setDailyLimit(limit);
-    const { error } = await supabase
-      .from('lab_settings')
-      .update({ value: limit })
-      .eq('key', 'daily_limit');
-
-    if (error) console.error('Error updating limit:', error);
+    try {
+      await dbService.from('lab_settings').update({ value: limit }, { key: 'daily_limit' });
+    } catch (error) {
+      console.error('Error updating limit:', error);
+    }
 
     localStorage.setItem('lab_daily_limit', limit.toString());
     window.dispatchEvent(new CustomEvent('calendarUpdate', { detail: { dailyLimit: limit } }));
@@ -119,12 +83,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     const updated = { ...specificLimits, [date]: limit };
     setSpecificLimits(updated);
 
-    const { error } = await supabase
-      .from('lab_settings')
-      .update({ value: updated })
-      .eq('key', 'specific_limits');
-
-    if (error) console.error('Error updating specific limit:', error);
+    try {
+      await dbService.from('lab_settings').update({ value: updated }, { key: 'specific_limits' });
+    } catch (error) {
+      console.error('Error updating specific limit:', error);
+    }
 
     localStorage.setItem('lab_specific_limits', JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('calendarUpdate', { detail: { specificLimits: updated } }));
@@ -137,12 +100,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     delete updated[date];
     setSpecificLimits(updated);
 
-    const { error } = await supabase
-      .from('lab_settings')
-      .update({ value: updated })
-      .eq('key', 'specific_limits');
-
-    if (error) console.error('Error removing specific limit:', error);
+    try {
+      await dbService.from('lab_settings').update({ value: updated }, { key: 'specific_limits' });
+    } catch (error) {
+      console.error('Error removing specific limit:', error);
+    }
 
     localStorage.setItem('lab_specific_limits', JSON.stringify(updated));
     window.dispatchEvent(new CustomEvent('calendarUpdate', { detail: { specificLimits: updated } }));
@@ -153,12 +115,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   const saveBlockedDates = async (dates: string[]) => {
     setBlockedDates(dates);
 
-    const { error } = await supabase
-      .from('lab_settings')
-      .update({ value: dates })
-      .eq('key', 'blocked_dates');
-
-    if (error) console.error('Error updating blocked dates:', error);
+    try {
+      await dbService.from('lab_settings').update({ value: dates }, { key: 'blocked_dates' });
+    } catch (error) {
+      console.error('Error updating blocked dates:', error);
+    }
 
     localStorage.setItem('lab_blocked_dates', JSON.stringify(dates));
     window.dispatchEvent(new CustomEvent('calendarUpdate', { detail: { blockedDates: dates } }));
@@ -276,12 +237,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
   const handleDeleteAppointment = async (id: string) => {
     if (window.confirm("Deseja realmente excluir este agendamento?")) {
-      const { error } = await supabase.from('appointments').delete().eq('id', id);
-
-      if (error) {
-        alert('Erro ao excluir agendamento: ' + error.message);
-      } else {
+      try {
+        await dbService.from('appointments').delete({ id });
         setAppointments(prev => prev.filter(a => a.id !== id));
+      } catch (error: any) {
+        alert('Erro ao excluir agendamento: ' + error.message);
       }
     }
   };
@@ -304,33 +264,26 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       return;
     }
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .insert([
-        {
-          patient_id: 'P-' + Math.floor(Math.random() * 1000), // In real usage, this should be real ID if possible, but Reception creates for anyone
-          patient_name: newApp.patientName,
-          patient_cpf: newApp.patientCpf || '000.000.000-00',
-          date: formattedDate,
-          time: newApp.time,
-          exam_type: 'N/A'
-        }
-      ])
-      .select();
+    try {
+      const data = await dbService.from('appointments').insert({
+        patient_id: 'P-' + Math.floor(Math.random() * 1000),
+        patient_name: newApp.patientName,
+        patient_cpf: newApp.patientCpf || '000.000.000-00',
+        date: formattedDate,
+        time: newApp.time,
+        exam_type: 'N/A'
+      });
 
-    if (error) {
-      alert('Erro ao agendar: ' + error.message);
-    } else {
+      const newFormatted = {
+        id: data[0].id,
+        patientId: data[0].patient_id,
+        patientName: data[0].patient_name,
+        patientCpf: data[0].patient_cpf,
+        date: data[0].date,
+        time: data[0].time,
+        examType: data[0].exam_type
+      };
       setAppointments(prev => {
-        const newFormatted = {
-          id: data[0].id,
-          patientId: data[0].patient_id,
-          patientName: data[0].patient_name,
-          patientCpf: data[0].patient_cpf,
-          date: data[0].date,
-          time: data[0].time,
-          examType: data[0].exam_type
-        };
         const updated = [...prev, newFormatted].sort((a, b) => {
           if (a.date !== b.date) return a.date.localeCompare(b.date);
           return a.time.localeCompare(b.time);
@@ -340,6 +293,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       setIsModalOpen(false);
       setNewApp({ patientName: '', patientCpf: '', date: '', time: '' });
       alert('Agendamento criado com sucesso!');
+    } catch (error: any) {
+      alert('Erro ao agendar: ' + error.message);
     }
   };
 

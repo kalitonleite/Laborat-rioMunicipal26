@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
-import { supabase } from '../services/supabase';
+import { authService } from '../services/apiService';
 
 interface RegisterPageProps {
   onLogin: (user: User) => void;
@@ -15,12 +15,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
     cpf: '',
     sus_number: '',
     email: '',
-    phone: '',
-    password: '',
-    confirmPassword: ''
+    phone: ''
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const maskCPF = (value: string) => {
     return value
@@ -41,39 +37,24 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem!');
-      return;
-    }
 
     try {
       const cleanCPF = formData.cpf.replace(/\D/g, '');
       const cleanSUS = formData.sus_number.replace(/\D/g, '');
-      console.log('Registering user with email:', formData.email, 'and CPF/SUS:', cleanCPF, cleanSUS);
+      console.log('Registering user with CPF/SUS:', cleanCPF, cleanSUS);
 
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            cpf: cleanCPF,
-            sus_number: cleanSUS,
-            role: UserRole.PATIENT
-          }
-        }
+      await authService.register({
+        cpf: cleanCPF,
+        name: formData.name,
+        role: UserRole.PATIENT,
+        sus_number: cleanSUS
       });
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      alert('Cadastro realizado com sucesso! Você já pode acessar sua conta.');
+      alert(`Cadastro realizado com sucesso! Sua senha de acesso inicial são os primeiros 6 dígitos do seu CPF (${cleanCPF.substring(0, 6)}). Você poderá alterá-la no seu painel.`);
       navigate('/');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error:', err);
-      alert('Erro inesperado ao realizar cadastro.');
+      alert(err.message || 'Erro inesperado ao realizar cadastro.');
     }
   };
 
@@ -106,14 +87,13 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
               </p>
             </div>
 
-            <div className="mt-auto bg-[#002147]/5 p-8 rounded-[32px] border border-[#002147]/10 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#eab308]/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
-              <div className="flex items-center gap-3 text-[#002147] mb-3">
-                <i className="fas fa-shield-halved text-lg"></i>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Privacidade</span>
+            <div className="mt-auto bg-[#002147]/10 p-6 rounded-[32px] border border-[#002147]/10 relative overflow-hidden group">
+              <div className="flex items-center gap-3 text-[#002147] mb-2">
+                <i className="fas fa-key text-lg"></i>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Senha Automática</span>
               </div>
-              <p className="text-[12px] text-slate-600 leading-relaxed font-semibold">
-                Seus dados estão protegidos sob sigilo médico e criptografia de ponta a ponta.
+              <p className="text-[11px] text-slate-600 leading-relaxed font-semibold">
+                Sua senha inicial será gerada automaticamente com os <strong>6 primeiros dígitos do seu CPF</strong>.
               </p>
             </div>
           </div>
@@ -181,33 +161,17 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Senha (6 caracteres)</label>
-                <div className="relative group">
-                  <i className="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
-                  <input
-                    required type={showPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
-                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#002147]">
-                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
-                </div>
-              </div>
-
-              <div className="md:col-span-2 space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
-                <div className="relative group">
-                  <i className="fas fa-shield absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
-                  <input
-                    required type={showConfirmPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
-                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#002147]">
-                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
+              <div className="md:col-span-2 bg-blue-50/50 p-6 rounded-3xl border border-blue-100/50 mt-4">
+                <div className="flex items-start gap-4">
+                  <div className="bg-blue-600 p-2.5 rounded-xl shadow-lg shadow-blue-600/20">
+                    <i className="fas fa-info-circle text-white"></i>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-blue-900 uppercase tracking-widest mb-1">Nota de Segurança</h4>
+                    <p className="text-[11px] text-blue-800/70 font-medium leading-relaxed">
+                      Sua senha será gerada automaticamente. Após o primeiro acesso, você poderá alterá-la na aba "Perfil" do seu painel.
+                    </p>
+                  </div>
                 </div>
               </div>
 

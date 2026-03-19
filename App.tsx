@@ -16,7 +16,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Layout from './components/Layout';
 import { User, UserRole } from './types';
 import { useAuth } from './contexts/AuthContext';
-import { supabase } from './services/supabase';
+import { dbService } from './services/apiService';
 
 interface ProtectedRouteProps {
   user: User | null;
@@ -54,23 +54,14 @@ const App: React.FC = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: updatedUser.name,
-          avatar: updatedUser.avatar,
-          // role and cpf should normally not be editable by the user directly here without checks
-        })
-        .eq('id', user.id);
+      await dbService.from('profiles').update({
+        name: updatedUser.name,
+        avatar: updatedUser.avatar,
+      }, { id: user.id });
 
-      if (error) {
-        console.error('Error updating profile:', error);
-        alert('Erro ao atualizar perfil.');
-      } else {
-        await fetchProfile(user.id);
-        alert('Perfil atualizado com sucesso!');
-      }
-    } catch (err) {
+      await fetchProfile(user.id);
+      alert('Perfil atualizado com sucesso!');
+    } catch (err: any) {
       console.error('Unexpected error updating profile:', err);
       alert('Erro inesperado ao atualizar.');
     }

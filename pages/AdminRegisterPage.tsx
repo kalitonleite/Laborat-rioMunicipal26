@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 
-import { supabase } from '../services/supabase';
+import { authService, dbService } from '../services/apiService';
 
 interface AdminRegisterPageProps {
   onLogin: (user: User) => void;
@@ -16,12 +16,8 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
     cpf: '',
     email: '',
     phone: '',
-    accessCode: '',
-    password: '',
-    confirmPassword: ''
+    accessCode: ''
   });
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showAccessCode, setShowAccessCode] = useState(false);
 
   const maskCPF = (value: string) => {
@@ -43,48 +39,32 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
 
   const handleAdminRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem!');
-      return;
-    }
-    try {
-      // Validar código via banco de dados
-      const { data: codeData, error: codeError } = await supabase
-        .from('authorization_codes')
-        .select('code')
-        .eq('code', formData.accessCode.trim().toUpperCase())
-        .eq('role', UserRole.ADMIN)
-        .maybeSingle();
 
-      if (codeError || !codeData) {
+    try {
+      const accessCode = formData.accessCode.trim().toUpperCase();
+      const codeData = await dbService.from('authorization_codes').select({
+        code: accessCode,
+        role: UserRole.ADMIN
+      });
+
+      if (!codeData || codeData.length === 0) {
         alert('Código de autorização do laboratório inválido!');
         return;
       }
 
       const cleanCPF = formData.cpf.replace(/\D/g, '');
 
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            name: formData.name,
-            cpf: cleanCPF,
-            role: UserRole.ADMIN
-          }
-        }
+      await authService.register({
+        cpf: cleanCPF,
+        name: formData.name,
+        role: UserRole.ADMIN
       });
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      alert('Cadastro administrativo realizado com sucesso! Você já pode acessar sua conta.');
+      alert(`Cadastro administrativo realizado com sucesso! Sua senha de acesso inicial são os primeiros 6 dígitos do seu CPF (${cleanCPF.substring(0, 6)}). Você poderá alterá-la no seu painel.`);
       navigate('/admin/login');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Registration error:', err);
-      alert('Erro inesperado ao realizar cadastro.');
+      alert(err.message || 'Erro inesperado ao realizar cadastro.');
     }
   };
 
@@ -116,13 +96,13 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
               </p>
             </div>
 
-            <div className="mt-auto bg-[#eab308]/5 p-8 rounded-[32px] border border-[#eab308]/20 relative overflow-hidden">
-              <div className="flex items-center gap-3 text-[#a16207] mb-3">
-                <i className="fas fa-user-shield text-lg"></i>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Acesso Restrito</span>
+            <div className="mt-auto bg-[#eab308]/10 p-6 rounded-[32px] border border-[#eab308]/20 relative overflow-hidden group">
+              <div className="flex items-center gap-3 text-[#a16207] mb-2">
+                <i className="fas fa-key text-lg"></i>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Senha Automática</span>
               </div>
-              <p className="text-[12px] text-slate-600 leading-relaxed font-semibold">
-                Este cadastro requer um código de autorização mestre fornecido pela diretoria.
+              <p className="text-[11px] text-slate-600 leading-relaxed font-semibold">
+                Sua senha inicial será gerada com os <strong>6 primeiros dígitos do seu CPF</strong>.
               </p>
             </div>
           </div>
@@ -167,39 +147,21 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Senha (6 dígitos)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Telefone / WhatsApp</label>
                 <div className="relative group">
-                  <i className="fas fa-lock absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
+                  <i className="fas fa-phone absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
                   <input
-                    required type={showPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
-                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/10 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    type="tel" placeholder="(00) 00000-0000"
+                    className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/10 outline-none text-sm font-bold text-slate-700 transition-all"
+                    value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#002147]">
-                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Confirmar Senha</label>
-                <div className="relative group">
-                  <i className="fas fa-check-double absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
-                  <input
-                    required type={showConfirmPassword ? "text" : "password"} maxLength={6} placeholder="••••••"
-                    className="w-full pl-14 pr-12 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/10 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-[#002147]">
-                    <i className={`fas ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                  </button>
                 </div>
               </div>
 
               <div className="md:col-span-2 space-y-1.5 mt-2">
                 <label className="text-[10px] font-bold text-[#a16207] uppercase ml-1 tracking-[0.2em]">Código de Autorização do Laboratório</label>
                 <div className="relative group">
-                  <i className="fas fa-key absolute left-5 top-1/2 -translate-y-1/2 text-[#eab308] transition-colors"></i>
+                  <i className="fas fa-lock-open absolute left-5 top-1/2 -translate-y-1/2 text-[#eab308] transition-colors"></i>
                   <input
                     required type={showAccessCode ? "text" : "password"} placeholder="Digite o código mestre"
                     className="w-full pl-14 pr-12 py-5 rounded-2xl border border-[#eab308]/30 bg-[#eab308]/5 text-sm focus:ring-4 focus:ring-[#eab308]/10 outline-none font-bold text-[#a16207] transition-all"
@@ -212,8 +174,8 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
               </div>
 
               <button type="submit" className="md:col-span-2 w-full bg-[#002147] text-white font-extrabold py-5 rounded-3xl shadow-2xl hover:bg-black hover:-translate-y-0.5 transition-all mt-6 uppercase tracking-widest text-xs flex items-center justify-center gap-4 active:scale-95">
-                Confirmar Acesso Administrativo
-                <i className="fas fa-shield-halved text-[10px]"></i>
+                Confirmar Registro Administrativo
+                <i className="fas fa-check-circle text-[10px]"></i>
               </button>
             </form>
           </div>

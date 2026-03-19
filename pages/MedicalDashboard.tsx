@@ -5,7 +5,7 @@ import { suggestMedicalDiagnosis } from '../services/geminiService';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import { maskCPF } from '../services/masks';
-import { supabase } from '../services/supabase';
+import { dbService } from '../services/apiService';
 import { extractTextFromPDF } from '../services/pdfOcr';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -60,14 +60,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
 
   useEffect(() => {
     const fetchExams = async () => {
-      const { data, error } = await supabase
-        .from('exams')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching medical exams:', error);
-      } else {
+      try {
+        const data = await dbService.from('exams').select({}, { column: 'created_at', ascending: false });
         const mappedExams = (data || []).map((e: any) => ({
           id: e.id,
           patientId: e.patient_id,
@@ -84,20 +78,12 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
           previousValue: e.previous_value
         }));
         setAllExams(mappedExams);
+      } catch (error) {
+        console.error('Error fetching medical exams:', error);
       }
     };
     fetchExams();
-
-    const examsSubscription = supabase.channel('exams_realtime_medical')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'exams' }, () => {
-        fetchExams();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(examsSubscription);
-    };
-  }, [activeTab]); // Recarrega ao mudar de aba para garantir dados frescos
+  }, [activeTab]);
 
   const [selectedExam, setSelectedExam] = useState<ExamResult | null>(null);
   const [viewingExam, setViewingExam] = useState<ExamResult | null>(null);
@@ -133,66 +119,58 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
   const fetchPatientData = async (cpf: string) => {
     if (!cpf) return;
 
-    // 1. Perfil do Paciente
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('cpf', cpf)
-      .maybeSingle();
+    try {
+      const profileData = await dbService.from('profiles').select({ cpf }).then(res => res[0]);
+      if (profileData) {
+        setPatientProfile({
+          id: profileData.id,
+          name: profileData.name,
+          cpf: profileData.cpf,
+          sus_number: profileData.sus_number,
+          role: profileData.role,
+          avatar: profileData.avatar,
+          age: profileData.age,
+          gender: profileData.gender
+        });
+      }
 
-    if (profileData) {
-      setPatientProfile({
-        id: profileData.id,
-        name: profileData.name,
-        cpf: profileData.cpf,
-        sus_number: profileData.sus_number,
-        role: profileData.role,
-        avatar: profileData.avatar,
-        age: profileData.age,
-        gender: profileData.gender
-      });
+      const noteData = await dbService.from('doctor_notes').select({
+        doctor_id: user.id,
+        patient_cpf: cpf
+      }).then(res => res[0]);
+
+      setDoctorNote(noteData?.content || '');
+    } catch (err) {
+      console.error('Error fetching patient data:', err);
     }
-
-    // 2. Nota do Médico
-    const { data: noteData } = await supabase
-      .from('doctor_notes')
-      .select('content')
-      .eq('doctor_id', user.id)
-      .eq('patient_cpf', cpf)
-      .maybeSingle();
-
-    setDoctorNote(noteData?.content || '');
   };
 
   const saveDoctorNote = async (content: string) => {
     if (!selectedExam) return;
     setIsSavingNote(true);
-    const { error } = await supabase
-      .from('doctor_notes')
-      .upsert({
+    try {
+      await dbService.from('doctor_notes').upsert({
         doctor_id: user.id,
         patient_cpf: selectedExam.patientCpf,
         content: content,
         updated_at: new Date().toISOString()
-      }, { onConflict: 'doctor_id,patient_cpf' });
-
-    if (error) console.error('Error saving note:', error);
+      }, ['doctor_id', 'patient_cpf']);
+    } catch (error) {
+      console.error('Error saving note:', error);
+    }
     setIsSavingNote(false);
   };
 
   const fetchPatientHistory = async (cpf: string) => {
     if (!cpf) return;
     setLoadingHistory(true);
-    const { data, error } = await supabase
-      .from('exams')
-      .select('*')
-      .eq('patient_cpf', cpf)
-      .eq('status', 'READY')
-      .order('date', { ascending: true });
+    try {
+      const data = await dbService.from('exams').select({
+        patient_cpf: cpf,
+        status: 'READY'
+      }, { column: 'date', ascending: true });
 
-    if (error) {
-      console.error('Error fetching patient history:', error);
-    } else {
+      // mapped logic follows
       const mapped = (data || []).map((e: any) => ({
         id: e.id,
         patientId: e.patient_id,
@@ -209,7 +187,6 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         previousValue: e.previous_value
       }));
       setPatientHistory(mapped);
-
       // Auto-selecionar o primeiro parâmetro disponível para o gráfico
       if (mapped.length > 0) {
         const firstValues = parseExamValues(mapped[0].resultData || '');
@@ -218,6 +195,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
           setSelectedParam(params[0]);
         }
       }
+    } catch (err) {
+      console.error('Error fetching patient history:', err);
     }
     setLoadingHistory(false);
   };
@@ -306,17 +285,12 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
   const handleSaveResult = async () => {
     if (!selectedExam) return;
 
-    const { error } = await supabase
-      .from('exams')
-      .update({
+    try {
+      await dbService.from('exams').update({
         status: 'READY',
         result_data: resultInput
-      })
-      .eq('id', selectedExam.id);
+      }, { id: selectedExam.id });
 
-    if (error) {
-      alert('Erro ao salvar resultado: ' + error.message);
-    } else {
       setAllExams(prev => prev.map(e =>
         e.id === selectedExam.id ? { ...e, status: 'READY', resultData: resultInput } : e
       ));
@@ -324,6 +298,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
       setResultInput('');
       setAiSuggestion(null);
       alert('Resultado liberado com sucesso!');
+    } catch (error: any) {
+      alert('Erro ao salvar resultado: ' + error.message);
     }
   };
 
@@ -370,66 +346,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
 
     setUploading(true);
     try {
-      const cleanCPF = selectedExam.patientCpf.replace(/\D/g, '');
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${selectedExam.id}_${Date.now()}.${fileExt}`;
-      const filePath = `${cleanCPF}/${fileName}`;
-
-      // 1. Upload para o Storage
-      const { data: storageData, error: storageError } = await supabase.storage
-        .from('lab-files')
-        .upload(filePath, file);
-
-      if (storageError) throw storageError;
-
-      // 2. Obter URL pública (ou assinada, mas aqui usaremos a pública para simplificar o link, 
-      // já que as políticas de bucket cuidam da segurança)
-      const { data: { publicUrl } } = supabase.storage
-        .from('lab-files')
-        .getPublicUrl(filePath);
-
-      // 3. Salvar metadados na file_attachments
-      const { error: metaError } = await supabase
-        .from('file_attachments')
-        .insert({
-          file_name: file.name,
-          storage_path: filePath,
-          content_type: file.type,
-          size_bytes: file.size,
-          patient_cpf: selectedExam.patientCpf,
-          patient_id: selectedExam.patientId, // Usando o UUID
-          uploaded_by: user.id
-        });
-
-      if (metaError) throw metaError;
-
-      // OCR Extraction
-      let extractedText = selectedExam.resultData || '';
-      if (file.type === 'application/pdf') {
-        try {
-          const newText = await extractTextFromPDF(file);
-          if (newText) extractedText = newText;
-        } catch (ocrErr) {
-          console.error("Falha ao extrair texto com OCR", ocrErr);
-        }
-      }
-
-      // 4. Atualizar o exame com o link
-      const { error: examUpdateError } = await supabase
-        .from('exams')
-        .update({ file_url: publicUrl, status: 'READY', result_data: extractedText })
-        .eq('id', selectedExam.id);
-
-      if (examUpdateError) throw examUpdateError;
-
-      // 5. Atualizar estado local
-      setAllExams(prev => prev.map(ex =>
-        ex.id === selectedExam.id ? { ...ex, fileUrl: publicUrl, status: 'READY', resultData: extractedText } : ex
-      ));
-      setSelectedExam(prev => prev ? { ...prev, fileUrl: publicUrl, status: 'READY', resultData: extractedText } : null);
-
-      alert('Laudo digital anexado com sucesso!');
-
+      // TODO: Implement Neon-compatible storage (e.g. Vercel Blob)
+      alert('O armazenamento via Supabase está desativado devido à migração para o Neon. Configure um novo serviço de arquivos (ex: Vercel Blob).');
     } catch (err: any) {
       console.error('Upload error:', err);
       alert('Erro no upload: ' + err.message);
@@ -444,21 +362,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
 
     setUploading(true);
     try {
-      // Limpar a URL no exame e o resultado extraído
-      const { error: clearErr } = await supabase
-        .from('exams')
-        .update({ file_url: null, result_data: null })
-        .eq('id', selectedExam.id);
-
-      if (clearErr) throw clearErr;
-
-      // Atualizar estado
-      setAllExams(prev => prev.map(ex =>
-        ex.id === selectedExam.id ? { ...ex, fileUrl: undefined } : ex
-      ));
-      setSelectedExam(prev => prev ? { ...prev, fileUrl: undefined } : null);
-
-      alert('Arquivo removido com sucesso.');
+      // TODO: Implement Neon-compatible storage cleanup
+      alert('Ação desativada devido à migração do Storage.');
     } catch (err: any) {
       alert('Erro ao remover: ' + err.message);
     } finally {
