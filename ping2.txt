@@ -1,0 +1,13 @@
+HTTP/1.1 200 OK
+Age: 0
+Cache-Control: public, max-age=0, must-revalidate
+Content-Length: 42
+Content-Type: application/json; charset=utf-8
+Date: Thu, 19 Mar 2026 22:55:34 GMT
+Etag: W/"2a-WuG2NVGBiEnBfMT1Unv+LxdkNqA"
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: MISS
+X-Vercel-Id: gru1::iad1::mghnn-1773960934266-fe0940c20e0c
+
+{"status":"ok","msg":"JS fallback works!"}

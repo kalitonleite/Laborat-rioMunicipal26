@@ -1,0 +1,106 @@
+const { sql } = require('./db.js');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+
+module.exports = async function handler(req, res) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Não autorizado: Token não fornecido.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { table, action, id, filter, order, data } = req.body;
+
+    if (!table) return res.status(400).json({ error: 'O nome da tabela é obrigatório.' });
+
+    const allowedTables = ['profiles', 'exams', 'campaigns', 'appointments', 'lab_settings', 'doctor_notes', 'authorization_codes'];
+    if (!allowedTables.includes(table)) {
+      return res.status(403).json({ error: 'Acesso negado: Tabela não permitida.' });
+    }
+
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Método não permitido.' });
+    }
+
+    if (action === 'select') {
+      let query = `SELECT * FROM public.${table}`;
+      const params = [];
+      
+      if (filter) {
+        const keys = Object.keys(filter);
+        if (keys.length > 0) {
+          query += ' WHERE ' + keys.map((key) => {
+              params.push(filter[key]);
+              return `${key} = $${params.length}`;
+          }).join(' AND ');
+        }
+      }
+
+      if (order) {
+        query += ` ORDER BY ${order.column} ${order.ascending ? 'ASC' : 'DESC'}`;
+      }
+      
+      const results = await sql(query, params);
+      return res.status(200).json(results);
+    }
+
+    if (action === 'insert') {
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        const query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`;
+        const results = await sql(query, values);
+        return res.status(201).json(results);
+    }
+
+    if (action === 'update') {
+        if (!id && !filter) return res.status(400).json({ error: 'ID ou filtro é necessário para atualização.' });
+        const keys = Object.keys(data);
+        const values = Object.values(data);
+        let query = `UPDATE public.${table} SET ` + keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
+        
+        const filterKeys = filter ? Object.keys(filter) : ['id'];
+        const filterValues = filter ? Object.values(filter) : [id];
+        
+        query += ' WHERE ' + filterKeys.map((key) => {
+            values.push(filterValues[filterKeys.indexOf(key)]);
+            return `${key} = $${values.length}`;
+        }).join(' AND ');
+
+        query += ' RETURNING *';
+        const results = await sql(query, values);
+        return res.status(200).json(results);
+    }
+
+    if (action === 'upsert') {
+        const { conflictKeys, data: upsertData } = req.body;
+        if (!conflictKeys || !upsertData) return res.status(400).json({ error: 'conflictKeys e data são necessários.' });
+        const keys = Object.keys(upsertData);
+        const values = Object.values(upsertData);
+        
+        let query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})`;
+        query += ` ON CONFLICT (${conflictKeys.join(', ')}) DO UPDATE SET ` + keys.map((key) => `${key} = EXCLUDED.${key}`).join(', ');
+        query += ' RETURNING *';
+        
+        const results = await sql(query, values);
+        return res.status(200).json(results);
+    }
+
+    if (action === 'delete') {
+        if (!id && !filter) return res.status(400).json({ error: 'ID ou filtro é necessário para exclusão.' });
+        const filterKeys = filter ? Object.keys(filter) : ['id'];
+        const filterValues = filter ? Object.values(filter) : [id];
+        const query = `DELETE FROM public.${table} WHERE ` + filterKeys.map((key, i) => `${key} = $${i + 1}`).join(' AND ') + ' RETURNING *';
+        const results = await sql(query, filterValues);
+        return res.status(200).json(results);
+    }
+
+    return res.status(400).json({ error: 'Ação inválida.' });
+
+  } catch (err) {
+    console.error('Data API error:', err);
+    return res.status(401).json({ error: 'Sessão inválida ou expirada. Faça login novamente.' });
+  }
+};

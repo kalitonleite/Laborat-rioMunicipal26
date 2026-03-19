@@ -1,12 +1,10 @@
-
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql } from '../db';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+const { sql } = require('../db.js');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido.' });
   }
@@ -63,6 +61,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (err) {
     console.error('Login error:', err);
-    return res.status(500).json({ error: 'Erro interno no servidor.' });
+    return res.status(500).json({ error: 'Erro interno no servidor: ' + err.message });
   }
-}
+};

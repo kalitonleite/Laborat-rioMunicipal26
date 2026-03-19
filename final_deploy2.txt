@@ -1,0 +1,57 @@
+Retrieving projectÔÇª
+Deploying kalitons-projects/laboratorio-municipal06
+Uploading [--------------------] (0.0B/20.9KB)
+Uploading [=====---------------] (5.3KB/20.9KB)
+Uploading [===========---------] (11.7KB/20.9KB)
+Uploading [====================] (20.9KB/20.9KB)
+Inspect: https://vercel.com/kalitons-projects/laboratorio-municipal06/FqwxgxpAcNsK7Ac8rc548zdz7JsU [3s]
+Production: https://laboratorio-municipal06-9e7hwaul7-kalitons-projects.vercel.app [3s]
+Building...
+Building...
+Building: Running build in Washington, D.C., USA (East) ÔÇô iad1
+Building: Build machine configuration: 2 cores, 8 GB
+Building: Retrieving list of deployment files...
+Building: Downloading 75 deployment files...
+Building: Restored build cache from previous deployment (GMQDSQ2iYs2c6yCoB1ni2wYpg43C)
+Building: Running "vercel build"
+Building: Vercel CLI 50.32.4
+Building: Installing dependencies...
+Building: npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+Building: npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+Building: npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+Building: npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+Building: npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+Building: npm warn deprecated gauge@3.0.2: This package is no longer supported.
+Building: npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+Building: up to date in 5s
+Building: 47 packages are looking for funding
+Building: run `npm fund` for details
+Building: Running "npm run build"
+Building: > laboratorio-municipal-de-analises-clinicas-de-uarini@0.0.0 build
+Building: > vite build
+Building: vite v6.4.1 building for production...
+Building: transforming...
+Building: Ô£ô 925 modules transformed.
+Building: node_modules/pdfjs-dist/build/pdf.js (1982:23): Use of eval in "node_modules/pdfjs-dist/build/pdf.js" is strongly discouraged as it poses security risks and may cause issues with minification.
+Building: rendering chunks...
+Building: computing gzip size...
+Building: dist/index.html                        0.96 kB Ôöé gzip:   0.55 kB
+Building: dist/assets/index-CnP097Tg.css         1.19 kB Ôöé gzip:   0.64 kB
+Building: dist/assets/purify.es-C_uT9hQ1.js     21.98 kB Ôöé gzip:   8.74 kB
+Building: dist/assets/index.es-ChYv51Jf.js     159.35 kB Ôöé gzip:  53.40 kB
+Building: dist/assets/index-DwX1NjHw.js      1,994.81 kB Ôöé gzip: 535.63 kB
+Building: Ô£ô built in 8.18s
+Building: (!) Some chunks are larger than 500 kB after minification. Consider:
+Building: - Using dynamic import() to code-split the application
+Building: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+Building: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+Building: Build Completed in /vercel/output [16s]
+Building: Deploying outputs...
+[2K[1A[2K[GProduction: https://laboratorio-municipal06-9e7hwaul7-kalitons-projects.vercel.app [29s]
+Completing...
+Aliased: https://laboratorio-municipal06.vercel.app [29s]
+
+Common next commands:
+- `vercel inspect laboratorio-municipal06-9e7hwaul7-kalitons-projects.vercel.app --logs`
+- `vercel redeploy laboratorio-municipal06-9e7hwaul7-kalitons-projects.vercel.app`
+https://laboratorio-municipal06-9e7hwaul7-kalitons-projects.vercel.app

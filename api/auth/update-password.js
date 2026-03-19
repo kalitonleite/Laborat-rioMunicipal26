@@ -1,11 +1,10 @@
-import { neon } from '@neondatabase/serverless';
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+const { sql } = require('../db.js');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido.' });
 
   const authHeader = req.headers.authorization;
@@ -15,13 +14,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    const decoded = jwt.verify(token, JWT_SECRET);
     const { password } = req.body;
     if (!password) return res.status(400).json({ error: 'A nova senha é obrigatória.' });
 
-    const sql = neon(process.env.NEON_DATABASE_URL!);
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const result = await sql`
       UPDATE profiles 
       SET password_hash = ${hashedPassword} 
@@ -34,11 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     return res.status(200).json({ message: 'Senha atualizada com sucesso!' });
-  } catch (err: any) {
-    if (err.name === 'JsonWebTokenError') {
-      return res.status(401).json({ error: 'Não autorizado: Token inválido ou expirado.' });
-    }
+  } catch (err) {
     console.error('Update password error:', err);
-    return res.status(500).json({ error: 'Erro interno no servidor ao atualizar senha.' });
+    return res.status(500).json({ error: 'Erro interno: ' + err.message });
   }
-}
+};

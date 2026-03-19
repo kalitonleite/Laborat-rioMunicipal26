@@ -1,9 +1,7 @@
+const { sql } = require('../db.js');
+const bcrypt = require('bcryptjs');
 
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { sql } from '../db';
-import bcrypt from 'bcryptjs';
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido.' });
   }
@@ -31,11 +29,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       user: result[0]
     });
 
-  } catch (err: any) {
+  } catch (err) {
     console.error('Registration error:', err);
     if (err.message?.includes('unique_cpf')) {
         return res.status(409).json({ error: 'Este CPF já está cadastrado no sistema.' });
     }
-    return res.status(500).json({ error: 'Erro interno no servidor ao realizar cadastro.' });
+    return res.status(500).json({ error: 'Erro interno: ' + err.message });
   }
-}
+};

@@ -1,0 +1,16 @@
+HTTP/1.1 500 Internal Server Error
+Cache-Control: public, max-age=0, must-revalidate
+Content-Length: 96
+Content-Type: text/plain; charset=utf-8
+Date: Thu, 19 Mar 2026 22:59:09 GMT
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: MISS
+X-Vercel-Error: FUNCTION_INVOCATION_FAILED
+X-Vercel-Id: gru1::jqzsk-1773961149196-758e3546cd02
+
+A server error has occurred
+
+FUNCTION_INVOCATION_FAILED
+
+gru1::jqzsk-1773961149196-758e3546cd02
