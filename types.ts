@@ -58,7 +58,9 @@ export interface Appointment {
   patientId: string;
   patientName: string;
   patientCpf?: string;
+  patientAge?: number;
+  patientGender?: string;
+  patientSusNumber?: string;
   date: string;
   time: string;
-  examType: string;
 }

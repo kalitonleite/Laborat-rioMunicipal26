@@ -28,7 +28,15 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isListViewOpen, setIsListViewOpen] = useState(false);
-  const [newApp, setNewApp] = useState({ patientName: '', patientCpf: '', date: '', time: '' });
+  const [newApp, setNewApp] = useState({ 
+    patientName: '', 
+    patientCpf: '', 
+    patientAge: '', 
+    patientGender: '', 
+    patientSusNumber: '', 
+    date: '', 
+    time: '' 
+  });
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -39,9 +47,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           patientId: a.patient_id,
           patientName: a.patient_name,
           patientCpf: a.patient_cpf,
+          patientAge: a.patient_age,
+          patientGender: a.patient_gender,
+          patientSusNumber: a.patient_sus_number,
           date: a.date,
-          time: a.time,
-          examType: a.exam_type
+          time: a.time
         }));
         setAppointments(mappedAppointments);
       } catch (error) {
@@ -199,17 +209,19 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("HORÁRIO", 18, yPos + 1);
-    doc.text("PACIENTE", 50, yPos + 1);
-    doc.text("CPF", 130, yPos + 1);
-    doc.text("DATA", 170, yPos + 1);
+    doc.text("HORA", 14, yPos + 1);
+    doc.text("PACIENTE", 30, yPos + 1);
+    doc.text("CPF", 95, yPos + 1);
+    doc.text("IDADE", 125, yPos + 1);
+    doc.text("SUS", 145, yPos + 1);
+    doc.text("DATA", 185, yPos + 1);
 
     yPos += 10;
 
     // Linhas
     doc.setTextColor(50, 50, 50); // Slate 700
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
 
     filtered.forEach((app, index) => {
       // Alternar cor de fundo
@@ -218,10 +230,12 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         doc.rect(14, yPos - 5, 182, 10, 'F');
       }
 
-      doc.text(app.time, 18, yPos + 1);
-      doc.text(app.patientName.substring(0, 35), 50, yPos + 1); // Limitar tamanho do nome
-      doc.text(app.patientCpf || '-', 130, yPos + 1);
-      doc.text(app.date, 170, yPos + 1);
+      doc.text(app.time, 14, yPos + 1);
+      doc.text(app.patientName.substring(0, 25), 30, yPos + 1); 
+      doc.text(app.patientCpf || '-', 95, yPos + 1);
+      doc.text(String(app.patientAge || '-'), 125, yPos + 1);
+      doc.text(String(app.patientSusNumber || '-'), 145, yPos + 1);
+      doc.text(app.date, 185, yPos + 1);
 
       yPos += 10;
 
@@ -269,9 +283,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         patient_id: 'P-' + Math.floor(Math.random() * 1000),
         patient_name: newApp.patientName,
         patient_cpf: newApp.patientCpf || '000.000.000-00',
+        patient_age: parseInt(newApp.patientAge) || null,
+        patient_gender: newApp.patientGender,
+        patient_sus_number: newApp.patientSusNumber,
         date: formattedDate,
-        time: newApp.time,
-        exam_type: 'N/A'
+        time: newApp.time
       });
 
       const newFormatted = {
@@ -279,9 +295,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         patientId: data[0].patient_id,
         patientName: data[0].patient_name,
         patientCpf: data[0].patient_cpf,
+        patientAge: data[0].patient_age,
+        patientGender: data[0].patient_gender,
+        patientSusNumber: data[0].patient_sus_number,
         date: data[0].date,
-        time: data[0].time,
-        examType: data[0].exam_type
+        time: data[0].time
       };
       setAppointments(prev => {
         const updated = [...prev, newFormatted].sort((a, b) => {
@@ -291,7 +309,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         return updated;
       });
       setIsModalOpen(false);
-      setNewApp({ patientName: '', patientCpf: '', date: '', time: '' });
+      setNewApp({ patientName: '', patientCpf: '', patientAge: '', patientGender: '', patientSusNumber: '', date: '', time: '' });
       alert('Agendamento criado com sucesso!');
     } catch (error: any) {
       alert('Erro ao agendar: ' + error.message);
@@ -370,7 +388,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 </div>
                 <div className="flex items-center justify-between md:justify-end gap-4 mt-4 md:mt-0">
                   <div className="text-right">
-                    <p className="text-[9px] font-black text-blue-500 uppercase">{app.examType}</p>
+                    <p className="text-[9px] font-black text-blue-500 uppercase">COLETA LABORATORIAL</p>
                     <p className="text-[10px] text-gray-400 font-bold">{app.date}</p>
                   </div>
                   <button onClick={() => handleDeleteAppointment(app.id)} className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white">
@@ -656,9 +674,30 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Paciente</label>
                   <input required type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientName} onChange={e => setNewApp({ ...newApp, patientName: e.target.value })} />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
-                  <input type="text" placeholder="000.000.000-00" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientCpf} onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
+                    <input type="text" placeholder="000.000.000-00" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={newApp.patientCpf} onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS</label>
+                    <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientSusNumber} onChange={e => setNewApp({ ...newApp, patientSusNumber: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Idade</label>
+                    <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientAge} onChange={e => setNewApp({ ...newApp, patientAge: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sexo</label>
+                    <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientGender} onChange={e => setNewApp({ ...newApp, patientGender: e.target.value })}>
+                      <option value="">Selecione</option>
+                      <option value="MASCULINO">MASCULINO</option>
+                      <option value="FEMININO">FEMININO</option>
+                      <option value="OUTRO">OUTRO</option>
+                    </select>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
@@ -691,20 +730,26 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
             </div>
 
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="grid grid-cols-7 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <span>Horário</span>
                 <span>Paciente</span>
                 <span>CPF</span>
-                <span>Exame</span>
+                <span>Idade</span>
+                <span>Sexo</span>
+                <span>SUS</span>
+                <span>Data</span>
               </div>
 
               <div className="space-y-4">
                 {filtered.length > 0 ? filtered.map(app => (
-                  <div key={app.id} className="grid grid-cols-4 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
+                  <div key={app.id} className="grid grid-cols-7 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
                     <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
                     <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
                     <span className="text-xs font-medium text-slate-500">{app.patientCpf || '-'}</span>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 w-fit px-2 py-1 rounded-md">{app.examType}</span>
+                    <span className="text-xs font-medium text-slate-500">{app.patientAge || '-'}</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 w-fit px-2 py-1 rounded-md">{app.patientGender || '-'}</span>
+                    <span className="text-xs font-medium text-slate-500">{app.patientSusNumber || '-'}</span>
+                    <span className="text-xs font-bold text-slate-800">{app.date}</span>
                   </div>
                 )) : (
                   <div className="py-12 text-center text-gray-400 italic">

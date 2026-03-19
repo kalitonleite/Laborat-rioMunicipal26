@@ -53,7 +53,15 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
   }, [user.name, user.cpf, activeTab]);
 
   const [viewingSimulated, setViewingSimulated] = useState<ExamResult | null>(null);
-  const [newApp, setNewApp] = useState({ patientName: user.name, date: '', time: '', examType: '' });
+  const [newApp, setNewApp] = useState({ 
+    patientName: user.name, 
+    patientCpf: user.cpf || '',
+    patientAge: user.age || '',
+    patientGender: user.gender || '',
+    patientSusNumber: user.sus_number || '',
+    date: '', 
+    time: '' 
+  });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
@@ -85,9 +93,11 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
           patientId: a.patient_id,
           patientName: a.patient_name,
           patientCpf: a.patient_cpf,
+          patientAge: a.patient_age,
+          patientGender: a.patient_gender,
+          patientSusNumber: a.patient_sus_number,
           date: a.date,
-          time: a.time,
-          examType: a.exam_type
+          time: a.time
         }));
         setAppointments(mappedAppointments);
       } catch (error) {
@@ -254,7 +264,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
   const handleConfirmAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newApp.date || !newApp.time || !newApp.examType) return alert("Preencha todos os campos.");
+    if (!newApp.date || !newApp.time || !newApp.patientAge || !newApp.patientGender) return alert("Preencha todos os campos.");
 
     const cleanCPF = (user.cpf || '').replace(/\D/g, '');
     const hasActiveAppointment = appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === cleanCPF);
@@ -279,11 +289,13 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     try {
       const data = await dbService.from('appointments').insert({
         patient_id: user.id,
-        patient_name: user.name,
-        patient_cpf: user.cpf,
+        patient_name: newApp.patientName,
+        patient_cpf: newApp.patientCpf,
+        patient_age: newApp.patientAge,
+        patient_gender: newApp.patientGender,
+        patient_sus_number: newApp.patientSusNumber,
         date: newApp.date,
-        time: newApp.time,
-        exam_type: newApp.examType
+        time: newApp.time
       });
 
       const newAppointment = {
@@ -291,9 +303,11 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
         patientId: data[0].patient_id,
         patientName: data[0].patient_name,
         patientCpf: data[0].patient_cpf,
+        patientAge: data[0].patient_age,
+        patientGender: data[0].patient_gender,
+        patientSusNumber: data[0].patient_sus_number,
         date: data[0].date,
-        time: data[0].time,
-        examType: data[0].exam_type
+        time: data[0].time
       };
       setAppointments(prev => [...prev, newAppointment]);
       alert("Agendado com sucesso!");
@@ -431,7 +445,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                           <i className="fas fa-calendar-check text-blue-600"></i>
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{app.examType}</p>
+                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest text-ellipsis overflow-hidden">COLETA LABORATORIAL</p>
                           <h4 className="font-black text-slate-800 text-sm">Coleta agendada</h4>
                         </div>
                       </div>
@@ -533,21 +547,63 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
               </div>
 
               <form onSubmit={handleConfirmAppointment} className="p-6 md:p-8 space-y-5">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">PACIENTE</label>
-                  <input disabled type="text" className="w-full p-4 rounded-2xl bg-gray-100 border border-gray-100 text-sm font-black text-gray-400 opacity-60 cursor-not-allowed uppercase" value={user.name} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">PACIENTE</label>
+                    <input disabled type="text" className="w-full p-4 rounded-2xl bg-gray-100 border border-gray-100 text-sm font-black text-gray-400 opacity-60 cursor-not-allowed uppercase" value={user.name} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
+                    <input
+                      required type="text"
+                      placeholder="888.888.888-88"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50 uppercase"
+                      value={newApp.patientCpf}
+                      onChange={e => setNewApp({ ...newApp, patientCpf: e.target.value })}
+                      disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CARTÃO SUS</label>
+                    <input
+                      required type="text"
+                      placeholder="000.0000.0000.0000"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
+                      value={newApp.patientSusNumber}
+                      onChange={e => setNewApp({ ...newApp, patientSusNumber: e.target.value })}
+                      disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IDADE</label>
+                    <input
+                      required type="number"
+                      placeholder="Ex: 25"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
+                      value={newApp.patientAge}
+                      onChange={e => setNewApp({ ...newApp, patientAge: e.target.value })}
+                      disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">TIPO DE EXAME</label>
-                  <input
-                    required type="text"
-                    placeholder="Ex: Hemograma, Glicemia, etc."
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">SEXO</label>
+                  <select
+                    required
                     className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
-                    value={newApp.examType}
-                    onChange={e => setNewApp({ ...newApp, examType: e.target.value })}
+                    value={newApp.patientGender}
+                    onChange={e => setNewApp({ ...newApp, patientGender: e.target.value })}
                     disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
-                  />
+                  >
+                    <option value="">Selecione...</option>
+                    <option value="MASCULINO">MASCULINO</option>
+                    <option value="FEMININO">FEMININO</option>
+                    <option value="OUTRO">OUTRO</option>
+                  </select>
                 </div>
 
                 <div className="flex justify-start gap-4 px-1 mb-4">
@@ -584,7 +640,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                     <div className="bg-white/50 p-3 rounded-xl border border-amber-100/50">
                       {appointments.filter(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, '')).map(a => (
                         <div key={a.id} className="flex justify-between items-center text-[10px] font-black text-slate-500">
-                          <span className="uppercase">{a.examType}</span>
+                          <span className="uppercase">COLETA LABORATORIAL</span>
                           <span className="bg-amber-100 px-2 py-0.5 rounded-md text-amber-700">{a.date} às {a.time}</span>
                         </div>
                       ))}
