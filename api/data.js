@@ -21,8 +21,14 @@ module.exports = async function handler(req, res) {
   }
 
   const token = authHeader.split(' ')[1];
+  let decoded;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    decoded = jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+  }
+
+  try {
     const body = await getBody(req);
     const { table, action, id, filter, order, data } = body;
 
@@ -95,7 +101,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Ação inválida.' });
 
   } catch (err) {
-    console.error('Data API error:', err);
-    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+    console.error('Data API Database Error:', err);
+    return res.status(500).json({ error: 'Erro no banco de dados: ' + err.message });
   }
 };

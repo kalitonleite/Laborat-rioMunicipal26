@@ -260,8 +260,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     }
   };
 
+  const [isAdding, setIsAdding] = useState(false);
   const handleAddAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAdding) return;
+    setIsAdding(true);
     if (!newApp.patientName || !newApp.date || !newApp.time) {
       alert("Por favor, preencha todos os campos e selecione uma data.");
       return;
@@ -278,17 +281,25 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       return;
     }
 
+    console.log('[ReceptionDashboard] Attempting to add appointment:', newApp);
     try {
+      const age = parseInt(newApp.patientAge);
       const data = await dbService.from('appointments').insert({
         patient_id: 'P-' + Math.floor(Math.random() * 1000),
         patient_name: newApp.patientName,
         patient_cpf: newApp.patientCpf || '000.000.000-00',
-        patient_age: parseInt(newApp.patientAge) || null,
+        patient_age: !isNaN(age) ? age : null,
         patient_gender: newApp.patientGender,
         patient_sus_number: newApp.patientSusNumber,
         date: formattedDate,
         time: newApp.time
       });
+
+      console.log('[ReceptionDashboard] Insert result:', data);
+
+      if (!data || data.length === 0) {
+          throw new Error('Nenhum dado retornado do servidor.');
+      }
 
       const newFormatted = {
         id: data[0].id,
@@ -312,7 +323,10 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       setNewApp({ patientName: '', patientCpf: '', patientAge: '', patientGender: '', patientSusNumber: '', date: '', time: '' });
       alert('Agendamento criado com sucesso!');
     } catch (error: any) {
+      console.error('[ReceptionDashboard] Error adding appointment:', error);
       alert('Erro ao agendar: ' + error.message);
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -681,13 +695,32 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS</label>
-                    <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientSusNumber} onChange={e => setNewApp({ ...newApp, patientSusNumber: e.target.value })} />
+                    <input 
+                      type="text" 
+                      maxLength={15}
+                      placeholder="15 dígitos"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
+                      value={newApp.patientSusNumber} 
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setNewApp({ ...newApp, patientSusNumber: val });
+                      }} 
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Idade</label>
-                    <input type="number" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientAge} onChange={e => setNewApp({ ...newApp, patientAge: e.target.value })} />
+                    <input 
+                      type="text" 
+                      maxLength={3}
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
+                      value={newApp.patientAge} 
+                      onChange={e => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setNewApp({ ...newApp, patientAge: val });
+                      }} 
+                    />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sexo</label>
@@ -709,7 +742,20 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} />
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-emerald-600 text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-emerald-700 transition-all uppercase tracking-widest text-xs mt-4">Confirmar Agendamento</button>
+                <button 
+                   type="submit" 
+                   disabled={isAdding}
+                   className={`w-full text-white font-black py-5 rounded-[24px] shadow-xl transition-all uppercase tracking-widest text-xs mt-4 flex items-center justify-center gap-2 ${
+                     isAdding ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700'
+                   }`}
+                >
+                  {isAdding ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      PROCESSANDO...
+                    </>
+                  ) : 'Confirmar Agendamento'}
+                </button>
               </form>
             </div>
           </div>
