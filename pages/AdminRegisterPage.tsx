@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 
 import { authService, dbService } from '../services/apiService';
+import { maskCPF, maskPhone } from '../services/masks';
 
 interface AdminRegisterPageProps {
   onLogin: (user: User) => void;
@@ -19,23 +20,6 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
     accessCode: ''
   });
   const [showAccessCode, setShowAccessCode] = useState(false);
-
-  const maskCPF = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-      .slice(0, 14);
-  };
-
-  const maskPhone = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{2})(\d)/, '$1 $2')
-      .replace(/(\d{5})(\d)/, '$1 $2')
-      .slice(0, 13);
-  };
 
   const handleAdminRegister = async (e: React.FormEvent) => {
     e.preventDefault();

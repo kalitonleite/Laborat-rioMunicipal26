@@ -4,7 +4,7 @@ import { User, Appointment } from '../types';
 import { jsPDF } from 'jspdf';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
-import { maskCPF, maskSUS } from '../services/masks';
+import { maskCPF, maskSUS, maskAge } from '../services/masks';
 import { dbService } from '../services/apiService';
 
 interface ReceptionDashboardProps {
@@ -713,16 +713,13 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <input type="text" placeholder="000.000.000-00" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={newApp.patientCpf} onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS (15 dígitos)</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS</label>
                     <input 
                       type="text" 
-                      placeholder="Somente números"
+                      placeholder="000 0000 0000 0000"
                       className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
                       value={newApp.patientSusNumber} 
-                      onChange={e => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        if (val.length <= 15) setNewApp({ ...newApp, patientSusNumber: val });
-                      }} 
+                      onChange={e => setNewApp({ ...newApp, patientSusNumber: maskSUS(e.target.value) })} 
                     />
                   </div>
                 </div>
@@ -731,13 +728,10 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Idade</label>
                     <input 
                       type="text" 
-                      maxLength={3}
+                      placeholder="Ex: 25"
                       className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
                       value={newApp.patientAge} 
-                      onChange={e => {
-                        const val = e.target.value.replace(/\D/g, '');
-                        setNewApp({ ...newApp, patientAge: val });
-                      }} 
+                      onChange={e => setNewApp({ ...newApp, patientAge: maskAge(e.target.value) })} 
                     />
                   </div>
                   <div className="space-y-1">

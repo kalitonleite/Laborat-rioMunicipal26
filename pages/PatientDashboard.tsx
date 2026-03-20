@@ -6,6 +6,7 @@ import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import { dbService } from '../services/apiService';
 import { jsPDF } from 'jspdf';
+import { maskCPF, maskSUS, maskAge } from '../services/masks';
 
 interface PatientDashboardProps {
   user: User;
@@ -317,6 +318,16 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     }
   };
 
+  const handleDeleteAppointment = async (id: string | number) => {
+    if (!window.confirm("Deseja realmente cancelar este agendamento?")) return;
+    try {
+      await dbService.from('appointments').delete({ id });
+      setAppointments(prev => prev.filter(a => a.id !== id));
+    } catch (error: any) {
+      alert("Erro ao cancelar agendamento: " + error.message);
+    }
+  };
+
   const monthYearLabel = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
 
   return (
@@ -449,9 +460,18 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                           <h4 className="font-black text-slate-800 text-sm">Coleta agendada</h4>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-xs font-black text-slate-800">{app.date}</p>
-                        <p className="text-[10px] font-bold text-blue-600">{app.time}</p>
+                      <div className="flex flex-col md:flex-row items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-xs font-black text-slate-800">{app.date}</p>
+                          <p className="text-[10px] font-bold text-blue-600">{app.time}</p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteAppointment(app.id)}
+                          className="w-10 h-10 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+                          title="Cancelar Agendamento"
+                        >
+                          <i className="fas fa-trash-can text-sm"></i>
+                        </button>
                       </div>
                     </div>
                   ))
@@ -553,13 +573,13 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                     <input disabled type="text" className="w-full p-4 rounded-2xl bg-gray-100 border border-gray-100 text-sm font-black text-gray-400 opacity-60 cursor-not-allowed uppercase" value={user.name} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IDADE</label>
                     <input
                       required type="text"
-                      placeholder="888.888.888-88"
-                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50 uppercase"
-                      value={newApp.patientCpf}
-                      onChange={e => setNewApp({ ...newApp, patientCpf: e.target.value })}
+                      placeholder="Ex: 25"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
+                      value={newApp.patientAge}
+                      onChange={e => setNewApp({ ...newApp, patientAge: maskAge(e.target.value) })}
                       disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
                     />
                   </div>
@@ -570,21 +590,21 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CARTÃO SUS</label>
                     <input
                       required type="text"
-                      placeholder="000.0000.0000.0000"
+                      placeholder="000 0000 0000 0000"
                       className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
                       value={newApp.patientSusNumber}
-                      onChange={e => setNewApp({ ...newApp, patientSusNumber: e.target.value })}
+                      onChange={e => setNewApp({ ...newApp, patientSusNumber: maskSUS(e.target.value) })}
                       disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">IDADE</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
                     <input
-                      required type="number"
-                      placeholder="Ex: 25"
-                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50"
-                      value={newApp.patientAge}
-                      onChange={e => setNewApp({ ...newApp, patientAge: e.target.value })}
+                      required type="text"
+                      placeholder="888.888.888-88"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 focus:ring-2 focus:ring-emerald-500 outline-none text-sm font-bold disabled:opacity-50 uppercase"
+                      value={newApp.patientCpf}
+                      onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })}
                       disabled={appointments.some(a => (a.patientCpf || '').replace(/\D/g, '') === (user.cpf || '').replace(/\D/g, ''))}
                     />
                   </div>
