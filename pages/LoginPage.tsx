@@ -156,7 +156,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 <input
                   type="text" placeholder="CPF ou Número SUS"
                   className="w-full pl-14 pr-4 py-4.5 rounded-2xl border border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 focus:border-[#002147]/20 outline-none transition-all text-sm font-bold text-slate-700"
-                  value={identification} onChange={(e) => setIdentification(e.target.value)}
+                  value={identification} onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^\d/.test(val) || val === '') {
+                      // Se começar com número, tenta mascarar como CPF/SUS
+                      setIdentification(maskCPF(val));
+                    } else {
+                      setIdentification(val);
+                    }
+                  }}
                 />
               </div>
             </div>
