@@ -1,7 +1,18 @@
-const { sql } = require('./db.js');
+const { sql } = require('./db');
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+
+async function getBody(req) {
+    if (req.body && Object.keys(req.body).length > 0) return req.body;
+    return new Promise((resolve) => {
+        let data = '';
+        req.on('data', chunk => { data += chunk; });
+        req.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch (e) { resolve({}); }
+        });
+    });
+}
 
 module.exports = async function handler(req, res) {
   const authHeader = req.headers.authorization;
@@ -12,7 +23,8 @@ module.exports = async function handler(req, res) {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const { table, action, id, filter, order, data } = req.body;
+    const body = await getBody(req);
+    const { table, action, id, filter, order, data } = body;
 
     if (!table) return res.status(400).json({ error: 'O nome da tabela é obrigatório.' });
 
@@ -39,11 +51,8 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      if (order) {
-        query += ` ORDER BY ${order.column} ${order.ascending ? 'ASC' : 'DESC'}`;
-      }
-      
-      const results = await sql(query, params);
+      const orderClause = order ? ` ORDER BY ${order.column} ${order.ascending ? 'ASC' : 'DESC'}` : '';
+      const results = await sql.query(query + orderClause, params);
       return res.status(200).json(results);
     }
 
@@ -51,7 +60,7 @@ module.exports = async function handler(req, res) {
         const keys = Object.keys(data);
         const values = Object.values(data);
         const query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`;
-        const results = await sql(query, values);
+        const results = await sql.query(query, values);
         return res.status(201).json(results);
     }
 
@@ -70,21 +79,7 @@ module.exports = async function handler(req, res) {
         }).join(' AND ');
 
         query += ' RETURNING *';
-        const results = await sql(query, values);
-        return res.status(200).json(results);
-    }
-
-    if (action === 'upsert') {
-        const { conflictKeys, data: upsertData } = req.body;
-        if (!conflictKeys || !upsertData) return res.status(400).json({ error: 'conflictKeys e data são necessários.' });
-        const keys = Object.keys(upsertData);
-        const values = Object.values(upsertData);
-        
-        let query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})`;
-        query += ` ON CONFLICT (${conflictKeys.join(', ')}) DO UPDATE SET ` + keys.map((key) => `${key} = EXCLUDED.${key}`).join(', ');
-        query += ' RETURNING *';
-        
-        const results = await sql(query, values);
+        const results = await sql.query(query, values);
         return res.status(200).json(results);
     }
 
@@ -93,7 +88,7 @@ module.exports = async function handler(req, res) {
         const filterKeys = filter ? Object.keys(filter) : ['id'];
         const filterValues = filter ? Object.values(filter) : [id];
         const query = `DELETE FROM public.${table} WHERE ` + filterKeys.map((key, i) => `${key} = $${i + 1}`).join(' AND ') + ' RETURNING *';
-        const results = await sql(query, filterValues);
+        const results = await sql.query(query, filterValues);
         return res.status(200).json(results);
     }
 
@@ -101,6 +96,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('Data API error:', err);
-    return res.status(401).json({ error: 'Sessão inválida ou expirada. Faça login novamente.' });
+    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
   }
 };

@@ -1,0 +1,12 @@
+HTTP/1.1 401 Unauthorized
+Cache-Control: public, max-age=0, must-revalidate
+Content-Length: 37
+Content-Type: application/json; charset=utf-8
+Date: Fri, 20 Mar 2026 18:09:03 GMT
+Etag: W/"25-aqHJ+30BSr09yhSkVILHeIcIBNw"
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: MISS
+X-Vercel-Id: gru1::iad1::xmz6x-1774030141425-12c666f23da2
+
+{"error":"Usuário não encontrado."}

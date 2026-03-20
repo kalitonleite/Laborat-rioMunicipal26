@@ -1,0 +1,9 @@
+HTTP/1.1 400 Bad Request
+Cache-Control: public, max-age=0, must-revalidate
+Content-Length: 0
+Date: Fri, 20 Mar 2026 17:37:40 GMT
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: MISS
+X-Vercel-Id: gru1::iad1::9247l-1774028259906-6ae9198120f9
+

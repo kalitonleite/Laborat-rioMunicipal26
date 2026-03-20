@@ -1,0 +1,12 @@
+HTTP/1.1 500 Internal Server Error
+Cache-Control: public, max-age=0, must-revalidate
+Content-Length: 38
+Content-Type: application/json; charset=utf-8
+Date: Fri, 20 Mar 2026 18:21:08 GMT
+Etag: W/"26-m7GF6HUk+nM8P4igyEL3KCu5Gho"
+Server: Vercel
+Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+X-Vercel-Cache: MISS
+X-Vercel-Id: gru1::iad1::bdv4p-1774030868052-317ffbcd522a
+
+{"error":"Erro interno: Invalid JSON"}

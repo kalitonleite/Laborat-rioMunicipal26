@@ -1,18 +1,26 @@
-const { sql } = require('../db.js');
+const { sql } = require('../db');
 const bcrypt = require('bcryptjs');
 
+async function getBody(req) {
+    if (req.body && Object.keys(req.body).length > 0) return req.body;
+    return new Promise((resolve) => {
+        let data = '';
+        req.on('data', chunk => { data += chunk; });
+        req.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch (e) { resolve({}); }
+        });
+    });
+}
+
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método não permitido.' });
-  }
-
-  const { cpf, name, role, sus_number, password } = req.body;
-
-  if (!cpf || !name || !role) {
-    return res.status(400).json({ error: 'CPF, Nome e Cargo são obrigatórios.' });
-  }
-
   try {
+    const body = await getBody(req);
+    const { cpf, name, role, sus_number, password } = body;
+
+    if (!cpf || !name || !role) {
+      return res.status(400).json({ error: 'CPF, Nome e Cargo são obrigatórios.' });
+    }
+
     const rawPassword = password || cpf.replace(/\D/g, '').substring(0, 6);
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(rawPassword, salt);
@@ -31,9 +39,6 @@ module.exports = async function handler(req, res) {
 
   } catch (err) {
     console.error('Registration error:', err);
-    if (err.message?.includes('unique_cpf')) {
-        return res.status(409).json({ error: 'Este CPF já está cadastrado no sistema.' });
-    }
     return res.status(500).json({ error: 'Erro interno: ' + err.message });
   }
 };
