@@ -149,7 +149,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
   const handleRegisterExam = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanCPF = newExam.patientCpf.replace(/\D/g, '');
+    const cleanCpf = newExam.patientCpf.replace(/\D/g, '');
+    if (cleanCpf.length !== 11) {
+      alert("O CPF deve conter exatamente 11 dígitos.");
+      return;
+    }
     const dateFormatted = newExam.date.includes('-') ? newExam.date.split('-').reverse().join('/') : newExam.date;
 
     try {
@@ -157,7 +161,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         // UPDATE existing exam
         const updatePayload: any = {
           patient_name: newExam.patientName,
-          patient_cpf: cleanCPF,
+          patient_cpf: cleanCpf,
           exam_name: newExam.examName,
           date: dateFormatted,
           status: newExam.status,
@@ -176,7 +180,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           item.id === editingId ? {
             ...item,
             patientName: newExam.patientName,
-            patientCpf: cleanCPF,
+            patientCpf: cleanCpf,
             examName: newExam.examName,
             date: dateFormatted,
             status: newExam.status,
@@ -187,7 +191,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       } else {
         const data = await dbService.from('exams').insert({
           patient_name: newExam.patientName,
-          patient_cpf: cleanCPF,
+          patient_cpf: cleanCpf,
           exam_name: newExam.examName,
           date: dateFormatted,
           status: newExam.status,

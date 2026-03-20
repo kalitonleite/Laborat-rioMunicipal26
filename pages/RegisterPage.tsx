@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { authService } from '../services/apiService';
+import { maskCPF, maskSUS, maskPhone } from '../services/masks';
 
 interface RegisterPageProps {
   onLogin: (user: User) => void;
@@ -18,29 +19,23 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
     phone: ''
   });
 
-  const maskCPF = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-      .slice(0, 14);
-  };
-
-  const maskPhone = (value: string) => {
-    return value
-      .replace(/\D/g, '')
-      .replace(/(\d{2})(\d)/, '$1 $2')
-      .replace(/(\d{5})(\d)/, '$1 $2')
-      .slice(0, 13);
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const cleanCPF = formData.cpf.replace(/\D/g, '');
+    const cleanSUS = formData.sus_number.replace(/\D/g, '');
+
+    if (cleanCPF.length !== 11) {
+      alert("O CPF deve conter exatamente 11 dígitos.");
+      return;
+    }
+
+    if (cleanSUS.length !== 15) {
+      alert("O Cartão SUS deve conter exatamente 15 dígitos.");
+      return;
+    }
+
     try {
-      const cleanCPF = formData.cpf.replace(/\D/g, '');
-      const cleanSUS = formData.sus_number.replace(/\D/g, '');
       console.log('Registering user with CPF/SUS:', cleanCPF, cleanSUS);
 
       await authService.register({
@@ -130,9 +125,9 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
                 <div className="relative group">
                   <i className="fas fa-address-card absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#22c55e] transition-colors"></i>
                   <input
-                    required type="text" placeholder="000 0000 0000 0000"
+                    required type="text" placeholder="15 dígitos numéricos"
                     className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#22c55e]/5 outline-none text-sm font-bold text-slate-700 transition-all"
-                    value={formData.sus_number} onChange={(e) => setFormData({ ...formData, sus_number: e.target.value.replace(/\D/g, '').slice(0, 15) })}
+                    value={formData.sus_number} onChange={(e) => setFormData({ ...formData, sus_number: maskSUS(e.target.value) })}
                   />
                 </div>
               </div>

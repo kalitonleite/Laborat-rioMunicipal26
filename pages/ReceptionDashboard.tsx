@@ -4,7 +4,7 @@ import { User, Appointment } from '../types';
 import { jsPDF } from 'jspdf';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
-import { maskCPF } from '../services/masks';
+import { maskCPF, maskSUS } from '../services/masks';
 import { dbService } from '../services/apiService';
 
 interface ReceptionDashboardProps {
@@ -249,12 +249,14 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     doc.save(`lista_agendados_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
   };
 
-  const handleDeleteAppointment = async (id: string) => {
-    if (window.confirm("Deseja realmente excluir este agendamento?")) {
+  const handleDeleteAppointment = async (id: string, name: string) => {
+    if (window.confirm(`Deseja realmente excluir o agendamento de ${name}?`)) {
       try {
         await dbService.from('appointments').delete({ id });
         setAppointments(prev => prev.filter(a => a.id !== id));
+        alert('Agendamento excluído com sucesso!');
       } catch (error: any) {
+        console.error('[ReceptionDashboard] Error deleting appointment:', error);
         alert('Erro ao excluir agendamento: ' + error.message);
       }
     }
@@ -267,6 +269,19 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     setIsAdding(true);
     if (!newApp.patientName || !newApp.date || !newApp.time) {
       alert("Por favor, preencha todos os campos e selecione uma data.");
+      return;
+    }
+
+    const cleanCpf = newApp.patientCpf.replace(/\D/g, '');
+    const cleanSus = newApp.patientSusNumber.replace(/\D/g, '');
+
+    if (cleanCpf.length !== 11) {
+      alert("O CPF deve conter exatamente 11 dígitos.");
+      return;
+    }
+
+    if (cleanSus.length > 0 && cleanSus.length !== 15) {
+      alert("O Cartão SUS deve conter exatamente 15 dígitos.");
       return;
     }
 
@@ -405,8 +420,12 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <p className="text-[9px] font-black text-blue-500 uppercase">COLETA LABORATORIAL</p>
                     <p className="text-[10px] text-gray-400 font-bold">{app.date}</p>
                   </div>
-                  <button onClick={() => handleDeleteAppointment(app.id)} className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white">
-                    <i className="fas fa-trash-can text-xs"></i>
+                  <button 
+                      onClick={() => handleDeleteAppointment(app.id, app.patientName)} 
+                      className="w-10 h-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center transition-all hover:bg-red-500 hover:text-white"
+                      title="Excluir agendamento"
+                  >
+                    <i className="fas fa-trash-can text-sm"></i>
                   </button>
                 </div>
               </div>
@@ -694,16 +713,15 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <input type="text" placeholder="000.000.000-00" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={newApp.patientCpf} onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS</label>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS (15 dígitos)</label>
                     <input 
                       type="text" 
-                      maxLength={15}
-                      placeholder="15 dígitos"
+                      placeholder="Somente números"
                       className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
                       value={newApp.patientSusNumber} 
                       onChange={e => {
                         const val = e.target.value.replace(/\D/g, '');
-                        setNewApp({ ...newApp, patientSusNumber: val });
+                        if (val.length <= 15) setNewApp({ ...newApp, patientSusNumber: val });
                       }} 
                     />
                   </div>
