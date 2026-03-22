@@ -15,22 +15,25 @@ async function getBody(req) {
 }
 
 module.exports = async function handler(req, res) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Não autorizado: Token não fornecido.' });
-  }
-
-  const token = authHeader.split(' ')[1];
-  let decoded;
-  try {
-    decoded = jwt.verify(token, JWT_SECRET);
-  } catch (err) {
-    return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
-  }
-
   try {
     const body = await getBody(req);
     const { table, action, id, filter, order, data } = body;
+
+    const isPublicCheck = table === 'authorization_codes' && action === 'select';
+
+    if (!isPublicCheck) {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Não autorizado: Token não fornecido.' });
+      }
+
+      const token = authHeader.split(' ')[1];
+      try {
+        jwt.verify(token, JWT_SECRET);
+      } catch (err) {
+        return res.status(401).json({ error: 'Sessão inválida ou expirada.' });
+      }
+    }
 
     if (!table) return res.status(400).json({ error: 'O nome da tabela é obrigatório.' });
 
