@@ -3,7 +3,9 @@ export enum UserRole {
   PATIENT = 'PATIENT',
   MEDICAL = 'MEDICAL',
   RECEPTION = 'RECEPTION',
-  ADMIN = 'ADMIN'
+  ADMIN = 'ADMIN',
+  PENDING_MEDICAL = 'PENDING_MEDICAL',
+  PENDING_RECEPTION = 'PENDING_RECEPTION'
 }
 
 export interface User {

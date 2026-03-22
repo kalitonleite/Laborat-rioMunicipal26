@@ -53,6 +53,10 @@ module.exports = async function handler(req, res) {
         return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
+    if (user.role === 'PENDING_MEDICAL' || user.role === 'PENDING_RECEPTION') {
+        return res.status(403).json({ error: 'Seu acesso ainda está aguardando liberação do gestor.' });
+    }
+
     const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '1d' });
     return res.status(200).json({
       token,

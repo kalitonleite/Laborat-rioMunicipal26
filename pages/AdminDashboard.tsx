@@ -131,7 +131,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       try {
         const data = await dbService.from('profiles').select(); // In is not easily supported in my basic filter.
         // For now, I'll filter manually or just fetch all.
-        const staff = (data || []).filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION'].includes(p.role));
+        const staff = (data || []).filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION', 'PENDING_MEDICAL', 'PENDING_RECEPTION'].includes(p.role));
         setAdminsList(staff);
       } catch (error) {
         console.error('Erro ao buscar equipe:', error);
@@ -323,6 +323,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         alert("Acesso administrativo revogado com sucesso.");
       } catch (err: any) {
         alert("Erro ao revogar acesso: " + err.message);
+      }
+    }
+  };
+
+  const approveAdmin = async (id: string, role: string) => {
+    const newRole = role === 'PENDING_MEDICAL' ? UserRole.MEDICAL : UserRole.RECEPTION;
+    if (window.confirm("Deseja aprovar e liberar o acesso deste membro?")) {
+      try {
+        await dbService.from('profiles').update({ role: newRole }, { id });
+        setAdminsList(prev => prev.map(a => a.id === id ? { ...a, role: newRole } : a));
+        alert("Acesso liberado com sucesso.");
+      } catch (err: any) {
+        alert("Erro ao liberar acesso: " + err.message);
       }
     }
   };
@@ -869,13 +882,23 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                       <td className="px-8 py-5">
                         <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
                           admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-700' :
-                            'bg-emerald-100 text-emerald-700'
+                            admin.role === 'RECEPTION' ? 'bg-emerald-100 text-emerald-700' :
+                              'bg-amber-100 text-amber-700'
                           }`}>
-                          {admin.role === 'ADMIN' ? 'Administrador' : admin.role === 'MEDICAL' ? 'Área Médica' : 'Recepção'}
+                          {admin.role === 'ADMIN' ? 'Administrador' : admin.role === 'MEDICAL' ? 'Área Médica' : admin.role === 'RECEPTION' ? 'Recepção' : 'Aguardando Aprovação'}
                         </span>
                       </td>
                       <td className="px-8 py-5">
                         <div className="flex justify-center gap-2">
+                          {(admin.role === 'PENDING_MEDICAL' || admin.role === 'PENDING_RECEPTION') && (
+                            <button
+                              onClick={() => approveAdmin(admin.id, admin.role)}
+                              className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
+                              title="Aprovar Acesso"
+                            >
+                              <i className="fas fa-check text-xs"></i>
+                            </button>
+                          )}
                           <button
                             disabled={admin.id === user.id}
                             onClick={() => deleteAdmin(admin.id)}
