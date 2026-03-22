@@ -24,7 +24,7 @@ const MedicalLoginPage: React.FC<MedicalLoginPageProps> = ({ onLogin }) => {
     e.preventDefault();
     try {
       const cleanCPF = cpf.replace(/\D/g, '');
-      await login(cleanCPF, password);
+      await login(cleanCPF, password, UserRole.MEDICAL);
       navigate('/medical');
     } catch (err: any) {
       console.error('Login error:', err);

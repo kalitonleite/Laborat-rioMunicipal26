@@ -24,7 +24,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin }) => {
     e.preventDefault();
     try {
       const cleanCPF = cpf.replace(/\D/g, '');
-      await login(cleanCPF, password);
+      await login(cleanCPF, password, UserRole.ADMIN);
       navigate('/admin');
     } catch (err: any) {
       console.error('Login error:', err);

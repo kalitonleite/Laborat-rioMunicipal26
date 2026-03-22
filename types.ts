@@ -17,6 +17,8 @@ export interface User {
   avatar?: string;
   age?: number;
   gender?: string;
+  email?: string;
+  phone?: string;
 }
 
 export interface Campaign {

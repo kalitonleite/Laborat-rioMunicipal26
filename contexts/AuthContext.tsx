@@ -6,7 +6,7 @@ import { authService, dbService } from '../services/apiService';
 interface AuthContextType {
     user: User | null;
     loading: boolean;
-    login: (cpf: string, password?: string) => Promise<void>;
+    login: (cpf: string, password?: string, role?: string) => Promise<void>;
     signOut: () => Promise<void>;
     fetchProfile: (userId: string) => Promise<void>;
 }
@@ -50,6 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     sus_number: profile.sus_number,
                     role: (profile.role || '').trim().toUpperCase() as UserRole,
                     avatar: profile.avatar,
+                    email: profile.email,
+                    phone: profile.phone,
                 };
                 setUser(mappedUser);
                 localStorage.setItem('user_data', JSON.stringify(mappedUser));
@@ -59,9 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const login = async (cpf: string, password?: string) => {
+    const login = async (cpf: string, password?: string, role?: string) => {
         try {
-            const result = await authService.login(cpf, password);
+            const result = await authService.login(cpf, password, role);
             if (result.token) {
                 localStorage.setItem('auth_token', result.token);
                 localStorage.setItem('user_data', JSON.stringify(result.user));

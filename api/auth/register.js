@@ -15,7 +15,7 @@ async function getBody(req) {
 module.exports = async function handler(req, res) {
   try {
     const body = await getBody(req);
-    const { cpf, name, role, sus_number, password } = body;
+    const { cpf, name, role, sus_number, email, phone, password } = body;
 
     if (!cpf || !name || !role) {
       return res.status(400).json({ error: 'CPF, Nome e Cargo são obrigatórios.' });
@@ -26,8 +26,8 @@ module.exports = async function handler(req, res) {
     const password_hash = await bcrypt.hash(rawPassword, salt);
 
     const result = await sql`
-      INSERT INTO public.profiles (id, cpf, name, role, sus_number, password_hash)
-      VALUES (gen_random_uuid(), ${cpf}, ${name}, ${role}, ${sus_number || null}, ${password_hash})
+      INSERT INTO public.profiles (id, cpf, name, role, sus_number, email, phone, password_hash)
+      VALUES (gen_random_uuid(), ${cpf}, ${name}, ${role}, ${sus_number || null}, ${email || null}, ${phone || null}, ${password_hash})
       RETURNING *
     `;
 

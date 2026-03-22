@@ -58,6 +58,9 @@ const App: React.FC = () => {
         name: updatedUser.name,
         avatar: updatedUser.avatar,
         cpf: updatedUser.cpf,
+        sus_number: updatedUser.sus_number,
+        email: updatedUser.email,
+        phone: updatedUser.phone
       }, { id: user.id });
 
       await fetchProfile(user.id);

@@ -42,7 +42,9 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
         cpf: cleanCPF,
         name: formData.name,
         role: UserRole.PATIENT,
-        sus_number: cleanSUS
+        sus_number: cleanSUS,
+        email: formData.email,
+        phone: formData.phone.replace(/\D/g, '')
       });
 
       alert(`Cadastro realizado com sucesso! Sua senha de acesso inicial são os primeiros 6 dígitos do seu CPF (${cleanCPF.substring(0, 6)}). Você poderá alterá-la no seu painel.`);

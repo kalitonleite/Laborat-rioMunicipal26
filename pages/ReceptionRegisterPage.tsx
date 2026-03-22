@@ -28,7 +28,9 @@ const ReceptionRegisterPage: React.FC<ReceptionRegisterPageProps> = ({ onLogin }
       await authService.register({
         cpf: cleanCPF,
         name: formData.name,
-        role: UserRole.PENDING_RECEPTION
+        role: UserRole.PENDING_RECEPTION,
+        email: formData.email,
+        phone: formData.phone.replace(/\D/g, '')
       });
 
       alert(`Cadastro da recepção realizado com sucesso! Sua senha de acesso inicial são os primeiros 6 dígitos do seu CPF (${cleanCPF.substring(0, 6)}). Você poderá alterá-la no seu painel.`);

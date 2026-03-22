@@ -23,7 +23,7 @@ async function getBody(req) {
 module.exports = async function handler(req, res) {
   try {
     const body = await getBody(req);
-    const { cpf, password } = body;
+    const { cpf, password, role } = body;
 
     if (!cpf || !password) {
       return res.status(400).json({ 
@@ -32,7 +32,12 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const results = await sql`SELECT * FROM public.profiles WHERE cpf = ${cpf} LIMIT 1`;
+    let results;
+    if (role) {
+      results = await sql`SELECT * FROM public.profiles WHERE cpf = ${cpf} AND role = ${role} LIMIT 1`;
+    } else {
+      results = await sql`SELECT * FROM public.profiles WHERE cpf = ${cpf} LIMIT 1`;
+    }
     if (results.length === 0) return res.status(401).json({ error: 'Usuário não encontrado.' });
 
     const user = results[0];

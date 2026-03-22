@@ -13,6 +13,9 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(user.name);
   const [tempCpf, setTempCpf] = useState(user.cpf);
+  const [tempEmail, setTempEmail] = useState(user.email || '');
+  const [tempPhone, setTempPhone] = useState(user.phone || '');
+  const [tempSus, setTempSus] = useState(user.sus_number || '');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pwdData, setPwdData] = useState({ new: '', confirm: '' });
   const [showNewPwd, setShowNewPwd] = useState(false);
@@ -36,7 +39,14 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
       alert("O CPF deve conter 11 dígitos.");
       return;
     }
-    onUpdateUser({ ...user, name: tempName, cpf: cleanCpf });
+    onUpdateUser({ 
+      ...user, 
+      name: tempName, 
+      cpf: cleanCpf,
+      email: tempEmail,
+      phone: tempPhone.replace(/\D/g, ''),
+      sus_number: tempSus.replace(/\D/g, '')
+    });
     setIsEditing(false);
   };
 
@@ -115,7 +125,20 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
                   <p className="text-sm text-gray-500 font-medium tracking-tight">CPF: {maskCPF(user.cpf || '')}</p>
                 )}
               </div>
-              {user.sus_number && <p className="text-sm text-emerald-600 font-bold">Cartão SUS: {user.sus_number}</p>}
+              {isEditing ? (
+                <div className="flex flex-col gap-1 mt-2">
+                  <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">Nº Cartão SUS</label>
+                  <input
+                    type="text"
+                    className="text-sm font-bold text-emerald-700 border-b border-emerald-200 outline-none bg-transparent py-0.5 w-48"
+                    value={tempSus}
+                    onChange={(e) => setTempSus(e.target.value.replace(/\D/g, '').substring(0, 15))}
+                    placeholder="15 dígitos"
+                  />
+                </div>
+              ) : (
+                user.sus_number && <p className="text-sm text-emerald-600 font-bold">Cartão SUS: {user.sus_number}</p>
+              )}
             </div>
           </div>
 
@@ -125,8 +148,32 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
               <div className="space-y-4">
                 <InfoRow icon="fa-id-card" label="ID do Sistema" value={user.id} />
                 <InfoRow icon="fa-shield-halved" label="Nível de Acesso" value={getRoleLabel(user.role)} />
-                {user.sus_number && <InfoRow icon="fa-address-card" label="Nº Cartão SUS" value={user.sus_number} />}
-                <InfoRow icon="fa-envelope" label="Email de Recuperação" value="Não cadastrado" />
+                
+                <div className="space-y-4 pt-2 border-t border-gray-100">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">E-mail de Contato</label>
+                    {isEditing ? (
+                      <input type="email" className="text-sm font-bold text-slate-700 border border-gray-100 rounded-lg p-2 bg-white" value={tempEmail} onChange={e => setTempEmail(e.target.value)} />
+                    ) : (
+                      <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                        <i className="fas fa-envelope text-blue-300 w-5"></i>
+                        {user.email || "Não cadastrado"}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefone / WhatsApp</label>
+                    {isEditing ? (
+                      <input type="text" className="text-sm font-bold text-slate-700 border border-gray-100 rounded-lg p-2 bg-white" value={tempPhone} onChange={e => setTempPhone(e.target.value)} />
+                    ) : (
+                      <div className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                        <i className="fas fa-phone text-blue-300 w-5"></i>
+                        {user.phone || "Não cadastrado"}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 

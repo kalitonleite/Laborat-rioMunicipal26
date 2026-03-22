@@ -47,7 +47,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     try {
       const cleanId = identification.replace(/\D/g, '');
-      await login(cleanId, password);
+      await login(cleanId, password, UserRole.PATIENT);
       navigate('/patient');
     } catch (err: any) {
       console.error('Login error:', err);

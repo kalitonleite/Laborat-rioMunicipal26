@@ -43,10 +43,10 @@ export const dbService = {
 };
 
 export const authService = {
-  login: (cpf: string, password?: string) => 
-    apiRequest('/api/auth/login', 'POST', { cpf, password }),
+  login: (cpf: string, password?: string, role?: string) => 
+    apiRequest('/api/auth/login', 'POST', { cpf, password, role }),
   
-  register: (data: { cpf: string, name: string, role: string, sus_number?: string, password?: string }) => 
+  register: (data: { cpf: string, name: string, role: string, sus_number?: string, email?: string, phone?: string, password?: string }) => 
     apiRequest('/api/auth/register', 'POST', data),
   
   updatePassword: (password: string) => 

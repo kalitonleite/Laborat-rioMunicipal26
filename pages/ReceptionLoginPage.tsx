@@ -24,7 +24,7 @@ const ReceptionLoginPage: React.FC<ReceptionLoginPageProps> = ({ onLogin }) => {
     e.preventDefault();
     try {
       const cleanCPF = cpf.replace(/\D/g, '');
-      await login(cleanCPF, password);
+      await login(cleanCPF, password, UserRole.RECEPTION);
       navigate('/reception');
     } catch (err: any) {
       console.error('Login error:', err);
