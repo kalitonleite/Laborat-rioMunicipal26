@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/apiService';
+import { maskCPF } from '../services/masks';
 
 interface ProfileTabProps {
   user: User;
@@ -11,6 +12,7 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [tempName, setTempName] = useState(user.name);
+  const [tempCpf, setTempCpf] = useState(user.cpf);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [pwdData, setPwdData] = useState({ new: '', confirm: '' });
   const [showNewPwd, setShowNewPwd] = useState(false);
@@ -29,7 +31,12 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
   };
 
   const handleSaveInfo = () => {
-    onUpdateUser({ ...user, name: tempName });
+    const cleanCpf = tempCpf.replace(/\D/g, '');
+    if (cleanCpf.length !== 11) {
+      alert("O CPF deve conter 11 dígitos.");
+      return;
+    }
+    onUpdateUser({ ...user, name: tempName, cpf: cleanCpf });
     setIsEditing(false);
   };
 
@@ -93,7 +100,21 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ user, onUpdateUser }) => {
                   <i className={`fas ${isEditing ? 'fa-check-circle text-green-500' : 'fa-pen-to-square'}`}></i>
                 </button>
               </div>
-              <p className="text-sm text-gray-500 font-medium">CPF: {user.cpf}</p>
+              <div className="mt-1">
+                {isEditing ? (
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest ml-1">CPF</label>
+                    <input
+                      type="text"
+                      className="text-sm font-bold text-slate-700 border-b border-blue-200 outline-none bg-transparent py-0.5 w-40"
+                      value={tempCpf}
+                      onChange={(e) => setTempCpf(maskCPF(e.target.value))}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 font-medium tracking-tight">CPF: {maskCPF(user.cpf || '')}</p>
+                )}
+              </div>
               {user.sus_number && <p className="text-sm text-emerald-600 font-bold">Cartão SUS: {user.sus_number}</p>}
             </div>
           </div>

@@ -57,6 +57,7 @@ const App: React.FC = () => {
       await dbService.from('profiles').update({
         name: updatedUser.name,
         avatar: updatedUser.avatar,
+        cpf: updatedUser.cpf,
       }, { id: user.id });
 
       await fetchProfile(user.id);
