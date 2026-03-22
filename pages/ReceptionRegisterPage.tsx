@@ -15,25 +15,14 @@ const ReceptionRegisterPage: React.FC<ReceptionRegisterPageProps> = ({ onLogin }
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
-    unitCode: '',
     email: '',
+    phone: ''
   });
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const unitCode = formData.unitCode.trim().toUpperCase();
-      const codeData = await dbService.from('authorization_codes').select({
-        code: unitCode,
-        role: UserRole.RECEPTION
-      });
-
-      if (!codeData || codeData.length === 0) {
-        alert('Código de autorização da unidade inválido!');
-        return;
-      }
-
       const cleanCPF = formData.cpf.replace(/\D/g, '');
 
       await authService.register({
@@ -121,7 +110,7 @@ const ReceptionRegisterPage: React.FC<ReceptionRegisterPageProps> = ({ onLogin }
                 <div className="relative group">
                   <i className="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-emerald-600 transition-colors"></i>
                   <input
-                    required type="email" placeholder="nome@uarini.am.gov.br"
+                    type="email" placeholder="nome@uarini.am.gov.br"
                     className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none text-sm font-bold text-slate-700 transition-all"
                     value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
@@ -140,15 +129,17 @@ const ReceptionRegisterPage: React.FC<ReceptionRegisterPageProps> = ({ onLogin }
                 </div>
               </div>
 
-              <div className="md:col-span-2 space-y-1.5 mt-2">
-                <label className="text-[10px] font-bold text-emerald-600 uppercase ml-1 tracking-[0.2em]">Código de Autorização da Unidade</label>
-                <div className="relative group">
-                  <i className="fas fa-key absolute left-5 top-1/2 -translate-y-1/2 text-emerald-400 group-focus-within:text-emerald-600 transition-colors"></i>
-                  <input
-                    required type="text" placeholder="Digite o código da recepção"
-                    className="w-full pl-14 pr-4 py-5 rounded-2xl border border-emerald-100 bg-emerald-50/30 text-sm focus:ring-4 focus:ring-emerald-500/10 outline-none font-bold text-emerald-900 transition-all"
-                    value={formData.unitCode} onChange={(e) => setFormData({ ...formData, unitCode: e.target.value })}
-                  />
+              <div className="md:col-span-2 bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100/50 mt-4">
+                <div className="flex items-start gap-4">
+                  <div className="bg-emerald-600 p-2.5 rounded-xl shadow-lg shadow-emerald-600/20">
+                    <i className="fas fa-info-circle text-white"></i>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-emerald-900 uppercase tracking-widest mb-1">Nota de Segurança e Aprovação</h4>
+                    <p className="text-[11px] text-emerald-800/70 font-medium leading-relaxed">
+                      Seu cadastro ficará pendente de aprovação pela gestão. A senha inicial será os primeiros 6 dígitos do seu CPF.
+                    </p>
+                  </div>
                 </div>
               </div>
 

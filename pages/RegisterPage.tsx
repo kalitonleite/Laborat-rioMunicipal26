@@ -30,7 +30,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
       return;
     }
 
-    if (cleanSUS.length !== 15) {
+    if (cleanSUS.length > 0 && cleanSUS.length !== 15) {
       alert("O Cartão SUS deve conter exatamente 15 dígitos.");
       return;
     }
@@ -125,7 +125,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
                 <div className="relative group">
                   <i className="fas fa-address-card absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#22c55e] transition-colors"></i>
                   <input
-                    required type="text" placeholder="15 dígitos numéricos"
+                    type="text" placeholder="15 dígitos numéricos"
                     className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#22c55e]/5 outline-none text-sm font-bold text-slate-700 transition-all"
                     value={formData.sus_number} onChange={(e) => setFormData({ ...formData, sus_number: maskSUS(e.target.value) })}
                   />
@@ -137,7 +137,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
                 <div className="relative group">
                   <i className="fas fa-envelope absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
                   <input
-                    required type="email" placeholder="seu@email.com"
+                    type="email" placeholder="seu@email.com"
                     className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/5 outline-none text-sm font-bold text-slate-700 transition-all"
                     value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />

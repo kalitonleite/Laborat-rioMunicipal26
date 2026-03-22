@@ -123,7 +123,7 @@ const AdminRegisterPage: React.FC<AdminRegisterPageProps> = ({ onLogin }) => {
                 <div className="relative group">
                   <i className="fas fa-at absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#002147] transition-colors"></i>
                   <input
-                    required type="email" placeholder="nome@laboratorio.com"
+                    type="email" placeholder="nome@laboratorio.com"
                     className="w-full pl-14 pr-4 py-4 rounded-2xl border border-slate-100 bg-slate-50/50 focus:bg-white focus:ring-4 focus:ring-[#002147]/10 outline-none text-sm font-bold text-slate-700 transition-all"
                     value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
