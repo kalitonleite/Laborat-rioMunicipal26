@@ -16,15 +16,17 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'perfil'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil'>('geral');
   const [searchTerm, setSearchTerm] = useState('');
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
+  const [patientSearchTerm, setPatientSearchTerm] = useState('');
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [isCampaignModalOpen, setIsCampaignModalOpen] = useState(false);
   const [viewingExam, setViewingExam] = useState<ExamResult | null>(null);
   const [examsList, setExamsList] = useState<ExamResult[]>([]);
   const [campaignsList, setCampaignsList] = useState<Campaign[]>([]);
   const [adminsList, setAdminsList] = useState<User[]>([]);
+  const [patientsList, setPatientsList] = useState<User[]>([]);
 
   // Novos estados para mídia de campanha
   const [campaignMediaFile, setCampaignMediaFile] = useState<string | null>(null);
@@ -127,21 +129,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       }
     };
 
-    const fetchStaff = async () => {
+    const fetchUsers = async () => {
       try {
-        const data = await dbService.from('profiles').select(); // In is not easily supported in my basic filter.
-        // For now, I'll filter manually or just fetch all.
-        const staff = (data || []).filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION', 'PENDING_MEDICAL', 'PENDING_RECEPTION'].includes(p.role));
+        const data = await dbService.from('profiles').select();
+        const profiles = data || [];
+        const staff = profiles.filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION', 'PENDING_MEDICAL', 'PENDING_RECEPTION'].includes(p.role));
+        const patients = profiles.filter((p: any) => p.role === 'PATIENT');
+        
         setAdminsList(staff);
+        setPatientsList(patients);
+        setPatientStats({ total: patients.length, growth: 0 }); // Simplificado para este exemplo
       } catch (error) {
-        console.error('Erro ao buscar equipe:', error);
+        console.error('Erro ao buscar usuários:', error);
       }
     };
 
     fetchExams();
-    fetchPatientStats();
     fetchCampaigns();
-    fetchStaff();
+    fetchUsers();
   }, []);
 
   // Estado para controle de edição
@@ -316,13 +321,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       alert("Você não pode excluir seu próprio acesso administrativo.");
       return;
     }
-    if (window.confirm("Deseja revogar o acesso deste administrador?")) {
+    if (window.confirm("Deseja excluir permanentemente este membro da equipe? Todos os dados dele serão removidos.")) {
       try {
-        await dbService.from('profiles').update({ role: UserRole.PATIENT }, { id });
+        await dbService.from('profiles').delete({ id });
         setAdminsList(prev => prev.filter(a => a.id !== id));
-        alert("Acesso administrativo revogado com sucesso.");
+        alert("Membro excluído com sucesso.");
       } catch (err: any) {
-        alert("Erro ao revogar acesso: " + err.message);
+        alert("Erro ao excluir membro: " + err.message);
+      }
+    }
+  };
+
+  const deletePatient = async (id: string) => {
+    if (window.confirm("Deseja excluir permanentemente este usuário/paciente? Todos os dados vinculados serão perdidos.")) {
+      try {
+        await dbService.from('profiles').delete({ id });
+        setPatientsList(prev => prev.filter(p => p.id !== id));
+        alert("Usuário excluído com sucesso.");
+      } catch (err: any) {
+        alert("Erro ao excluir usuário: " + err.message);
       }
     }
   };
@@ -429,6 +446,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     );
   }, [adminSearchTerm, adminsList]);
 
+  const filteredPatients = useMemo(() => {
+    return patientsList.filter(p =>
+      (p.name || '').toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
+      (p.cpf || '').includes(patientSearchTerm)
+    );
+  }, [patientSearchTerm, patientsList]);
+
   // Lógica de Relatórios
   const reportStats = useMemo(() => {
     const typeCounts: Record<string, number> = {};
@@ -511,6 +535,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'relatorios', label: 'Relatórios', icon: 'fa-file-contract' },
           { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
           { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
+          { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
         ]}
         activeTab={activeTab}
@@ -889,7 +914,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                         </span>
                       </td>
                       <td className="px-8 py-5">
-                        <div className="flex justify-center gap-2">
+                        <div className="flex justify-center gap-2 text-right">
                           {(admin.role === 'PENDING_MEDICAL' || admin.role === 'PENDING_RECEPTION') && (
                             <button
                               onClick={() => approveAdmin(admin.id, admin.role)}
@@ -903,9 +928,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                             disabled={admin.id === user.id}
                             onClick={() => deleteAdmin(admin.id)}
                             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-sm border ${admin.id === user.id ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed' : 'bg-red-50 text-red-500 border-red-100 hover:bg-red-500 hover:text-white'}`}
-                            title="Remover Acesso"
+                            title="Deletar Membro"
                           >
-                            <i className="fas fa-user-minus text-xs"></i>
+                            <i className="fas fa-trash-can text-xs"></i>
                           </button>
                         </div>
                       </td>
@@ -913,6 +938,79 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   )) : (
                     <tr>
                       <td colSpan={3} className="py-16 text-center text-gray-400 font-bold text-sm">Nenhum administrador encontrado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'usuarios' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Usuários Cadastrados</h2>
+            <div className="bg-white p-5 md:p-6 rounded-[28px] shadow-sm border border-gray-100">
+              <div className="relative">
+                <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                <input
+                  type="text"
+                  placeholder="Buscar usuário por nome ou CPF..."
+                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-500 outline-none text-sm font-bold transition-all placeholder:text-gray-300"
+                  value={patientSearchTerm}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (/^\d/.test(v)) setPatientSearchTerm(maskCPF(v));
+                    else setPatientSearchTerm(v);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[600px]">
+                <thead className="bg-gray-50/50 border-b border-gray-50">
+                  <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <th className="px-8 py-5">Nome / CPF</th>
+                    <th className="px-8 py-5">Cartão SUS</th>
+                    <th className="px-8 py-5 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredPatients.length > 0 ? filteredPatients.map(p => (
+                    <tr key={p.id} className="hover:bg-blue-50/10 transition-colors group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black text-xs">
+                            <i className="fas fa-user"></i>
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-800 text-sm">{p.name}</p>
+                            <p className="text-[10px] text-gray-400 font-bold">{maskCPF(p.cpf || '')}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-[11px] font-bold text-slate-600">{p.sus_number || 'Não informado'}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => deletePatient(p.id)}
+                            className="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                            title="Excluir Usuário"
+                          >
+                            <i className="fas fa-trash-can text-xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={3} className="py-16 text-center text-gray-400 font-bold text-sm">Nenhum usuário encontrado.</td>
                     </tr>
                   )}
                 </tbody>
