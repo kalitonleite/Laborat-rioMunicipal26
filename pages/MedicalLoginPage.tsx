@@ -45,8 +45,8 @@ const MedicalLoginPage: React.FC<MedicalLoginPageProps> = ({ onLogin }) => {
             <button onClick={() => navigate('/')} className="text-slate-400 hover:text-[#1e3a8a] transition-all bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100">
               <i className="fas fa-arrow-left"></i>
             </button>
-            <div className="bg-white p-2 rounded-2xl shadow-xl border border-blue-50">
-              <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-12 h-12 object-contain" />
+            <div className="bg-white rounded-2xl shadow-xl border border-blue-50 overflow-hidden w-12 h-12">
+              <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
 

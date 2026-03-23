@@ -29,12 +29,11 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
       <header className="bg-gradient-to-br from-[#002147] via-[#002147] to-[#003366] text-white px-4 py-6 md:px-8 md:py-7 pt-8 shadow-[0_10px_40px_rgba(0,33,71,0.2)] rounded-b-[40px] md:rounded-b-[50px] z-50 relative border-b border-white/5">
         <div className="container mx-auto flex justify-between items-center max-w-7xl">
           <div className="flex items-center gap-4 md:gap-6">
-            {/* Logo Relocado no lugar do Microscópio */}
-            <div className="bg-white p-1.5 md:p-2 rounded-2xl shadow-2xl shadow-black/20 border border-white/10 hover:scale-105 transition-transform duration-300">
+            <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 border border-white/10 hover:scale-105 transition-transform duration-300 overflow-hidden w-12 h-12 md:w-16 md:h-16">
               <img
                 src={appLogo || "/assets/logo-uarini.jpg"}
                 alt="Uarini"
-                className="w-12 h-12 md:w-16 md:h-16 object-contain rounded-lg"
+                className="w-full h-full object-cover"
               />
             </div>
 

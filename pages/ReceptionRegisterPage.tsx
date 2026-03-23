@@ -59,8 +59,8 @@ const ReceptionRegisterPage: React.FC<ReceptionRegisterPageProps> = ({ onLogin }
               >
                 <i className="fas fa-arrow-left"></i>
               </button>
-              <div className="bg-white p-2 rounded-2xl shadow-xl border border-emerald-50">
-                <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-12 h-12 object-contain" />
+              <div className="bg-white rounded-2xl shadow-xl border border-emerald-50 overflow-hidden w-12 h-12">
+                <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-full h-full object-cover" />
               </div>
             </div>
 
