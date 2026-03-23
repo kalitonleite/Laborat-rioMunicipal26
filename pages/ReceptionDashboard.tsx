@@ -6,6 +6,7 @@ import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import { maskCPF, maskSUS, maskAge } from '../services/masks';
 import { dbService } from '../services/apiService';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface ReceptionDashboardProps {
   user: User;
@@ -13,6 +14,7 @@ interface ReceptionDashboardProps {
 }
 
 const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateUser }) => {
+  const { appLogo } = useSettings();
   const [activeTab, setActiveTab] = useState<'fila' | 'agenda' | 'perfil' | 'config'>('fila');
   const [dailyLimit, setDailyLimit] = useState<number>(20);
   const [specificLimits, setSpecificLimits] = useState<Record<string, number>>({});
@@ -186,38 +188,47 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
     // Cabeçalho
     doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 50, 'F');
+
+    if (appLogo) {
+      try {
+        doc.addImage(appLogo, 'PNG', 105 - 12.5, 5, 25, 25);
+      } catch (e) {
+        console.error('Erro ao adicionar logo ao PDF:', e);
+      }
+    }
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("Laboratório Municipal de Uarini", 105, 18, { align: "center" });
+    doc.text("Laboratório Municipal de Uarini", 105, 38, { align: "center" });
 
-    doc.setFontSize(14);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text("Lista de Atendimentos Agendados", 105, 30, { align: "center" });
+    doc.text("Lista de Atendimentos Agendados", 105, 45, { align: "center" });
 
     // Metadados
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 50);
-    doc.text(`Total de agendamentos: ${filtered.length}`, 14, 55);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 60);
+    doc.text(`Total de agendamentos: ${filtered.length}`, 14, 65);
 
     // Tabela
-    let yPos = 65;
+    let yPos = 75;
 
     // Cabeçalho da Tabela
     doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
     doc.rect(14, yPos - 5, 182, 10, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.text("HORA", 14, yPos + 1);
     doc.text("PACIENTE", 30, yPos + 1);
-    doc.text("CPF", 95, yPos + 1);
-    doc.text("IDADE", 125, yPos + 1);
-    doc.text("SUS", 145, yPos + 1);
-    doc.text("DATA", 185, yPos + 1);
+    doc.text("NASCIMENTO", 75, yPos + 1);
+    doc.text("IDADE", 105, yPos + 1);
+    doc.text("SUS", 125, yPos + 1);
+    doc.text("ENDEREÇO", 155, yPos + 1);
+    doc.text("DATA", 188, yPos + 1);
 
     yPos += 10;
 
@@ -234,11 +245,12 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       }
 
       doc.text(app.time, 14, yPos + 1);
-      doc.text(app.patientName.substring(0, 25), 30, yPos + 1); 
-      doc.text(app.patientCpf || '-', 95, yPos + 1);
-      doc.text(String(app.patientAge || '-'), 125, yPos + 1);
-      doc.text(String(app.patientSusNumber || '-'), 145, yPos + 1);
-      doc.text(app.date, 185, yPos + 1);
+      doc.text(app.patientName.substring(0, 22), 30, yPos + 1); 
+      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 75, yPos + 1);
+      doc.text(String(app.patientAge || '-'), 105, yPos + 1);
+      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 125, yPos + 1);
+      doc.text(app.patientAddress?.substring(0, 20) || '-', 155, yPos + 1);
+      doc.text(app.date, 188, yPos + 1);
 
       yPos += 10;
 
