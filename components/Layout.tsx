@@ -31,9 +31,9 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
           <div className="flex items-center gap-4 md:gap-6">
             <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 border border-white/10 hover:scale-105 transition-transform duration-300 overflow-hidden w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
               <img
-                src={appLogo || "/assets/logo-uarini.jpg"}
+                src={appLogo || ""}
                 alt="Uarini"
-                className="w-full h-full object-contain p-2"
+                className={`w-full h-full object-contain p-2 ${!appLogo ? 'opacity-0' : 'opacity-100'}`}
               />
             </div>
 

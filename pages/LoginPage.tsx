@@ -118,7 +118,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
       <div className="w-full bg-gradient-to-br from-[#002147] via-[#002147] to-[#003366] pt-10 pb-20 md:pt-20 md:pb-32 px-4 flex flex-col items-center relative overflow-hidden shadow-2xl">
         {/* Decorative subtle logo background */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
-          <img src="/assets/logo-uarini.jpg" className="w-full h-full object-cover blur-3xl scale-150 md:scale-125" alt="" />
+          {appLogo && <img src={appLogo} className="w-full h-full object-cover blur-3xl scale-150 md:scale-125" alt="" />}
         </div>
 
         {/* Glow Effects */}
@@ -128,9 +128,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="relative z-10 flex flex-col items-center">
           <div className="rounded-[40px] md:rounded-[60px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/30 mb-8 md:mb-12 transform hover:scale-110 transition-all duration-500 overflow-hidden w-48 h-48 md:w-96 md:h-96 flex items-center justify-center bg-white">
             <img
-              src={appLogo || "/assets/logo-uarini.jpg"}
+              src={appLogo || ""}
               alt="Logo Uarini"
-              className="w-full h-full object-contain p-6"
+              className={`w-full h-full object-contain p-6 ${!appLogo ? 'opacity-0' : 'opacity-100'}`}
             />
           </div>
 

@@ -24,11 +24,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (settings && settings.length > 0) {
         setAppLogo(settings[0].value.url);
       } else {
-        setAppLogo('/assets/logo-uarini.jpg'); // Default fallback
+        setAppLogo(null); // No fallback to old logo
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
-      setAppLogo('/assets/logo-uarini.jpg'); // Default fallback on error
+      setAppLogo(null); // No fallback on error
     } finally {
       setLoading(false);
     }
