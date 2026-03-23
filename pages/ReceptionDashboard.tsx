@@ -4,7 +4,7 @@ import { User, Appointment } from '../types';
 import { jsPDF } from 'jspdf';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
-import { maskCPF, maskSUS, maskAge } from '../services/masks';
+import { maskCPF, maskSUS, maskAge, maskPhone } from '../services/masks';
 import { dbService } from '../services/apiService';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -35,7 +35,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     patientBirthDate: '', 
     patientGender: '', 
     patientSusNumber: '', 
+    patientPhone: '',
     patientAddress: '',
+    patientAddressNumber: '',
     patientAge: '',
     date: '', 
     time: '' 
@@ -54,7 +56,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           patientGender: a.patient_gender,
           patientSusNumber: a.patient_sus_number,
           patientBirthDate: a.patient_birth_date,
+          patientPhone: a.patient_phone,
           patientAddress: a.patient_address,
+          patientAddressNumber: a.patient_address_number,
           date: a.date,
           time: a.time
         }));
@@ -222,14 +226,15 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     doc.rect(14, yPos - 5, 182, 10, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    doc.setFontSize(7); // Reduzido para caber mais uma coluna
     doc.text("HORA", 14, yPos + 1);
-    doc.text("PACIENTE", 28, yPos + 1);
-    doc.text("NASCIMENTO", 63, yPos + 1);
-    doc.text("IDADE", 88, yPos + 1);
-    doc.text("SUS", 102, yPos + 1);
-    doc.text("ENDEREÇO", 132, yPos + 1);
-    doc.text("DATA", 182, yPos + 1);
+    doc.text("PACIENTE", 25, yPos + 1);
+    doc.text("CONTATO", 55, yPos + 1);
+    doc.text("NASCIMENTO", 80, yPos + 1);
+    doc.text("IDADE", 100, yPos + 1);
+    doc.text("SUS", 112, yPos + 1);
+    doc.text("ENDEREÇO", 138, yPos + 1);
+    doc.text("DATA", 185, yPos + 1);
 
     yPos += 10;
 
@@ -246,12 +251,13 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       }
 
       doc.text(app.time, 14, yPos + 1);
-      doc.text(app.patientName.substring(0, 18), 28, yPos + 1); 
-      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 63, yPos + 1);
-      doc.text(String(app.patientAge || '-'), 88, yPos + 1);
-      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 102, yPos + 1);
-      doc.text(app.patientAddress?.substring(0, 30) || '-', 132, yPos + 1);
-      doc.text(app.date, 182, yPos + 1);
+      doc.text(app.patientName.substring(0, 15), 25, yPos + 1); 
+      doc.text(app.patientPhone || '-', 55, yPos + 1);
+      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 80, yPos + 1);
+      doc.text(String(app.patientAge || '-'), 100, yPos + 1);
+      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 112, yPos + 1);
+      doc.text(`${app.patientAddress?.substring(0, 20) || '-'}${app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}`, 138, yPos + 1);
+      doc.text(app.date, 185, yPos + 1);
 
       yPos += 10;
 
@@ -319,7 +325,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         patient_age: !isNaN(age) ? age : null,
         patient_gender: newApp.patientGender,
         patient_sus_number: newApp.patientSusNumber,
+        patient_phone: newApp.patientPhone,
         patient_address: newApp.patientAddress,
+        patient_address_number: newApp.patientAddressNumber,
         date: formattedDate,
         time: newApp.time
       });
@@ -338,7 +346,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         patientAge: data[0].patient_age,
         patientGender: data[0].patient_gender,
         patientSusNumber: data[0].patient_sus_number,
+        patientPhone: data[0].patient_phone,
         patientAddress: data[0].patient_address,
+        patientAddressNumber: data[0].patient_address_number,
         date: data[0].date,
         time: data[0].time
       };
@@ -356,7 +366,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         patientAge: '', 
         patientGender: '', 
         patientSusNumber: '', 
+        patientPhone: '',
         patientAddress: '',
+        patientAddressNumber: '',
         date: '', 
         time: '' 
       });
@@ -436,7 +448,10 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   </div>
                   <div>
                     <h4 className="font-black text-slate-800 text-sm">{app.patientName}</h4>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{app.patientBirthDate ? `NASC: ${app.patientBirthDate.split('-').reverse().join('/')}` : 'DATA NASC. NÃO INFORMADA'}</p>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{app.patientBirthDate ? `NASC: ${app.patientBirthDate.split('-').reverse().join('/')}` : 'DATA NASC. NÃO INFORMADA'}</p>
+                      {app.patientPhone && <p className="text-[10px] text-blue-500 font-bold uppercase tracking-widest flex items-center gap-1"><i className="fas fa-phone text-[8px]"></i> {app.patientPhone}</p>}
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center justify-between md:justify-end gap-4 mt-4 md:mt-0">
@@ -737,6 +752,18 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <input required type="date" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientBirthDate} onChange={e => setNewApp({ ...newApp, patientBirthDate: e.target.value })} />
                   </div>
                   <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefone / Celular</label>
+                    <input 
+                      type="text" 
+                      placeholder="(00) 00000-0000"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
+                      value={newApp.patientPhone} 
+                      onChange={e => setNewApp({ ...newApp, patientPhone: maskPhone(e.target.value) })} 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2 space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS</label>
                     <input 
                       type="text" 
@@ -746,9 +773,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                       onChange={e => setNewApp({ ...newApp, patientSusNumber: maskSUS(e.target.value) })} 
                     />
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Idade</label>
                     <input 
                       type="text" 
@@ -758,34 +783,46 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                       onChange={e => setNewApp({ ...newApp, patientAge: maskAge(e.target.value) })} 
                     />
                   </div>
-                  <div className="space-y-1">
+                </div>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-1 space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sexo</label>
-                    <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientGender} onChange={e => setNewApp({ ...newApp, patientGender: e.target.value })}>
+                    <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.patientGender} onChange={e => setNewApp({ ...newApp, patientGender: e.target.value })}>
                       <option value="">Selecione</option>
-                      <option value="MASCULINO">MASCULINO</option>
-                      <option value="FEMININO">FEMININO</option>
-                      <option value="OUTRO">OUTRO</option>
+                      <option value="MASCULINO">MASC</option>
+                      <option value="FEMININO">FEM</option>
                     </select>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
+                  <div className="col-span-2 space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data</label>
                     <input required type="date" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.date} onChange={e => setNewApp({ ...newApp, date: e.target.value })} />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Horário</label>
-                    <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} />
+                  <div className="col-span-1 space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hora</label>
+                    <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold px-2" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Endereço Completo</label>
-                  <textarea 
-                    placeholder="Rua, Número, Bairro, Ponto de Referência..."
-                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold min-h-[100px]" 
-                    value={newApp.patientAddress} 
-                    onChange={e => setNewApp({ ...newApp, patientAddress: e.target.value })} 
-                  />
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-3 space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Endereço (Rua/Bairro)</label>
+                    <input 
+                      type="text"
+                      placeholder="Ex: Rua das Flores, Bairro Centro"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
+                      value={newApp.patientAddress} 
+                      onChange={e => setNewApp({ ...newApp, patientAddress: e.target.value })} 
+                    />
+                  </div>
+                  <div className="col-span-1 space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Número</label>
+                    <input 
+                      type="text"
+                      placeholder="Nº"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
+                      value={newApp.patientAddressNumber} 
+                      onChange={e => setNewApp({ ...newApp, patientAddressNumber: e.target.value })} 
+                    />
+                  </div>
                 </div>
                 <button 
                    type="submit" 
@@ -821,27 +858,27 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
             </div>
 
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="grid grid-cols-7 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+              <div className="grid grid-cols-8 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <span>Horário</span>
                 <span>Paciente</span>
+                <span>Contato</span>
                 <span>Nascimento</span>
                 <span>Idade</span>
-                <span>Sexo</span>
                 <span>SUS</span>
                 <span>Endereço</span>
                 <span>Data</span>
               </div>
 
-              <div className="space-y-4">
+              <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-2">
                 {filtered.length > 0 ? filtered.map(app => (
-                  <div key={app.id} className="grid grid-cols-7 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
+                  <div key={app.id} className="grid grid-cols-8 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
                     <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
                     <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
+                    <span className="text-[10px] font-medium text-blue-600">{app.patientPhone || '-'}</span>
                     <span className="text-xs font-medium text-slate-500">{app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
                     <span className="text-xs font-medium text-slate-500">{app.patientAge || '-'}</span>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 w-fit px-2 py-1 rounded-md">{app.patientGender || '-'}</span>
-                    <span className="text-xs font-medium text-slate-500">{app.patientSusNumber || '-'}</span>
-                    <span className="text-xs font-medium text-slate-400 truncate max-w-[150px]" title={app.patientAddress}>{app.patientAddress || '-'}</span>
+                    <span className="text-xs font-medium text-slate-500 truncate">{app.patientSusNumber || '-'}</span>
+                    <span className="text-[10px] font-medium text-slate-400 truncate max-w-[150px]" title={`${app.patientAddress}, ${app.patientAddressNumber}`}>{app.patientAddress}{app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}</span>
                     <span className="text-xs font-bold text-slate-800">{app.date}</span>
                   </div>
                 )) : (

@@ -67,6 +67,8 @@ export interface Appointment {
   patientSusNumber?: string;
   patientBirthDate?: string;
   patientAddress?: string;
+  patientPhone?: string;
+  patientAddressNumber?: string;
   date: string;
   time: string;
 }
