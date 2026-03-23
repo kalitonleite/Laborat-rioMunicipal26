@@ -60,7 +60,7 @@ const MedicalRegisterPage: React.FC<MedicalRegisterPageProps> = ({ onLogin }) =>
                 <i className="fas fa-arrow-left"></i>
               </button>
               <div className="bg-white rounded-2xl shadow-xl border border-blue-50 overflow-hidden w-32 h-32">
-                <img src={appLogo || ""} alt="Logo" className="w-full h-full object-contain p-4" />
+                <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-full h-full object-contain p-4" />
               </div>
             </div>
 

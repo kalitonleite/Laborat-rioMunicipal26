@@ -21,14 +21,14 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const refreshSettings = useCallback(async () => {
     try {
       const settings = await dbService.from('lab_settings').select({ key: 'app_logo' });
-      if (settings && settings.length > 0) {
+      if (settings && settings.length > 0 && settings[0].value && settings[0].value.url) {
         setAppLogo(settings[0].value.url);
       } else {
-        setAppLogo(null); // No fallback to old logo
+        setAppLogo('/assets/logo-uarini.jpg'); // Default fallback
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
-      setAppLogo(null); // No fallback on error
+      setAppLogo('/assets/logo-uarini.jpg'); // Default fallback on error
     } finally {
       setLoading(false);
     }
