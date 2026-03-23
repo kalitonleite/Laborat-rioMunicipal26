@@ -245,30 +245,53 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     doc.setTextColor(50, 50, 50); // Slate 700
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-
     filtered.forEach((app, index) => {
+      const patientLines = doc.splitTextToSize(app.patientName, 50);
+      const fullAddress = `${app.patientAddress || '-'}${app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}`;
+      const addressLines = doc.splitTextToSize(fullAddress, 55);
+      
+      const maxLines = Math.max(patientLines.length, addressLines.length, 1);
+      const rowHeight = Math.max(maxLines * 5, 10);
+
+      // Nova página se não couber
+      if (yPos + rowHeight > 190) {
+        doc.addPage('l', 'a4');
+        yPos = 20;
+        
+        doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+        doc.rect(14, yPos - 5, 269, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.text("HORA", 14, yPos + 1);
+        doc.text("PACIENTE", 32, yPos + 1);
+        doc.text("CONTATO", 85, yPos + 1);
+        doc.text("NASCIMENTO", 120, yPos + 1);
+        doc.text("IDADE", 155, yPos + 1);
+        doc.text("SUS", 175, yPos + 1);
+        doc.text("ENDEREÇO", 215, yPos + 1);
+        doc.text("DATA", 275, yPos + 1);
+        yPos += 10;
+        doc.setTextColor(50, 50, 50);
+        doc.setFont("helvetica", "normal");
+      }
+
       // Alternar cor de fundo
       if (index % 2 === 0) {
-        doc.setFillColor(248, 250, 252); // Slate 50
-        doc.rect(14, yPos - 5, 269, 10, 'F');
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, yPos - 5, 269, rowHeight, 'F');
       }
 
       doc.text(app.time, 14, yPos + 1);
-      doc.text(app.patientName.substring(0, 25), 32, yPos + 1); 
+      doc.text(patientLines, 32, yPos + 1); 
       doc.text(app.patientPhone || '-', 85, yPos + 1);
       doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 120, yPos + 1);
       doc.text(String(app.patientAge || '-'), 155, yPos + 1);
       doc.text(String(app.patientSusNumber || '-').substring(0, 15), 175, yPos + 1);
-      doc.text(`${app.patientAddress?.substring(0, 35) || '-'}${app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}`, 215, yPos + 1);
+      doc.text(addressLines, 215, yPos + 1);
       doc.text(app.date, 275, yPos + 1);
 
-      yPos += 10;
-
-      // Nova página se necessário
-      if (yPos > 280) {
-        doc.addPage();
-        yPos = 20;
-      }
+      yPos += rowHeight;
     });
 
     doc.save(`lista_agendados_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.pdf`);
