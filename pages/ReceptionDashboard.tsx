@@ -231,13 +231,13 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9); 
     doc.text("HORA", 14, yPos + 1);
-    doc.text("PACIENTE", 32, yPos + 1);
-    doc.text("CONTATO", 85, yPos + 1);
-    doc.text("NASCIMENTO", 120, yPos + 1);
-    doc.text("IDADE", 155, yPos + 1);
-    doc.text("SUS", 175, yPos + 1);
-    doc.text("ENDEREÇO", 215, yPos + 1);
-    doc.text("DATA", 275, yPos + 1);
+    doc.text("PACIENTE", 30, yPos + 1);
+    doc.text("CONTATO", 80, yPos + 1);
+    doc.text("NASCIMENTO", 115, yPos + 1);
+    doc.text("IDADE", 145, yPos + 1);
+    doc.text("SUS", 165, yPos + 1);
+    doc.text("ENDEREÇO", 205, yPos + 1);
+    doc.text("DATA", 265, yPos + 1);
 
     yPos += 10;
 
@@ -255,7 +255,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
       // Nova página se não couber
       if (yPos + rowHeight > 190) {
-        doc.addPage('l', 'a4');
+        doc.addPage('a4', 'l');
         yPos = 20;
         
         doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
@@ -264,13 +264,13 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         doc.setFont("helvetica", "bold");
         doc.setFontSize(9);
         doc.text("HORA", 14, yPos + 1);
-        doc.text("PACIENTE", 32, yPos + 1);
-        doc.text("CONTATO", 85, yPos + 1);
-        doc.text("NASCIMENTO", 120, yPos + 1);
-        doc.text("IDADE", 155, yPos + 1);
-        doc.text("SUS", 175, yPos + 1);
-        doc.text("ENDEREÇO", 215, yPos + 1);
-        doc.text("DATA", 275, yPos + 1);
+        doc.text("PACIENTE", 30, yPos + 1);
+        doc.text("CONTATO", 80, yPos + 1);
+        doc.text("NASCIMENTO", 115, yPos + 1);
+        doc.text("IDADE", 145, yPos + 1);
+        doc.text("SUS", 165, yPos + 1);
+        doc.text("ENDEREÇO", 205, yPos + 1);
+        doc.text("DATA", 265, yPos + 1);
         yPos += 10;
         doc.setTextColor(50, 50, 50);
         doc.setFont("helvetica", "normal");
@@ -283,13 +283,13 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       }
 
       doc.text(app.time, 14, yPos + 1);
-      doc.text(patientLines, 32, yPos + 1); 
-      doc.text(app.patientPhone || '-', 85, yPos + 1);
-      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 120, yPos + 1);
-      doc.text(String(app.patientAge || '-'), 155, yPos + 1);
-      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 175, yPos + 1);
-      doc.text(addressLines, 215, yPos + 1);
-      doc.text(app.date, 275, yPos + 1);
+      doc.text(patientLines, 30, yPos + 1); 
+      doc.text(app.patientPhone || '-', 80, yPos + 1);
+      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 115, yPos + 1);
+      doc.text(String(app.patientAge || '-'), 145, yPos + 1);
+      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 165, yPos + 1);
+      doc.text(addressLines, 205, yPos + 1);
+      doc.text(app.date, 265, yPos + 1);
 
       yPos += rowHeight;
     });
