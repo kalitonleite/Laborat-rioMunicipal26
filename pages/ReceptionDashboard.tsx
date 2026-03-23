@@ -184,7 +184,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   });
 
   const handleDownloadList = () => {
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      orientation: 'l',
+      unit: 'mm',
+      format: 'a4'
+    });
 
     // Configurações visuais
     const primaryColor = [30, 58, 138]; // Blue 900 (#1e3a8a)
@@ -192,29 +196,28 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
     // Cabeçalho
     doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, 210, 55, 'F'); // Aumentado para 55mm
+    doc.rect(0, 0, 297, 55, 'F'); 
 
     if (appLogo) {
       try {
-        // Tentar manter proporção quadrada 25x25
-        doc.addImage(appLogo, 'JPEG', 105 - 12.5, 5, 25, 25);
+        doc.addImage(appLogo, 'JPEG', 148.5 - 12.5, 5, 25, 25);
       } catch (e) {
         console.error('Erro ao adicionar logo ao PDF:', e);
       }
     }
 
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(22);
     doc.setFont("helvetica", "bold");
-    doc.text("Laboratório Municipal de Uarini", 105, 42, { align: "center" });
+    doc.text("Laboratório Municipal de Uarini", 148.5, 42, { align: "center" });
 
-    doc.setFontSize(11);
+    doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
-    doc.text("Lista de Atendimentos Agendados", 105, 48, { align: "center" });
+    doc.text("Lista de Atendimentos Agendados", 148.5, 48, { align: "center" });
 
     // Metadados
     doc.setTextColor(100, 100, 100);
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 65);
     doc.text(`Total de agendamentos: ${filtered.length}`, 14, 70);
 
@@ -223,18 +226,18 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
     // Cabeçalho da Tabela
     doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
-    doc.rect(14, yPos - 5, 182, 10, 'F');
+    doc.rect(14, yPos - 5, 269, 10, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7); // Reduzido para caber mais uma coluna
+    doc.setFontSize(9); 
     doc.text("HORA", 14, yPos + 1);
-    doc.text("PACIENTE", 25, yPos + 1);
-    doc.text("CONTATO", 55, yPos + 1);
-    doc.text("NASCIMENTO", 80, yPos + 1);
-    doc.text("IDADE", 100, yPos + 1);
-    doc.text("SUS", 112, yPos + 1);
-    doc.text("ENDEREÇO", 138, yPos + 1);
-    doc.text("DATA", 185, yPos + 1);
+    doc.text("PACIENTE", 32, yPos + 1);
+    doc.text("CONTATO", 85, yPos + 1);
+    doc.text("NASCIMENTO", 120, yPos + 1);
+    doc.text("IDADE", 155, yPos + 1);
+    doc.text("SUS", 175, yPos + 1);
+    doc.text("ENDEREÇO", 215, yPos + 1);
+    doc.text("DATA", 275, yPos + 1);
 
     yPos += 10;
 
@@ -247,17 +250,17 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       // Alternar cor de fundo
       if (index % 2 === 0) {
         doc.setFillColor(248, 250, 252); // Slate 50
-        doc.rect(14, yPos - 5, 182, 10, 'F');
+        doc.rect(14, yPos - 5, 269, 10, 'F');
       }
 
       doc.text(app.time, 14, yPos + 1);
-      doc.text(app.patientName.substring(0, 15), 25, yPos + 1); 
-      doc.text(app.patientPhone || '-', 55, yPos + 1);
-      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 80, yPos + 1);
-      doc.text(String(app.patientAge || '-'), 100, yPos + 1);
-      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 112, yPos + 1);
-      doc.text(`${app.patientAddress?.substring(0, 20) || '-'}${app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}`, 138, yPos + 1);
-      doc.text(app.date, 185, yPos + 1);
+      doc.text(app.patientName.substring(0, 25), 32, yPos + 1); 
+      doc.text(app.patientPhone || '-', 85, yPos + 1);
+      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 120, yPos + 1);
+      doc.text(String(app.patientAge || '-'), 155, yPos + 1);
+      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 175, yPos + 1);
+      doc.text(`${app.patientAddress?.substring(0, 35) || '-'}${app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}`, 215, yPos + 1);
+      doc.text(app.date, 275, yPos + 1);
 
       yPos += 10;
 
