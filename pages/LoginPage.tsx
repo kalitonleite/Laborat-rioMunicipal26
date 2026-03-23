@@ -130,7 +130,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <img
               src={appLogo || "/assets/logo-uarini.jpg"}
               alt="Logo Uarini"
-              className="w-full h-full object-cover scale-[1.5]"
+              className="w-full h-full object-contain p-6"
             />
           </div>
 

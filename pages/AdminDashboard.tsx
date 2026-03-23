@@ -1351,7 +1351,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   <img
                     src={appLogo || "/assets/logo-uarini.jpg"}
                     alt="Logo Atual"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 scale-[1.3]"
+                    className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 </div>

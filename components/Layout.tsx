@@ -33,7 +33,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
               <img
                 src={appLogo || "/assets/logo-uarini.jpg"}
                 alt="Uarini"
-                className="w-full h-full object-cover scale-[1.2]"
+                className="w-full h-full object-contain p-2"
               />
             </div>
 
