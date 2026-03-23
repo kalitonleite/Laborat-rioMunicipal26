@@ -98,419 +98,1245 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         startOfMonth.setHours(0, 0, 0, 0);
 
         const previousTotal = patients.filter((p: any) => new Date(p.created_at) < startOfMonth).length;
-        const growth = previousTotal === 0 ? 0 : Math.round(((total - previousTotal) / previousTotal) * 100);
-        
-        setPatientStats({ total, growth });
-      } catch (error) {
-        console.error('Error fetching patient stats:', error);
+
+        let growth = 0;
+        if (previousTotal > 0) {
+          growth = ((total - previousTotal) / previousTotal) * 100;
+        } else if (total > 0) {
+          growth = 100;
+        }
+
+        setPatientStats({ total, growth: Math.round(growth) });
+      } catch (err) {
+        console.error('Erro ao buscar estatísticas de pacientes:', err);
       }
     };
 
     const fetchCampaigns = async () => {
       try {
-        const data = await dbService.from('campaigns').select({}, { column: 'date', ascending: false });
-        setCampaignsList(data || []);
+        const data = await dbService.from('campaigns').select({}, { column: 'created_at', ascending: false });
+        const mappedCampaigns = (data || []).map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          date: c.date,
+          type: c.type,
+          active: c.active,
+          mediaUrl: c.media_url,
+          mediaType: c.media_type
+        }));
+        setCampaignsList(mappedCampaigns);
       } catch (error) {
-        console.error('Error fetching campaigns:', error);
+        console.error('Erro ao buscar campanhas:', error);
       }
     };
 
-    const fetchAdmins = async () => {
+    const fetchUsers = async () => {
       try {
-        const data = await dbService.from('profiles').select({ role: 'ADMIN' });
-        setAdminsList(data || []);
+        const data = await dbService.from('profiles').select();
+        const profiles = data || [];
+        const staff = profiles.filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION', 'PENDING_MEDICAL', 'PENDING_RECEPTION'].includes(p.role));
+        const patients = profiles.filter((p: any) => p.role === 'PATIENT');
+        
+        setAdminsList(staff);
+        setPatientsList(patients);
+        setPatientStats({ total: patients.length, growth: 0 }); // Simplificado para este exemplo
       } catch (error) {
-        console.error('Error fetching admins:', error);
-      }
-    };
-
-    const fetchPatients = async () => {
-      try {
-        const data = await dbService.from('profiles').select({ role: 'PATIENT' });
-        setPatientsList(data || []);
-      } catch (error) {
-        console.error('Error fetching patients:', error);
+        console.error('Erro ao buscar usuários:', error);
       }
     };
 
     fetchExams();
-    fetchPatientStats();
     fetchCampaigns();
-    fetchAdmins();
-    fetchPatients();
+    fetchUsers();
   }, []);
 
-  // Dados para o Gráfico (Exames por mês)
-  const chartData = useMemo(() => {
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-    const data = months.map(m => ({ name: m, exames: 0 }));
-    
-    examsList.forEach(ex => {
-      const d = new Date(ex.date);
-      if (!isNaN(d.getTime())) {
-        data[d.getMonth()].exames++;
-      }
-    });
-
-    return data;
-  }, [examsList]);
-
-  // Filtrar exames por pesquisa
-  const filteredExams = examsList.filter(ex => 
-    ex.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ex.patientCpf.includes(searchTerm) ||
-    ex.examName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Filtrar usuários por pesquisa
-  const filteredAdmins = adminsList.filter(adm => 
-    adm.name.toLowerCase().includes(adminSearchTerm.toLowerCase()) ||
-    adm.cpf.includes(adminSearchTerm)
-  );
-
-  const filteredPatients = patientsList.filter(pt => 
-    pt.name.toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
-    pt.cpf.includes(patientSearchTerm)
-  );
-
-  // Filtrar para Relatórios
-  const reportData = useMemo(() => {
-    return examsList.filter(ex => {
-        const d = new Date(ex.date);
-        const m = (d.getMonth() + 1).toString();
-        const y = d.getFullYear().toString();
-        
-        const matchMonth = filterMonth === 'all' || m === filterMonth;
-        const matchYear = filterYear === 'all' || y === filterYear;
-        
-        return matchMonth && matchYear;
-    });
-  }, [examsList, filterMonth, filterYear]);
+  // Estado para controle de edição
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const handleRegisterExam = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    const cleanCpf = newExam.patientCpf.replace(/\D/g, '');
+    if (cleanCpf.length !== 11) {
+      alert("O CPF deve conter exatamente 11 dígitos.");
+      return;
+    }
+    const dateFormatted = newExam.date.includes('-') ? newExam.date.split('-').reverse().join('/') : newExam.date;
+
     try {
-        // Mock do upload se houver arquivo
-        let fileUrl = '';
-        if (selectedFile) {
-             fileUrl = 'https://example.com/laudo-gerado.pdf';
-             alert('Upload de arquivos desativado. O registro foi criado sem o laudo digital.');
+      if (editingId) {
+        // UPDATE existing exam
+        const updatePayload: any = {
+          patient_name: newExam.patientName,
+          patient_cpf: cleanCpf,
+          exam_name: newExam.examName,
+          date: dateFormatted,
+          status: newExam.status,
+        };
+        if (newExam.resultData) {
+          updatePayload.result_data = newExam.resultData;
+        }
+        if (selectedFileBlob) {
+          // TODO: Implement Storage in Neon/Vercel
+          alert('Upload de arquivos desativado. Use um serviço compatível (ex: Vercel Blob).');
         }
 
-        const dataToSave = {
-            patient_name: newExam.patientName,
-            patient_cpf: newExam.patientCpf,
-            exam_name: newExam.examName,
-            date: newExam.date,
-            status: newExam.status,
-            result_data: newExam.resultData,
-            file_url: fileUrl
-        };
-
-        await dbService.from('exams').insert(dataToSave);
+        await dbService.from('exams').update(updatePayload, { id: editingId });
         
-        alert('Exame registrado com sucesso!');
-        setIsRegisterModalOpen(false);
-        setNewExam({
-            patientName: '',
-            patientCpf: '',
-            examName: '',
-            date: new Date().toISOString().split('T')[0],
-            status: 'READY',
-            resultData: ''
+        setExamsList(prev => prev.map(item =>
+          item.id === editingId ? {
+            ...item,
+            patientName: newExam.patientName,
+            patientCpf: cleanCpf,
+            examName: newExam.examName,
+            date: dateFormatted,
+            status: newExam.status,
+            resultData: 'result_data' in updatePayload ? updatePayload.resultData : item.resultData
+          } : item
+        ));
+        alert('Exame atualizado com sucesso!');
+      } else {
+        const data = await dbService.from('exams').insert({
+          patient_name: newExam.patientName,
+          patient_cpf: cleanCpf,
+          exam_name: newExam.examName,
+          date: dateFormatted,
+          status: newExam.status,
+          result_data: newExam.resultData
         });
-        window.location.reload();
+
+        if (data && data[0]) {
+          if (selectedFileBlob) {
+             alert('Upload de arquivos desativado. O registro foi criado sem o laudo digital.');
+          }
+
+          const newMappedExam = {
+            id: data[0].id,
+            patientName: data[0].patient_name,
+            patientCpf: data[0].patient_cpf,
+            examName: data[0].exam_name,
+            date: data[0].date,
+            status: data[0].status,
+            fileUrl: undefined,
+            resultData: data[0].result_data,
+            aiAnalysis: data[0].ai_analysis
+          };
+          setExamsList(prev => [newMappedExam, ...prev]);
+        }
+        alert('Exame registrado com sucesso!');
+      }
+
+      setIsRegisterModalOpen(false);
+      resetForm();
     } catch (err: any) {
       alert('Erro ao salvar: ' + err.message);
     }
   };
 
-  const handleCampaignAction = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const resetForm = () => {
+    setNewExam({ patientName: '', patientCpf: '', examName: '', date: new Date().toISOString().split('T')[0], status: 'READY' });
+    setSelectedFile(null);
+    setEditingId(null);
+  };
+
+  const openEditModal = (exam: ExamResult) => {
+    // Converter data DD/MM/YYYY para YYYY-MM-DD para o input date
+    const [day, month, year] = exam.date.split('/');
+    const safeDate = (day && month && year) ? `${year}-${month}-${day}` : new Date().toISOString().split('T')[0];
+
+    setNewExam({
+      patientName: exam.patientName,
+      patientCpf: maskCPF(exam.patientCpf || ''),
+      examName: exam.examName,
+      date: safeDate,
+      status: exam.status
+    });
+    setSelectedFile(exam.fileUrl || null);
+    setEditingId(exam.id);
+    setIsRegisterModalOpen(true);
+  };
+
+  const handleRegisterCampaign = async (e: React.FormEvent) => {
     try {
-        const data = {
-            title: newCampaign.title,
-            description: newCampaign.description,
-            type: newCampaign.type,
-            date: newCampaign.date,
-            media_type: newCampaign.mediaType,
-            media_url: campaignMediaFile || ''
+      if (campaignMediaBlob) {
+        alert('Upload de mídia para campanhas está temporariamente desativado.');
+      }
+
+      const data = await dbService.from('campaigns').insert({
+        title: newCampaign.title,
+        description: newCampaign.description,
+        type: newCampaign.type,
+        date: newCampaign.date,
+        active: true,
+        media_url: null,
+        media_type: 'NONE'
+      });
+
+      if (data && data[0]) {
+        const newItem: Campaign = {
+          id: data[0].id,
+          title: data[0].title,
+          description: data[0].description,
+          date: data[0].date,
+          type: data[0].type,
+          active: data[0].active,
+          mediaUrl: data[0].media_url,
+          mediaType: data[0].media_type
         };
+        setCampaignsList(prev => [newItem, ...prev]);
+      }
 
-        if (campaignMediaFile) {
-            alert('Upload de mídia para campanhas está temporariamente desativado.');
-        }
-
-        await dbService.from('campaigns').insert(data);
-        alert('Campanha publicada com sucesso!');
-        setIsCampaignModalOpen(false);
-        window.location.reload();
-    } catch (error) {
-        console.error(error);
+      setIsCampaignModalOpen(false);
+      setNewCampaign({ title: '', description: '', type: 'CAMPANHA', date: new Date().toISOString().split('T')[0], mediaType: 'NONE' });
+      setCampaignMediaBlob(null);
+      setCampaignMediaFile(null);
+      alert('Campanha publicada com sucesso!');
+    } catch (err: any) {
+      alert('Erro ao publicar campanha: ' + err.message);
+    } finally {
+      setUploading(false);
     }
   };
 
-  const deleteExam = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir este registro?')) {
-      try {
-        await dbService.from('exams').delete({ id });
-        setExamsList(examsList.filter(e => e.id !== id));
-      } catch (error) {
-        console.error('Error deleting exam:', error);
-      }
+  const toggleCampaignStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      await dbService.from('campaigns').update({ active: !currentStatus }, { id });
+      setCampaignsList(prev => prev.map(c => c.id === id ? { ...c, active: !currentStatus } : c));
+    } catch (err: any) {
+      alert('Erro ao atualizar status: ' + err.message);
     }
   };
 
   const deleteCampaign = async (id: string) => {
-    if (window.confirm('Excluir esta campanha?')) {
+    if (window.confirm("Deseja excluir esta campanha permanentemente?")) {
       try {
         await dbService.from('campaigns').delete({ id });
-        setCampaignsList(campaignsList.filter(c => c.id !== id));
-      } catch (error) {
-        console.error('Error deleting campaign:', error);
+        setCampaignsList(prev => prev.filter(c => c.id !== id));
+      } catch (err: any) {
+        alert('Erro ao excluir: ' + err.message);
       }
     }
   };
 
-  const generateReportPDF = async () => {
-    if (!reportRef.current) return;
-    const canvas = await html2canvas(reportRef.current);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`relatorio-laboratorio-${filterMonth}-${filterYear}.pdf`);
+  const deleteAdmin = async (id: string) => {
+    if (id === user.id) {
+      alert("Você não pode excluir seu próprio acesso administrativo.");
+      return;
+    }
+    if (window.confirm("Deseja excluir permanentemente este membro da equipe? Todos os dados dele serão removidos.")) {
+      try {
+        await dbService.from('profiles').delete({ id });
+        setAdminsList(prev => prev.filter(a => a.id !== id));
+        alert("Membro excluído com sucesso.");
+      } catch (err: any) {
+        alert("Erro ao excluir membro: " + err.message);
+      }
+    }
   };
 
-  const tabs: TabItem[] = [
-    { id: 'geral', label: 'Dashboard', icon: 'fa-chart-pie' },
-    { id: 'exames', label: 'Registros', icon: 'fa-file-medical' },
-    { id: 'relatorios', label: 'Relatórios', icon: 'fa-file-pdf' },
-    { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
-    { id: 'equipe', label: 'Equipe', icon: 'fa-user-nurse' },
-    { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
-    { id: 'perfil', label: 'Perfil', icon: 'fa-user-circle' },
-    { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
-  ];
+  const deletePatient = async (id: string) => {
+    if (window.confirm("Deseja excluir permanentemente este usuário/paciente? Todos os dados vinculados serão perdidos.")) {
+      try {
+        await dbService.from('profiles').delete({ id });
+        setPatientsList(prev => prev.filter(p => p.id !== id));
+        alert("Usuário excluído com sucesso.");
+      } catch (err: any) {
+        alert("Erro ao excluir usuário: " + err.message);
+      }
+    }
+  };
+
+  const approveAdmin = async (id: string, role: string) => {
+    const newRole = role === 'PENDING_MEDICAL' ? UserRole.MEDICAL : UserRole.RECEPTION;
+    if (window.confirm("Deseja aprovar e liberar o acesso deste membro?")) {
+      try {
+        await dbService.from('profiles').update({ role: newRole }, { id });
+        setAdminsList(prev => prev.map(a => a.id === id ? { ...a, role: newRole } : a));
+        alert("Acesso liberado com sucesso.");
+      } catch (err: any) {
+        alert("Erro ao liberar acesso: " + err.message);
+      }
+    }
+  };
+
+  const handleDeleteExam = async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este registro de exame?")) {
+      try {
+        await dbService.from('exams').delete({ id });
+        setExamsList(prev => prev.filter(e => e.id !== id));
+      } catch (err: any) {
+        alert('Erro ao excluir exame: ' + err.message);
+      }
+    }
+  };
+
+  const handleImportLaudo = () => {
+    fileInputRef.current?.click();
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFileBlob(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedFile(reader.result as string);
+        alert(`Laudo "${file.name}" preparado para upload. Processando leitura do PDF...`);
+      };
+      reader.readAsDataURL(file);
+
+      if (file.type === 'application/pdf') {
+        try {
+          const text = await extractTextFromPDF(file);
+          if (text) {
+            setNewExam(prev => ({ ...prev, resultData: text }));
+            console.log("Texto extraído com sucesso do PDF.");
+          }
+        } catch (err) {
+          console.error("Falha ao processar OCR do PDF", err);
+        }
+      }
+    }
+  };
+
+  const handleDownloadReportPDF = async () => {
+    if (!reportRef.current) return;
+
+    const canvas = await html2canvas(reportRef.current, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#f8fafc'
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.setFontSize(18);
+    pdf.setTextColor(30, 64, 175);
+    pdf.text('Relatório Consolidado de Exames', 10, 15);
+    pdf.setFontSize(10);
+    pdf.setTextColor(100);
+    pdf.text(`Laboratório Municipal de Uarini - Gerado em: ${new Date().toLocaleString()}`, 10, 22);
+
+    pdf.addImage(imgData, 'PNG', 0, 30, pdfWidth, pdfHeight);
+    pdf.save(`relatorio_laboratorio_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  const filteredExams = useMemo(() => {
+    const searchClean = searchTerm.replace(/\D/g, '');
+    const filteredExams = examsList.filter(exam => {
+      const term = searchTerm.toLowerCase();
+      const pName = (exam.patientName || '').toLowerCase();
+      const eName = (exam.examName || '').toLowerCase();
+      const pCpf = (exam.patientCpf || '').replace(/\D/g, '');
+      const sTermClean = searchTerm.replace(/\D/g, '');
+
+      return pName.includes(term) ||
+        eName.includes(term) ||
+        (sTermClean && pCpf.includes(sTermClean));
+    });
+    return filteredExams;
+  }, [searchTerm, examsList]);
+
+  const filteredAdmins = useMemo(() => {
+    return adminsList.filter(a =>
+      (a.name || '').toLowerCase().includes(adminSearchTerm.toLowerCase()) ||
+      (a.cpf || '').includes(adminSearchTerm)
+    );
+  }, [adminSearchTerm, adminsList]);
+
+  const filteredPatients = useMemo(() => {
+    return patientsList.filter(p =>
+      (p.name || '').toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
+      (p.cpf || '').includes(patientSearchTerm)
+    );
+  }, [patientSearchTerm, patientsList]);
+
+  // Lógica de Relatórios
+  const reportStats = useMemo(() => {
+    const typeCounts: Record<string, number> = {};
+    const monthlyData: Record<string, Record<string, number>> = {};
+    const lastPeriodByExam: Record<string, string> = {};
+
+    examsList.forEach(exam => {
+      const name = (exam.examName || '').toUpperCase().trim();
+      if (!name) return; // Skip invalid records
+
+      typeCounts[name] = (typeCounts[name] || 0) + 1;
+
+      // Agrupamento mensal (Assume formato DD/MM/YYYY)
+      const dateStr = exam.date || '';
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const key = `${parts[1]}/${parts[2]}`; // MM/YYYY
+        if (!monthlyData[key]) monthlyData[key] = {};
+        monthlyData[key][name] = (monthlyData[key][name] || 0) + 1;
+
+        // Mantém track do período mais recente para exibição no gráfico
+        lastPeriodByExam[name] = key;
+      }
+    });
+
+    // Gráfico Top Exames incluindo o período no nome para visualização
+    const topExamsChart = Object.entries(typeCounts)
+      .map(([name, total]) => ({
+        name: `${name} (${lastPeriodByExam[name] || 'N/A'})`,
+        total,
+        period: lastPeriodByExam[name] || 'Geral'
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 8);
+
+    const monthlyTable = Object.entries(monthlyData).flatMap(([period, exams]) =>
+      Object.entries(exams).map(([exam, count]) => ({
+        period,
+        exam,
+        count
+      }))
+    ).sort((a, b) => {
+      const [mA, yA] = a.period.split('/').map(Number);
+      const [mB, yB] = b.period.split('/').map(Number);
+      return yB !== yA ? yB - yA : mB - mA;
+    });
+
+    return { topExamsChart, monthlyTable };
+  }, [examsList]);
+
+  // Filtro dinâmico para a tabela de relatórios
+  const filteredMonthlyTable = useMemo(() => {
+    return reportStats.monthlyTable.filter(row => {
+      const [m, y] = row.period.split('/');
+      const monthMatch = filterMonth === 'all' || m === filterMonth;
+      const yearMatch = filterYear === 'all' || y === filterYear;
+      return monthMatch && yearMatch;
+    });
+  }, [reportStats.monthlyTable, filterMonth, filterYear]);
+
+  // Extrair anos únicos disponíveis nos exames para o seletor
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    examsList.forEach(e => {
+      const parts = e.date.split('/');
+      if (parts.length === 3) years.add(parts[2]);
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [examsList]);
+
+
+  const chartColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
 
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20">
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 backdrop-blur-md bg-white/80">
-        <div className="container mx-auto px-4">
-          <DashboardTabs 
-            tabs={tabs as any} 
-            activeTab={activeTab} 
-            onChange={(id) => setActiveTab(id as any)} 
-          />
-        </div>
-      </div>
+    <div className="space-y-6">
+      <DashboardTabs
+        tabs={[
+          { id: 'geral', label: 'Dashboard', icon: 'fa-chart-pie' },
+          { id: 'exames', label: 'Registros', icon: 'fa-file-medical' },
+          { id: 'relatorios', label: 'Relatórios', icon: 'fa-file-contract' },
+          { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
+          { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
+          { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
+          { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
+          { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(id) => setActiveTab(id as any)}
+      />
 
       {activeTab === 'geral' && (
-        <div className="container mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-            <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all hover:-translate-y-1">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pacientes Totais</p>
-                <h3 className="text-3xl font-black text-slate-800 tracking-tighter">{patientStats.total}</h3>
-                <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full mt-2 inline-block">+{patientStats.growth}% este mês</span>
-              </div>
-              <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <i className="fas fa-users text-xl"></i>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pacientes Totais</p>
+              <h3 className="text-3xl font-black text-slate-800">{patientStats.total.toLocaleString('pt-BR')}</h3>
+              <div className={`flex items-center gap-1 mt-1 ${patientStats.growth >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <i className={`fas ${patientStats.growth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[10px]`}></i>
+                <span className="text-[10px] font-black">{Math.abs(patientStats.growth)}% este mês</span>
               </div>
             </div>
-            
-            <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all hover:-translate-y-1">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Exames Realizados</p>
-                <h3 className="text-3xl font-black text-slate-800 tracking-tighter">{examsList.length}</h3>
-                <span className="text-[10px] font-bold text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full mt-2 inline-block">Histórico total</span>
-              </div>
-              <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                <i className="fas fa-microscope text-xl"></i>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all hover:-translate-y-1">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Campanhas Ativas</p>
-                <h3 className="text-3xl font-black text-slate-800 tracking-tighter">{campaignsList.length}</h3>
-                <span className="text-[10px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full mt-2 inline-block">Publicações</span>
-              </div>
-              <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
-                <i className="fas fa-bullhorn text-xl"></i>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all hover:-translate-y-1">
-              <div>
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pendentes</p>
-                <h3 className="text-3xl font-black text-slate-800 tracking-tighter">{examsList.filter(e => e.status === 'PENDING').length}</h3>
-                <span className="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full mt-2 inline-block">Aguardando</span>
-              </div>
-              <div className="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
-                <i className="fas fa-clock text-xl"></i>
+            <div className="bg-white p-6 rounded-[24px] shadow-sm border border-gray-100">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Exames Concluídos</p>
+              <h3 className="text-3xl font-black text-slate-800">{examsList.filter(e => e.status !== 'PENDING').length}</h3>
+              <div className="flex items-center gap-1 text-blue-500 mt-1">
+                <i className="fas fa-check-circle text-[10px]"></i>
+                <span className="text-[10px] font-black">94% taxa de sucesso</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-               <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xl font-black text-slate-800">Volume de Atendimentos</h3>
-                  <i className="fas fa-ellipsis-h text-gray-300"></i>
-               </div>
-               <div className="h-[350px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
-                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
-                      <Tooltip 
-                        contentStyle={{borderRadius: '20px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontWeight: 'bold'}}
-                        cursor={{fill: '#f8fafc'}}
-                      />
-                      <Bar dataKey="exames" radius={[10, 10, 10, 10]} barSize={20}>
-                        {chartData.map((entry, index) => (
-                           <Cell key={`cell-${index}`} fill={index === new Date().getMonth() ? '#1e40af' : '#cbd5e1'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-               </div>
+          <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-lg font-black text-[#1e3a8a] uppercase tracking-tighter">Volume de Exames Recentes</h2>
             </div>
-
-            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-               <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xl font-black text-slate-800">Últimos Registros</h3>
-                  <button onClick={() => setActiveTab('exames')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Ver Todos</button>
-               </div>
-               <div className="space-y-4">
-                  {examsList.slice(0, 5).map(ex => (
-                    <div key={ex.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-xs">
-                           {ex.patientName.charAt(0)}
-                        </div>
-                        <div>
-                           <h4 className="text-sm font-black text-slate-700 leading-none mb-1">{ex.patientName}</h4>
-                           <p className="text-[10px] font-bold text-gray-400">{ex.examName} • {ex.date}</p>
-                        </div>
-                      </div>
-                      <div className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${ex.status === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                        {ex.status === 'READY' ? 'Pronto' : 'Pendente'}
-                      </div>
-                    </div>
-                  ))}
-               </div>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={reportStats.topExamsChart}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} />
+                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                  <Bar dataKey="total" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={30} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
       )}
 
       {activeTab === 'exames' && (
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-             <div>
-                <h2 className="text-3xl font-black text-slate-800 tracking-tighter">Gerenciar Exames</h2>
-                <p className="text-sm text-gray-500 font-medium">Controle total sobre os laudos e registros de pacientes.</p>
-             </div>
-             <button 
-                onClick={() => setIsRegisterModalOpen(true)}
-                className="bg-[#002147] text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3"
-             >
-                <i className="fas fa-plus-circle"></i> Novo Registro
-             </button>
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Registros de Exames</h2>
+
+            <div className="bg-white p-5 md:p-6 rounded-[28px] shadow-sm border border-gray-100 space-y-4">
+              <div className="relative">
+                <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                <input
+                  type="text"
+                  placeholder="Buscar paciente por nome ou CPF..."
+                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-500 outline-none text-sm font-bold transition-all placeholder:text-gray-300"
+                  value={searchTerm}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (/^\d/.test(v)) setSearchTerm(maskCPF(v));
+                    else setSearchTerm(v);
+                  }}
+                />
+              </div>
+              <button
+                onClick={() => { resetForm(); setIsRegisterModalOpen(true); }}
+                className="w-full bg-[#059669] hover:bg-emerald-700 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+              >
+                <i className="fas fa-plus"></i> NOVO REGISTRO
+              </button>
+            </div>
           </div>
 
-          <div className="bg-white rounded-[40px] shadow-sm border border-gray-100 overflow-hidden">
-             <div className="p-6 border-b border-gray-50 bg-gray-50/30">
-                <div className="relative max-w-md">
-                   <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
-                   <input 
-                      type="text" 
-                      placeholder="Pesquisar por nome ou CPF..." 
-                      className="w-full pl-14 pr-6 py-4 rounded-2xl border-none bg-white shadow-inner text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                   />
-                </div>
-             </div>
-             <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                   <thead>
-                      <tr className="bg-white text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                         <th className="px-8 py-6">Paciente</th>
-                         <th className="px-8 py-6">Exame</th>
-                         <th className="px-8 py-6">Data</th>
-                         <th className="px-8 py-6">Status</th>
-                         <th className="px-8 py-6 text-right">Ações</th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-gray-50">
-                      {filteredExams.map(ex => (
-                         <tr key={ex.id} className="hover:bg-slate-50 transition-colors group">
-                            <td className="px-8 py-6">
-                               <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-black text-[10px]">
-                                     {ex.patientName.split(' ').map(n => n[0]).join('').substring(0,2)}
-                                  </div>
-                                  <div>
-                                     <p className="text-sm font-black text-slate-700 leading-none mb-1">{ex.patientName}</p>
-                                     <p className="text-[10px] text-gray-400 font-bold">{ex.patientCpf}</p>
-                                  </div>
-                               </div>
-                            </td>
-                            <td className="px-8 py-6">
-                               <p className="text-sm font-black text-slate-600 uppercase tracking-tight">{ex.examName}</p>
-                            </td>
-                            <td className="px-8 py-6">
-                               <p className="text-sm font-bold text-slate-500">{ex.date}</p>
-                            </td>
-                            <td className="px-8 py-6">
-                               <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-widest ${ex.status === 'READY' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                                  {ex.status === 'READY' ? 'Pronto' : 'Pendente'}
-                               </span>
-                            </td>
-                            <td className="px-8 py-6 text-right">
-                               <div className="flex items-center justify-end gap-2">
-                                  <button onClick={() => setViewingExam(ex)} className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center">
-                                     <i className="fas fa-eye text-xs"></i>
-                                  </button>
-                                  <button onClick={() => deleteExam(ex.id)} className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center">
-                                     <i className="fas fa-trash-alt text-xs"></i>
-                                  </button>
-                               </div>
-                            </td>
-                         </tr>
-                      ))}
-                   </tbody>
-                </table>
-                {filteredExams.length === 0 && (
-                   <div className="py-20 text-center">
-                      <i className="fas fa-folder-open text-4xl text-gray-200 mb-4"></i>
-                      <p className="text-sm font-bold text-gray-400">Nenhum registro encontrado para sua pesquisa.</p>
-                   </div>
-                )}
-             </div>
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[700px]">
+                <thead className="bg-gray-50/50 border-b border-gray-50">
+                  <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <th className="px-8 py-5">Paciente</th>
+                    <th className="px-8 py-5">Exame</th>
+                    <th className="px-8 py-5">Data</th>
+                    <th className="px-8 py-5">Status</th>
+                    <th className="px-8 py-5 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredExams.length > 0 ? filteredExams.map(exam => (
+                    <tr key={exam.id} className="hover:bg-blue-50/10 transition-colors group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">
+                            {(exam.patientName || '?').charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-800 text-sm">{exam.patientName || 'Paciente Desconhecido'}</p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">{maskCPF(exam.patientCpf || '')}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-blue-600 font-black text-[11px] uppercase tracking-tight bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                          {exam.examName || 'Exame'}
+                          {exam.fileUrl && <i className="fas fa-paperclip text-[10px] text-indigo-500"></i>}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-[11px] font-bold text-gray-500">{exam.date || '--/--/----'}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${exam.status === 'READY' || exam.status === 'ANALYZED' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400'}`}></div>
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${exam.status === 'READY' || exam.status === 'ANALYZED' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                            {exam.status === 'READY' || exam.status === 'ANALYZED' ? 'Concluído' : 'Processando'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => openEditModal(exam)}
+                            className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100"
+                            title="Editar/Anexar Laudo"
+                          >
+                            <i className="fas fa-pen-to-square text-xs"></i>
+                          </button>
+                          <button
+                            onClick={() => setViewingExam(exam)}
+                            className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-blue-100"
+                            title="Visualizar Detalhes"
+                          >
+                            <i className="fas fa-eye text-xs"></i>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteExam(exam.id)}
+                            className="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                            title="Deletar Registro"
+                          >
+                            <i className="fas fa-trash-can text-xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="py-16 text-center">
+                        <i className="fas fa-search-minus text-4xl text-gray-100 mb-3"></i>
+                        <p className="text-gray-400 text-xs font-bold">Nenhum registro encontrado para sua busca.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'configuracoes' && (
-        <div className="container mx-auto px-4 py-8 animate-in fade-in slide-in-from-bottom-6 duration-500">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
-            <div>
-              <h2 className="text-4xl font-black text-slate-800 tracking-tighter">Privacidade e Customização</h2>
-              <p className="text-sm text-gray-500 font-medium">Gerencie a identidade visual e configurações globais do sistema.</p>
+      {activeTab === 'relatorios' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex justify-end">
+            <button
+              onClick={handleDownloadReportPDF}
+              className="bg-[#1e40af] hover:bg-blue-800 text-white font-black px-6 py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
+            >
+              <i className="fas fa-file-pdf"></i> Baixar Relatório PDF
+            </button>
+          </div>
+
+          <div ref={reportRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-4">
+            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+              <h2 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                <i className="fas fa-ranking-star text-blue-600"></i>
+                Exames Mais Realizados (por Data)
+              </h2>
+              <div className="h-[350px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart layout="vertical" data={reportStats.topExamsChart} margin={{ left: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} />
+                    <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b', fontWeight: 'black' }} width={120} />
+                    <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey="total" radius={[0, 6, 6, 0]} barSize={20}>
+                      {reportStats.topExamsChart.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={chartColors[index % chartColors.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="mt-4 text-[9px] text-gray-400 font-bold uppercase text-center italic">Os valores entre parênteses indicam o período mais recente computado.</p>
+            </div>
+
+            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+              <h2 className="text-xl font-black text-slate-800 mb-2 flex items-center gap-2">
+                <i className="fas fa-calendar-days text-blue-600"></i>
+                Totais por Mês e Ano
+              </h2>
+
+              {/* Filtros de Mês e Ano */}
+              <div className="flex gap-4 mb-6 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                <div className="flex-1 space-y-1">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Mês</label>
+                  <select
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    value={filterMonth}
+                    onChange={(e) => setFilterMonth(e.target.value)}
+                  >
+                    <option value="all">Todos os Meses</option>
+                    {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex-1 space-y-1">
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Ano</label>
+                  <select
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-[11px] font-black text-slate-700 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    value={filterYear}
+                    onChange={(e) => setFilterYear(e.target.value)}
+                  >
+                    <option value="all">Todos os Anos</option>
+                    {availableYears.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="overflow-y-auto max-h-[260px] no-scrollbar">
+                <table className="w-full text-left">
+                  <thead className="sticky top-0 bg-white border-b border-gray-50">
+                    <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <th className="py-4 px-2">Período</th>
+                      <th className="py-4 px-2">Exame</th>
+                      <th className="py-4 px-2 text-center">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {filteredMonthlyTable.length > 0 ? filteredMonthlyTable.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                        <td className="py-4 px-2 text-[11px] font-black text-blue-600">{row.period}</td>
+                        <td className="py-4 px-2 text-[11px] font-bold text-slate-600 uppercase">{row.exam}</td>
+                        <td className="py-4 px-2 text-center">
+                          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black">{row.count}</span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td colSpan={3} className="py-12 text-center text-gray-400 text-xs font-bold uppercase tracking-widest">Nenhum dado para este filtro</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'campanhas' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Gestão de Campanhas</h2>
+            <button
+              onClick={() => setIsCampaignModalOpen(true)}
+              className="w-full bg-[#1e40af] hover:bg-blue-800 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2"
+            >
+              <i className="fas fa-plus"></i> NOVA CAMPANHA / AVISO
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {campaignsList.map(camp => (
+              <div key={camp.id} className={`bg-white rounded-[32px] p-6 border transition-all shadow-sm relative overflow-hidden ${!camp.active ? 'opacity-60 grayscale' : 'border-gray-100'}`}>
+                <div className={`absolute top-0 left-0 w-2 h-full ${camp.type === 'AVISO' ? 'bg-amber-400' : camp.type === 'SAUDE' ? 'bg-rose-500' : 'bg-blue-600'}`}></div>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider ${camp.type === 'AVISO' ? 'bg-amber-100 text-amber-700' : camp.type === 'SAUDE' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {camp.type}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-bold">{new Date(camp.date).toLocaleDateString('pt-BR')}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => toggleCampaignStatus(camp.id, camp.active)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${camp.active ? 'bg-emerald-50 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
+                      <i className={`fas ${camp.active ? 'fa-toggle-on' : 'fa-toggle-off'}`}></i>
+                    </button>
+                    <button onClick={() => deleteCampaign(camp.id)} className="w-8 h-8 rounded-lg bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all">
+                      <i className="fas fa-trash-can text-xs"></i>
+                    </button>
+                  </div>
+                </div>
+                <h3 className="text-lg font-black text-slate-800 mb-2">{camp.title}</h3>
+                <p className="text-xs text-gray-400 leading-relaxed font-bold mb-4 line-clamp-2">{camp.description}</p>
+
+                {camp.mediaUrl && (
+                  <div className="mb-4 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 h-32 flex items-center justify-center relative">
+                    {camp.mediaType === 'IMAGE' && <img src={camp.mediaUrl} className="w-full h-full object-cover" alt="" />}
+                    {camp.mediaType === 'VIDEO' && <video src={camp.mediaUrl} className="w-full h-full object-cover" />}
+                    {(camp.mediaType === 'AUDIO' || camp.mediaType === 'PDF') && (
+                      <div className="flex flex-col items-center gap-2 text-blue-500">
+                        <i className={`fas ${camp.mediaType === 'AUDIO' ? 'fa-music' : 'fa-file-pdf'} text-2xl`}></i>
+                        <span className="text-[8px] font-black uppercase tracking-widest">{camp.mediaType}</span>
+                      </div>
+                    )}
+                    <a href={camp.mediaUrl} target="_blank" rel="noreferrer" className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm border border-gray-200 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                      <i className="fas fa-external-link-alt text-[10px]"></i>
+                    </a>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                  <div className={`w-2 h-2 rounded-full ${camp.active ? 'bg-emerald-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                  <span className={camp.active ? 'text-emerald-600' : 'text-gray-400'}>{camp.active ? 'Ativa no Portal' : 'Inativa'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'admins' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Membros da Equipe</h2>
+            <div className="bg-white p-5 md:p-6 rounded-[28px] shadow-sm border border-gray-100">
+              <div className="relative">
+                <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                <input
+                  type="text"
+                  placeholder="Buscar membro por nome ou CPF..."
+                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-500 outline-none text-sm font-bold transition-all placeholder:text-gray-300"
+                  value={adminSearchTerm}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (/^\d/.test(v)) setAdminSearchTerm(maskCPF(v));
+                    else setAdminSearchTerm(v);
+                  }}
+                />
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[600px]">
+                <thead className="bg-gray-50/50 border-b border-gray-50">
+                  <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <th className="px-8 py-5">Membro</th>
+                    <th className="px-8 py-5">Cargo</th>
+                    <th className="px-8 py-5 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredAdmins.length > 0 ? filteredAdmins.map(admin => (
+                    <tr key={admin.id} className="hover:bg-purple-50/10 transition-colors group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 ${admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-600' : admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-600' : 'bg-emerald-100 text-emerald-600'} rounded-xl flex items-center justify-center font-black text-xs`}>
+                            <i className={`fas ${admin.role === 'ADMIN' ? 'fa-user-tie' : admin.role === 'MEDICAL' ? 'fa-user-md' : 'fa-user-nurse'}`}></i>
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-800 text-sm">{admin.name} {admin.id === user.id && <span className="text-[8px] bg-blue-600 text-white px-1.5 py-0.5 rounded ml-2">VOCÊ</span>}</p>
+                            <p className="text-[10px] text-gray-400 font-bold">{maskCPF(admin.cpf || '')}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${admin.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
+                          admin.role === 'MEDICAL' ? 'bg-blue-100 text-blue-700' :
+                            admin.role === 'RECEPTION' ? 'bg-emerald-100 text-emerald-700' :
+                              'bg-amber-100 text-amber-700'
+                          }`}>
+                          {admin.role === 'ADMIN' ? 'Administrador' : admin.role === 'MEDICAL' ? 'Área Médica' : admin.role === 'RECEPTION' ? 'Recepção' : 'Aguardando Aprovação'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex justify-center gap-2 text-right">
+                          {(admin.role === 'PENDING_MEDICAL' || admin.role === 'PENDING_RECEPTION') && (
+                            <button
+                              onClick={() => approveAdmin(admin.id, admin.role)}
+                              className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm border border-emerald-100"
+                              title="Aprovar Acesso"
+                            >
+                              <i className="fas fa-check text-xs"></i>
+                            </button>
+                          )}
+                          <button
+                            disabled={admin.id === user.id}
+                            onClick={() => deleteAdmin(admin.id)}
+                            className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shadow-sm border ${admin.id === user.id ? 'bg-gray-50 text-gray-200 border-gray-100 cursor-not-allowed' : 'bg-red-50 text-red-500 border-red-100 hover:bg-red-500 hover:text-white'}`}
+                            title="Deletar Membro"
+                          >
+                            <i className="fas fa-trash-can text-xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={3} className="py-16 text-center text-gray-400 font-bold text-sm">Nenhum administrador encontrado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'usuarios' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Usuários Cadastrados</h2>
+            <div className="bg-white p-5 md:p-6 rounded-[28px] shadow-sm border border-gray-100">
+              <div className="relative">
+                <i className="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-300"></i>
+                <input
+                  type="text"
+                  placeholder="Buscar usuário por nome ou CPF..."
+                  className="w-full pl-12 pr-6 py-4 rounded-2xl bg-gray-50 border border-transparent focus:bg-white focus:border-blue-500 outline-none text-sm font-bold transition-all placeholder:text-gray-300"
+                  value={patientSearchTerm}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (/^\d/.test(v)) setPatientSearchTerm(maskCPF(v));
+                    else setPatientSearchTerm(v);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left min-w-[600px]">
+                <thead className="bg-gray-50/50 border-b border-gray-50">
+                  <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <th className="px-8 py-5">Nome / CPF</th>
+                    <th className="px-8 py-5">Cartão SUS</th>
+                    <th className="px-8 py-5 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {filteredPatients.length > 0 ? filteredPatients.map(p => (
+                    <tr key={p.id} className="hover:bg-blue-50/10 transition-colors group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-black text-xs">
+                            <i className="fas fa-user"></i>
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-800 text-sm">{p.name}</p>
+                            <p className="text-[10px] text-gray-400 font-bold">{maskCPF(p.cpf || '')}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <span className="text-[11px] font-bold text-slate-600">{p.sus_number || 'Não informado'}</span>
+                      </td>
+                      <td className="px-8 py-5">
+                        <div className="flex justify-center">
+                          <button
+                            onClick={() => deletePatient(p.id)}
+                            className="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all shadow-sm border border-red-100"
+                            title="Excluir Usuário"
+                          >
+                            <i className="fas fa-trash-can text-xs"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={3} className="py-16 text-center text-gray-400 font-bold text-sm">Nenhum usuário encontrado.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'perfil' && <ProfileTab user={user} onUpdateUser={onUpdateUser} />}
+
+      {/* MODAL NOVO REGISTRO EXAME */}
+      {isRegisterModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className={`p-8 text-white relative ${editingId ? 'bg-indigo-600' : 'bg-[#059669]'}`}>
+              <h2 className="text-2xl font-black">{editingId ? 'Editar Exame' : 'Novo Registro'}</h2>
+              <p className="text-emerald-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Cadastro de Exame Laboratorial</p>
+            </div>
+
+            <div className="p-8 space-y-5 relative overflow-y-auto flex-1">
+              <button type="button" onClick={() => setIsRegisterModalOpen(false)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
+                <i className="fas fa-times text-xl"></i>
+              </button>
+              <form onSubmit={handleRegisterExam} className="space-y-5">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Paciente</label>
+                  <div className="relative">
+                    <i className="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
+                    <input required type="text" className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold transition-all" value={newExam.patientName} onChange={e => setNewExam({ ...newExam, patientName: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
+                  <div className="relative">
+                    <i className="fas fa-id-card absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 text-sm"></i>
+                    <input required type="text" className="w-full pl-11 pr-4 py-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold transition-all" value={newExam.patientCpf} onChange={e => setNewExam({ ...newExam, patientCpf: maskCPF(e.target.value) })} placeholder="000.000.000-00" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo de Exame</label>
+                    <input required type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold transition-all" value={newExam.examName} onChange={e => setNewExam({ ...newExam, examName: e.target.value })} placeholder="Ex: Hemograma" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data</label>
+                    <input required type="date" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-bold transition-all" value={newExam.date} onChange={e => setNewExam({ ...newExam, date: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Status Inicial</label>
+                  <select
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-emerald-500 text-sm font-black text-slate-700 transition-all"
+                    value={newExam.status}
+                    onChange={e => setNewExam({ ...newExam, status: e.target.value as any })}
+                  >
+                    <option value="READY">CONCLUÍDO (Pronto para baixar)</option>
+                    <option value="PENDING">PROCESSANDO (Aguardando laudo)</option>
+                  </select>
+                </div>
+
+                <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" />
+
+                {selectedFile ? (
+                  <div className="flex items-center justify-between p-4 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                        <i className="fas fa-file-pdf"></i>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Laudo Anexado</p>
+                        <p className="text-xs font-bold text-emerald-600">Arquivo pronto</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSelectedFile(null); setSelectedFileBlob(null); setNewExam(prev => ({ ...prev, resultData: '' })) }}
+                      className="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest px-3 py-2 hover:bg-rose-50 rounded-lg transition-all"
+                    >
+                      Remover
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleImportLaudo}
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-black py-4 rounded-2xl transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 border border-slate-200"
+                  >
+                    <i className="fas fa-cloud-arrow-up"></i> Importar Laudo
+                  </button>
+                )}
+
+                <button type="submit" className="w-full bg-[#059669] text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-emerald-700 transition-all uppercase tracking-[0.2em] text-xs mt-2">
+                  Confirmar Cadastro
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVA CAMPANHA */}
+      {isCampaignModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-lg max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-[#1e40af] p-8 text-white relative">
+              <h2 className="text-2xl font-black">Nova Campanha</h2>
+              <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Divulgação para o Portal do Paciente</p>
+            </div>
+
+            <div className="p-8 space-y-5 relative overflow-y-auto flex-1">
+              <button type="button" onClick={() => setIsCampaignModalOpen(false)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
+                <i className="fas fa-times text-xl"></i>
+              </button>
+              <form onSubmit={handleRegisterCampaign} className="space-y-5">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Título da Campanha</label>
+                  <input required type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold transition-all" value={newCampaign.title} onChange={e => setNewCampaign({ ...newCampaign, title: e.target.value })} placeholder="Ex: Campanha Multivacinação" />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Descrição</label>
+                  <textarea required className="w-full p-4 h-32 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium transition-all resize-none" value={newCampaign.description} onChange={e => setNewCampaign({ ...newCampaign, description: e.target.value })} placeholder="Detalhes do aviso ou campanha..." />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo</label>
+                    <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-black text-slate-700" value={newCampaign.type} onChange={e => setNewCampaign({ ...newCampaign, type: e.target.value as any })}>
+                      <option value="AVISO">AVISO</option>
+                      <option value="CAMPANHA">CAMPANHA</option>
+                      <option value="SAUDE">SAÚDE</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data</label>
+                    <input required type="date" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold transition-all" value={newCampaign.date} onChange={e => setNewCampaign({ ...newCampaign, date: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Anexar Mídia (Opcional)</label>
+
+                  <div
+                    onClick={() => campaignFileRef.current?.click()}
+                    className={`relative w-full min-h-[140px] rounded-3xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 cursor-pointer group overflow-hidden ${campaignMediaBlob ? 'border-emerald-200 bg-emerald-50/30' : 'border-gray-200 bg-gray-50/50 hover:border-blue-300 hover:bg-blue-50/30'
+                      }`}
+                  >
+                    {campaignMediaFile ? (
+                      <div className="w-full h-full absolute inset-0">
+                        {newCampaign.mediaType === 'IMAGE' && <img src={campaignMediaFile} className="w-full h-full object-cover" alt="" />}
+                        {newCampaign.mediaType === 'VIDEO' && <video src={campaignMediaFile} className="w-full h-full object-cover" />}
+                        {newCampaign.mediaType === 'AUDIO' && (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50/50">
+                            <i className="fas fa-volume-high text-indigo-400 text-3xl mb-2"></i>
+                            <span className="text-[10px] font-black text-indigo-600">Áudio Selecionado</span>
+                          </div>
+                        )}
+                        {newCampaign.mediaType === 'PDF' && (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50/50">
+                            <i className="fas fa-file-pdf text-rose-400 text-3xl mb-2"></i>
+                            <span className="text-[10px] font-black text-rose-600">PDF Selecionado</span>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                          <i className="fas fa-sync-alt text-xl"></i>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-gray-400 group-hover:text-blue-500 group-hover:scale-110 transition-all shadow-sm">
+                          <i className="fas fa-cloud-arrow-up text-xl"></i>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xs font-black text-slate-700 uppercase tracking-tight">Clique para carregar</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">PDF, IMAGEM, ÁUDIO OU VÍDEO</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <input
+                    type="file"
+                    ref={campaignFileRef}
+                    className="hidden"
+                    accept="image/*,video/*,audio/*,application/pdf"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setCampaignMediaBlob(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setCampaignMediaFile(reader.result as string);
+
+                          // Detecção automática do tipo para o preview
+                          const mime = file.type;
+                          let type: Campaign['mediaType'] = 'NONE';
+                          if (mime.startsWith('image/')) type = 'IMAGE';
+                          else if (mime === 'application/pdf') type = 'PDF';
+                          else if (mime.startsWith('audio/')) type = 'AUDIO';
+                          else if (mime.startsWith('video/')) type = 'VIDEO';
+
+                          setNewCampaign(prev => ({ ...prev, mediaType: type }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  {campaignMediaBlob && (
+                    <div className="flex items-center justify-between px-2">
+                      <p className="text-[9px] font-bold text-emerald-600 truncate italic">
+                        <i className="fas fa-check-circle mr-1"></i> {campaignMediaBlob.name}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { setCampaignMediaBlob(null); setCampaignMediaFile(null); setNewCampaign(p => ({ ...p, mediaType: 'NONE' })) }}
+                        className="text-[9px] font-black text-rose-500 uppercase hover:underline"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={uploading}
+                  className="w-full bg-[#1e40af] text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-blue-900 disabled:bg-slate-300 disabled:shadow-none transition-all uppercase tracking-[0.2em] text-xs mt-4 flex items-center justify-center gap-3"
+                >
+                  {uploading ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      Publicando...
+                    </>
+                  ) : 'Publicar Campanha'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL VISUALIZAR REGISTRO EXAME */}
+      {viewingExam && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-5xl max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-[#1e40af] p-8 text-white relative">
+              <h2 className="text-2xl font-black">Detalhes do Registro</h2>
+              <p className="text-blue-100 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Informações do Exame</p>
+            </div>
+
+            <div className="p-8 space-y-6 relative overflow-y-auto flex-1">
+              <button onClick={() => setViewingExam(null)} className="absolute top-4 right-6 text-gray-300 hover:text-red-500 transition-all z-10">
+                <i className="fas fa-times text-xl"></i>
+              </button>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Paciente</p>
+                  <p className="text-sm font-black text-slate-800">{viewingExam.patientName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">CPF</p>
+                  <p className="text-sm font-black text-slate-800">{viewingExam.patientCpf || '---'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Exame</p>
+                  <p className="text-sm font-black text-blue-600 uppercase tracking-tight">{viewingExam.examName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data de Registro</p>
+                  <p className="text-sm font-black text-slate-800">{viewingExam.date}</p>
+                </div>
+              </div>
+
+              {viewingExam.fileUrl ? (
+                <div className="w-full h-[70vh] rounded-2xl overflow-hidden border border-gray-100 bg-gray-50">
+                  <iframe src={viewingExam.fileUrl} className="w-full h-full" title="Laudo do Exame"></iframe>
+                </div>
+              ) : (
+                <>
+                  <div className="pt-4 border-t border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Status do Processamento</p>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full ${viewingExam.status === 'READY' ? 'bg-emerald-500' : 'bg-amber-400'}`}></div>
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wider">{viewingExam.status === 'READY' ? 'Laudo Disponível' : 'Aguardando Processamento'}</span>
+                    </div>
+                  </div>
+
+                  {viewingExam.resultData && (
+                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Resumo dos Resultados</p>
+                      <p className="text-xs text-slate-600 font-medium leading-relaxed italic">"{viewingExam.resultData}"</p>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <button
+                onClick={() => setViewingExam(null)}
+                className="w-full bg-slate-900 text-white font-black py-5 rounded-[24px] shadow-xl hover:bg-black transition-all uppercase tracking-widest text-xs mt-4"
+              >
+                Fechar Visualização
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {activeTab === 'configuracoes' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Privacidade e Customização</h2>
+            <p className="text-gray-500 font-medium text-sm">Gerencie a identidade visual e configurações globais do sistema.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-3 mb-6">
                 <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
                   <i className="fas fa-image text-xl"></i>
                 </div>
@@ -520,7 +1346,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                 </div>
               </div>
 
-              <div className="space-y-8">
+              <div className="space-y-6">
                 <div className="flex flex-col items-center justify-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 group relative overflow-hidden h-48">
                   <img
                     src={appLogo || "/assets/logo-uarini.jpg"}
@@ -631,114 +1457,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <p className="text-xs text-gray-400 font-bold text-center py-12">Esta funcionalidade estará disponível em futuras atualizações.</p>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Outras abas permanecem com seus conteúdos anteriores ... */}
-      
-      {/* MODAL VIEW EXAME */}
-      {viewingExam && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
-            <div className="p-8 border-b border-gray-100 flex items-center justify-between bg-slate-50/50">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center">
-                     <i className="fas fa-file-medical text-lg"></i>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-black text-slate-800 leading-none mb-1">Visualizar Registro</h3>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ID: {viewingExam.id.substring(0,8)}</p>
-                  </div>
-               </div>
-               <button onClick={() => setViewingExam(null)} className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center hover:bg-rose-50 hover:text-rose-500 transition-all">
-                  <i className="fas fa-times"></i>
-               </button>
-            </div>
-            <div className="p-8 overflow-y-auto flex-grow">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
-                     <div className="bg-blue-50/30 p-6 rounded-3xl border border-blue-100/50">
-                        <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest block mb-2">Informações do Paciente</label>
-                        <p className="text-xl font-black text-slate-800 mb-1">{viewingExam.patientName}</p>
-                        <p className="text-sm font-bold text-slate-500">CPF: {viewingExam.patientCpf}</p>
-                     </div>
-                     <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Detalhes do Exame</label>
-                        <p className="text-lg font-black text-slate-700 mb-1">{viewingExam.examName}</p>
-                        <p className="text-sm font-bold text-slate-500">Realizado em: {viewingExam.date}</p>
-                     </div>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="bg-emerald-50/30 p-6 rounded-3xl border border-emerald-100/50">
-                        <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest block mb-2">Status do Laudo</label>
-                        <div className="flex items-center gap-3">
-                           <span className={`w-3 h-3 rounded-full ${viewingExam.status === 'READY' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse shadow-sm`}></span>
-                           <span className="text-sm font-black text-slate-700 uppercase tracking-widest">{viewingExam.status === 'READY' ? 'Disponível' : 'Em Processamento'}</span>
-                        </div>
-                    </div>
-                    {viewingExam.resultData && (
-                        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-                           <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-3">Resultado / Observações</label>
-                           <div className="text-sm font-bold text-slate-600 bg-gray-50 p-4 rounded-xl whitespace-pre-wrap">{viewingExam.resultData}</div>
-                        </div>
-                    )}
-                  </div>
-               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL REGISTRO EXAME */}
-      {isRegisterModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="p-8 border-b border-gray-100 flex items-center justify-between">
-                    <h3 className="text-2xl font-black text-slate-800 tracking-tighter">Registrar Novo Exame</h3>
-                    <button onClick={() => setIsRegisterModalOpen(false)} className="text-gray-400 hover:text-rose-500 transition-colors">
-                        <i className="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <form onSubmit={handleRegisterExam} className="p-8 space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Paciente</label>
-                        <input 
-                            required type="text" placeholder="Nome completo"
-                            className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-none text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-50 outline-none transition-all"
-                            value={newExam.patientName} onChange={(e) => setNewExam({...newExam, patientName: e.target.value})}
-                        />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
-                            <input 
-                                required type="text" placeholder="000.000.000-00"
-                                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-none text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-50 outline-none transition-all"
-                                value={newExam.patientCpf} onChange={(e) => setNewExam({...newExam, patientCpf: maskCPF(e.target.value)})}
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data</label>
-                            <input 
-                                required type="date"
-                                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-none text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-50 outline-none transition-all"
-                                value={newExam.date} onChange={(e) => setNewExam({...newExam, date: e.target.value})}
-                            />
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo de Exame</label>
-                        <input 
-                            required type="text" placeholder="Ex: Hemograma Completo"
-                            className="w-full px-6 py-4 rounded-2xl bg-gray-50 border-none text-sm font-bold text-slate-700 focus:ring-4 focus:ring-blue-50 outline-none transition-all"
-                            value={newExam.examName} onChange={(e) => setNewExam({...newExam, examName: e.target.value})}
-                        />
-                    </div>
-                    <button type="submit" className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-3">
-                        Salvar Registro <i className="fas fa-check-circle"></i>
-                    </button>
-                </form>
-            </div>
         </div>
       )}
     </div>
