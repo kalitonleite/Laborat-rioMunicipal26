@@ -878,8 +878,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                 <p className="text-xs text-gray-400 leading-relaxed font-bold mb-4 line-clamp-2">{camp.description}</p>
 
                 {camp.mediaUrl && (
-                  <div className="mb-4 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 h-32 flex items-center justify-center relative">
-                    {camp.mediaType === 'IMAGE' && <img src={camp.mediaUrl} className="w-full h-full object-cover" alt="" />}
+                  <div className="mb-4 rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center relative">
+                    {camp.mediaType === 'IMAGE' && <img src={camp.mediaUrl} className="w-full max-h-48 object-contain" alt="" />}
                     {camp.mediaType === 'VIDEO' && <video src={camp.mediaUrl} className="w-full h-full object-cover" />}
                     {(camp.mediaType === 'AUDIO' || camp.mediaType === 'PDF') && (
                       <div className="flex flex-col items-center gap-2 text-blue-500">
@@ -1226,8 +1226,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                       }`}
                   >
                     {campaignMediaFile ? (
-                      <div className="w-full h-full absolute inset-0">
-                        {newCampaign.mediaType === 'IMAGE' && <img src={campaignMediaFile} className="w-full h-full object-cover" alt="" />}
+                      <div className="w-full h-full absolute inset-0 bg-gray-100">
+                        {newCampaign.mediaType === 'IMAGE' && <img src={campaignMediaFile} className="w-full h-full object-contain" alt="" />}
                         {newCampaign.mediaType === 'VIDEO' && !newCampaign.externalVideoUrl && <video src={campaignMediaFile} className="w-full h-full object-cover" controls />}
                         {newCampaign.mediaType === 'VIDEO' && newCampaign.externalVideoUrl && (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-blue-50/50">
