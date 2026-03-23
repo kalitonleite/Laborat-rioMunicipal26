@@ -29,7 +29,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
       <header className="bg-gradient-to-br from-[#002147] via-[#002147] to-[#003366] text-white px-4 py-6 md:px-8 md:py-7 pt-8 shadow-[0_10px_40px_rgba(0,33,71,0.2)] rounded-b-[40px] md:rounded-b-[50px] z-50 relative border-b border-white/5">
         <div className="container mx-auto flex justify-between items-center max-w-7xl">
           <div className="flex items-center gap-4 md:gap-6">
-            <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 border border-white/10 hover:scale-105 transition-transform duration-300 overflow-hidden w-16 h-16 md:w-24 md:h-24 flex items-center justify-center">
+            <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 border border-white/10 hover:scale-105 transition-transform duration-300 overflow-hidden w-24 h-24 md:w-32 md:h-32 flex items-center justify-center">
               <img
                 src={appLogo || "/assets/logo-uarini.jpg"}
                 alt="Uarini"

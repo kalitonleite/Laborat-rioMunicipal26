@@ -74,8 +74,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
               >
                 <i className="fas fa-arrow-left"></i>
               </button>
-              <div className="bg-white rounded-2xl shadow-xl border border-slate-50 overflow-hidden w-20 h-20">
-                <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-full h-full object-cover" />
+              <div className="bg-white rounded-2xl shadow-xl border border-slate-50 overflow-hidden w-32 h-32">
+                <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-full h-full object-cover scale-[1.2]" />
               </div>
             </div>
 

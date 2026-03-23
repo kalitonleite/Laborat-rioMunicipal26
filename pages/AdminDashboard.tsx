@@ -1347,7 +1347,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               </div>
 
               <div className="space-y-6">
-                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 group relative overflow-hidden h-48">
+                <div className="flex flex-col items-center justify-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 group relative overflow-hidden h-72">
                   <img
                     src={appLogo || "/assets/logo-uarini.jpg"}
                     alt="Logo Atual"
