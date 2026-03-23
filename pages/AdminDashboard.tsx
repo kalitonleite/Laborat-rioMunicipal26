@@ -446,16 +446,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     if (!searchTerm.trim()) return examsList;
     const term = searchTerm.toLowerCase().trim();
     const termDigits = searchTerm.replace(/\D/g, '');
+    
     return examsList.filter(exam => {
       const pName = (exam.patientName || '').toLowerCase();
       const eName = (exam.examName || '').toLowerCase();
       const pCpfRaw = (exam.patientCpf || '').replace(/\D/g, '');
       const pCpfMasked = maskCPF(exam.patientCpf || '').toLowerCase();
 
+      // Check for name or exam name match
       if (pName.includes(term)) return true;
       if (eName.includes(term)) return true;
+      
+      // Check for exact CPF match (masked or unmasked)
       if (termDigits && pCpfRaw.includes(termDigits)) return true;
       if (pCpfMasked.includes(term)) return true;
+      
       return false;
     });
   }, [searchTerm, examsList]);
@@ -619,8 +624,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   value={searchTerm}
                   onChange={e => {
                     const v = e.target.value;
-                    if (/^\d/.test(v)) setSearchTerm(maskCPF(v));
-                    else setSearchTerm(v);
+                    // Se o usuário digitou apenas números ou números com caracteres do CPF, aplicamos a máscara
+                    // para a visibilidade bonitinha na busca do CPF. Se contém letras, deixamos como está para pesquisar nomes.
+                    if (v.length > 0 && /^[0-9.\- ]+$/.test(v)) {
+                      setSearchTerm(maskCPF(v));
+                    } else {
+                      setSearchTerm(v);
+                    }
                   }}
                 />
               </div>
