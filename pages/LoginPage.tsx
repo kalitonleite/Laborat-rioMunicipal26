@@ -25,7 +25,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   // URL para o QR Code (usa a origem atual do app)
   // Configurado para cor branca (ffffff) e fundo azul (1e40af) para combinar com o estilo da imagem
-  const appUrl = "https://laborat-rio-municipal26-git-main-kalitons-projects.vercel.app/";
+  const appUrl = "https://laborat-rio-municipal26.vercel.app/";
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(appUrl)}&color=ffffff&bgcolor=1e40af`;
 
 
