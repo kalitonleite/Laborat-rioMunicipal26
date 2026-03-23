@@ -59,7 +59,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     description: '',
     type: 'CAMPANHA' as Campaign['type'],
     date: new Date().toISOString().split('T')[0],
-    mediaType: 'NONE' as Campaign['mediaType']
+    mediaType: 'NONE' as Campaign['mediaType'],
+    externalVideoUrl: ''
   });
 
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -257,9 +258,25 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   };
 
   const handleRegisterCampaign = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUploading(true);
     try {
+      let finalMediaUrl = campaignMediaFile;
+      let finalMediaType = newCampaign.mediaType;
+
       if (campaignMediaBlob) {
-        alert('Upload de mídia para campanhas está temporariamente desativado.');
+        // Limite de 15MB para Base64
+        if (campaignMediaBlob.size > 15 * 1024 * 1024) {
+          alert('O arquivo é muito grande (máximo 15MB). Para vídeos longos, use a opção de link externo.');
+          setUploading(false);
+          return;
+        }
+      }
+
+      // Se houver um link externo de vídeo, ele tem prioridade sobre o upload
+      if (newCampaign.externalVideoUrl) {
+        finalMediaUrl = newCampaign.externalVideoUrl;
+        finalMediaType = 'VIDEO';
       }
 
       const data = await dbService.from('campaigns').insert({
@@ -268,8 +285,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         type: newCampaign.type,
         date: newCampaign.date,
         active: true,
-        media_url: null,
-        media_type: 'NONE'
+        media_url: finalMediaUrl,
+        media_type: finalMediaType
       });
 
       if (data && data[0]) {
@@ -287,7 +304,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       }
 
       setIsCampaignModalOpen(false);
-      setNewCampaign({ title: '', description: '', type: 'CAMPANHA', date: new Date().toISOString().split('T')[0], mediaType: 'NONE' });
+      setNewCampaign({ title: '', description: '', type: 'CAMPANHA', date: new Date().toISOString().split('T')[0], mediaType: 'NONE', externalVideoUrl: '' });
       setCampaignMediaBlob(null);
       setCampaignMediaFile(null);
       alert('Campanha publicada com sucesso!');
@@ -1139,7 +1156,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Descrição</label>
-                  <textarea required className="w-full p-4 h-32 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium transition-all resize-none" value={newCampaign.description} onChange={e => setNewCampaign({ ...newCampaign, description: e.target.value })} placeholder="Detalhes do aviso ou campanha..." />
+                  <textarea required className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold transition-all min-h-[100px]" value={newCampaign.description} onChange={e => setNewCampaign({ ...newCampaign, description: e.target.value })} placeholder="Ex: Traga seus filhos para vacinar contra a gripe..." />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">URL de Vídeo Externo (Opcional - YouTube/Vimeo)</label>
+                  <input
+                    type="text"
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none focus:ring-2 focus:ring-blue-500 text-sm font-bold transition-all"
+                    value={newCampaign.externalVideoUrl}
+                    onChange={e => setNewCampaign({ ...newCampaign, externalVideoUrl: e.target.value, mediaType: e.target.value ? 'VIDEO' : newCampaign.mediaType })}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                  />
+                  <p className="text-[9px] text-blue-500 font-bold ml-1 italic">* Links externos têm prioridade sobre o upload de arquivo.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -1168,7 +1197,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                     {campaignMediaFile ? (
                       <div className="w-full h-full absolute inset-0">
                         {newCampaign.mediaType === 'IMAGE' && <img src={campaignMediaFile} className="w-full h-full object-cover" alt="" />}
-                        {newCampaign.mediaType === 'VIDEO' && <video src={campaignMediaFile} className="w-full h-full object-cover" />}
+                        {newCampaign.mediaType === 'VIDEO' && !newCampaign.externalVideoUrl && <video src={campaignMediaFile} className="w-full h-full object-cover" controls />}
+                        {newCampaign.mediaType === 'VIDEO' && newCampaign.externalVideoUrl && (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-blue-50/50">
+                            <i className="fab fa-youtube text-red-500 text-3xl mb-2"></i>
+                            <span className="text-[10px] font-black text-blue-600">Link Externo Ativo</span>
+                          </div>
+                        )}
                         {newCampaign.mediaType === 'AUDIO' && (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-indigo-50/50">
                             <i className="fas fa-volume-high text-indigo-400 text-3xl mb-2"></i>

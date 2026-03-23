@@ -383,9 +383,28 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                         </div>
                       )}
                       {camp.mediaType === 'VIDEO' && (
-                        <video controls className="w-full h-32 object-cover">
-                          <source src={camp.mediaUrl} />
-                        </video>
+                        <div className="w-full aspect-video">
+                          {camp.mediaUrl.includes('youtube.com') || camp.mediaUrl.includes('youtu.be') || camp.mediaUrl.includes('vimeo.com') ? (
+                            <iframe
+                              className="w-full h-full rounded-2xl"
+                              src={(() => {
+                                let url = camp.mediaUrl;
+                                if (url.includes('youtube.com/watch?v=')) return url.replace('watch?v=', 'embed/');
+                                if (url.includes('youtu.be/')) return url.replace('youtu.be/', 'www.youtube.com/embed/');
+                                if (url.includes('vimeo.com/')) return url.replace('vimeo.com/', 'player.vimeo.com/video/');
+                                return url;
+                              })()}
+                              title={camp.title}
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            ></iframe>
+                          ) : (
+                            <video controls className="w-full h-full rounded-2xl object-cover">
+                              <source src={camp.mediaUrl} />
+                            </video>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
