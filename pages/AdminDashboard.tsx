@@ -1376,16 +1376,41 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                           }
 
                           const reader = new FileReader();
-                          reader.onloadend = async () => {
-                            const base64String = reader.result as string;
-                            if (window.confirm('Deseja atualizar o logotipo do sistema para todos os usuários?')) {
-                              try {
-                                await updateLogo(base64String);
-                                alert('Logotipo atualizado com sucesso!');
-                              } catch (err) {
-                                alert('Erro ao atualizar logotipo.');
+                          reader.onloadend = () => {
+                            const img = new Image();
+                            img.onload = async () => {
+                              // Redimensionamento Inteligente (Max 800px)
+                              const canvas = document.createElement('canvas');
+                              let width = img.width;
+                              let height = img.height;
+                              const maxDim = 800;
+
+                              if (width > height && width > maxDim) {
+                                height = (height * maxDim) / width;
+                                width = maxDim;
+                              } else if (height > maxDim) {
+                                width = (width * maxDim) / height;
+                                height = maxDim;
                               }
-                            }
+
+                              canvas.width = width;
+                              canvas.height = height;
+                              const ctx = canvas.getContext('2d');
+                              ctx?.drawImage(img, 0, 0, width, height);
+
+                              // Converter para format comprimido (WebP ou JPEG)
+                              const processedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+
+                              if (window.confirm('Deseja atualizar o logotipo do sistema? A imagem será otimizada para melhor desempenho.')) {
+                                try {
+                                  await updateLogo(processedBase64);
+                                  alert('Logotipo atualizado e otimizado com sucesso!');
+                                } catch (err) {
+                                  alert('Erro ao atualizar logotipo. Verifique sua conexão.');
+                                }
+                              }
+                            };
+                            img.src = reader.result as string;
                           };
                           reader.readAsDataURL(file);
                         }
