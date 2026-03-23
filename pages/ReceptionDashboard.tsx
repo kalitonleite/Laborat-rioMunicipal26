@@ -188,11 +188,12 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
     // Cabeçalho
     doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.rect(0, 0, 210, 50, 'F');
+    doc.rect(0, 0, 210, 55, 'F'); // Aumentado para 55mm
 
     if (appLogo) {
       try {
-        doc.addImage(appLogo, 'PNG', 105 - 12.5, 5, 25, 25);
+        // Tentar manter proporção quadrada 25x25
+        doc.addImage(appLogo, 'JPEG', 105 - 12.5, 5, 25, 25);
       } catch (e) {
         console.error('Erro ao adicionar logo ao PDF:', e);
       }
@@ -201,34 +202,34 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("Laboratório Municipal de Uarini", 105, 38, { align: "center" });
+    doc.text("Laboratório Municipal de Uarini", 105, 42, { align: "center" });
 
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "normal");
-    doc.text("Lista de Atendimentos Agendados", 105, 45, { align: "center" });
+    doc.text("Lista de Atendimentos Agendados", 105, 48, { align: "center" });
 
     // Metadados
     doc.setTextColor(100, 100, 100);
-    doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 60);
-    doc.text(`Total de agendamentos: ${filtered.length}`, 14, 65);
+    doc.setFontSize(9);
+    doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 65);
+    doc.text(`Total de agendamentos: ${filtered.length}`, 14, 70);
 
     // Tabela
-    let yPos = 75;
+    let yPos = 80;
 
     // Cabeçalho da Tabela
     doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
     doc.rect(14, yPos - 5, 182, 10, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.text("HORA", 14, yPos + 1);
-    doc.text("PACIENTE", 30, yPos + 1);
-    doc.text("NASCIMENTO", 75, yPos + 1);
-    doc.text("IDADE", 105, yPos + 1);
-    doc.text("SUS", 125, yPos + 1);
-    doc.text("ENDEREÇO", 155, yPos + 1);
-    doc.text("DATA", 188, yPos + 1);
+    doc.text("PACIENTE", 28, yPos + 1);
+    doc.text("NASCIMENTO", 63, yPos + 1);
+    doc.text("IDADE", 88, yPos + 1);
+    doc.text("SUS", 102, yPos + 1);
+    doc.text("ENDEREÇO", 132, yPos + 1);
+    doc.text("DATA", 182, yPos + 1);
 
     yPos += 10;
 
@@ -245,12 +246,12 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       }
 
       doc.text(app.time, 14, yPos + 1);
-      doc.text(app.patientName.substring(0, 22), 30, yPos + 1); 
-      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 75, yPos + 1);
-      doc.text(String(app.patientAge || '-'), 105, yPos + 1);
-      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 125, yPos + 1);
-      doc.text(app.patientAddress?.substring(0, 20) || '-', 155, yPos + 1);
-      doc.text(app.date, 188, yPos + 1);
+      doc.text(app.patientName.substring(0, 18), 28, yPos + 1); 
+      doc.text(app.patientBirthDate?.split('-').reverse().join('/') || '-', 63, yPos + 1);
+      doc.text(String(app.patientAge || '-'), 88, yPos + 1);
+      doc.text(String(app.patientSusNumber || '-').substring(0, 15), 102, yPos + 1);
+      doc.text(app.patientAddress?.substring(0, 30) || '-', 132, yPos + 1);
+      doc.text(app.date, 182, yPos + 1);
 
       yPos += 10;
 
