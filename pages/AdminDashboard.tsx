@@ -1384,9 +1384,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <div className="space-y-6">
                 <div className="flex flex-col items-center justify-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 group relative overflow-hidden h-72">
                   <img
-                    src={appLogo || "/assets/logo-uarini.jpg"}
+                    src={appLogo || ""}
                     alt="Logo Atual"
-                    className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
+                    className={`w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500 ${!appLogo ? 'opacity-0' : 'opacity-100'}`}
                   />
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 </div>
@@ -1464,7 +1464,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                     onClick={async () => {
                       if (window.confirm('Deseja restaurar o logotipo original do sistema?')) {
                         try {
-                          await updateLogo('/assets/logo-uarini.jpg');
+                          await updateLogo("");
                           alert('Logotipo restaurado com sucesso!');
                         } catch (err) {
                           alert('Erro ao restaurar logotipo.');
