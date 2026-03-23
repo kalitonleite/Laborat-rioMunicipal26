@@ -177,9 +177,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         if (newExam.resultData) {
           updatePayload.result_data = newExam.resultData;
         }
-        if (selectedFileBlob) {
-          // TODO: Implement Storage in Neon/Vercel
-          alert('Upload de arquivos desativado. Use um serviço compatível (ex: Vercel Blob).');
+        if (selectedFile) {
+          updatePayload.file_url = selectedFile;
         }
 
         await dbService.from('exams').update(updatePayload, { id: editingId });
@@ -192,25 +191,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             examName: newExam.examName,
             date: dateFormatted,
             status: newExam.status,
-            resultData: 'result_data' in updatePayload ? updatePayload.resultData : item.resultData
+            resultData: 'result_data' in updatePayload ? updatePayload.result_data : item.resultData,
+            fileUrl: selectedFile || item.fileUrl
           } : item
         ));
         alert('Exame atualizado com sucesso!');
       } else {
-        const data = await dbService.from('exams').insert({
+        const payload: any = {
           patient_name: newExam.patientName,
           patient_cpf: cleanCpf,
           exam_name: newExam.examName,
           date: dateFormatted,
           status: newExam.status,
           result_data: newExam.resultData
-        });
+        };
+        if (selectedFile) {
+          payload.file_url = selectedFile;
+        }
+
+        const data = await dbService.from('exams').insert(payload);
 
         if (data && data[0]) {
-          if (selectedFileBlob) {
-             alert('Upload de arquivos desativado. O registro foi criado sem o laudo digital.');
-          }
-
           const newMappedExam = {
             id: data[0].id,
             patientName: data[0].patient_name,
@@ -218,7 +219,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             examName: data[0].exam_name,
             date: data[0].date,
             status: data[0].status,
-            fileUrl: undefined,
+            fileUrl: data[0].file_url,
             resultData: data[0].result_data,
             aiAnalysis: data[0].ai_analysis
           };
