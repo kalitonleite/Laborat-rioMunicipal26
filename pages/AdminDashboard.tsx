@@ -1370,8 +1370,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                       onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          if (file.size > 2 * 1024 * 1024) {
-                            alert('A imagem é muito grande. O limite é 2MB.');
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert('A imagem é muito grande. O limite é 10MB.');
                             return;
                           }
 
