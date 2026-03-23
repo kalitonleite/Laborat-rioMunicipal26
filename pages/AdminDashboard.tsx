@@ -9,6 +9,7 @@ import { dbService } from '../services/apiService';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { extractTextFromPDF } from '../services/pdfOcr';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface AdminDashboardProps {
   user: User;
@@ -16,7 +17,8 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil' | 'configuracoes'>('geral');
+  const { appLogo, updateLogo } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
   const [patientSearchTerm, setPatientSearchTerm] = useState('');
@@ -537,6 +539,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
           { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
+          { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
         ]}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as any)}
@@ -1320,6 +1323,113 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               >
                 Fechar Visualização
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {activeTab === 'configuracoes' && (
+        <div className="space-y-6 animate-in fade-in duration-500">
+          <div className="flex flex-col gap-4">
+            <h2 className="text-2xl font-black text-slate-800">Privacidade e Customização</h2>
+            <p className="text-gray-500 font-medium text-sm">Gerencie a identidade visual e configurações globais do sistema.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
+                  <i className="fas fa-image text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-800 text-lg">Logotipo do Sistema</h3>
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Identidade Visual</p>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 group relative overflow-hidden">
+                  <img
+                    src={appLogo || "/assets/logo-uarini.jpg"}
+                    alt="Logo Atual"
+                    className="h-32 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                </div>
+
+                <div className="space-y-4">
+                  <p className="text-[10px] text-gray-400 font-bold leading-relaxed px-2">
+                    <i className="fas fa-info-circle mr-1 text-blue-500"></i>
+                    Para melhores resultados, use uma imagem quadrada (PNG ou JPG) com fundo transparente ou branco. Tamanho recomendado: 512x512px.
+                  </p>
+
+                  <label className="block">
+                    <span className="sr-only">Escolher arquivo</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 2 * 1024 * 1024) {
+                            alert('A imagem é muito grande. O limite é 2MB.');
+                            return;
+                          }
+
+                          const reader = new FileReader();
+                          reader.onloadend = async () => {
+                            const base64String = reader.result as string;
+                            if (window.confirm('Deseja atualizar o logotipo do sistema para todos os usuários?')) {
+                              try {
+                                await updateLogo(base64String);
+                                alert('Logotipo atualizado com sucesso!');
+                              } catch (err) {
+                                alert('Erro ao atualizar logotipo.');
+                              }
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="block w-full text-xs text-slate-500
+                        file:mr-4 file:py-3 file:px-6
+                        file:rounded-full file:border-0
+                        file:text-[10px] file:font-black file:uppercase file:tracking-widest
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100 cursor-pointer
+                      "
+                    />
+                  </label>
+                  
+                  <button 
+                    onClick={async () => {
+                      if (window.confirm('Deseja restaurar o logotipo original do sistema?')) {
+                        try {
+                          await updateLogo('/assets/logo-uarini.jpg');
+                          alert('Logotipo restaurado com sucesso!');
+                        } catch (err) {
+                          alert('Erro ao restaurar logotipo.');
+                        }
+                      }
+                    }}
+                    className="w-full text-[10px] font-black text-gray-400 hover:text-red-500 uppercase tracking-widest py-2 transition-all"
+                  >
+                    Restaurar Padrão
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 opacity-50 cursor-not-allowed">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600">
+                  <i className="fas fa-paint-brush text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-800 text-lg">Cores do Tema</h3>
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Personalização Pro</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 font-bold text-center py-12">Esta funcionalidade estará disponível em futuras atualizações.</p>
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import { maskCPF } from '../services/masks';
 
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface MedicalLoginPageProps {
   onLogin: (user: User) => void;
@@ -19,6 +20,7 @@ const MedicalLoginPage: React.FC<MedicalLoginPageProps> = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   const { login } = useAuth();
+  const { appLogo } = useSettings();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ const MedicalLoginPage: React.FC<MedicalLoginPageProps> = ({ onLogin }) => {
               <i className="fas fa-arrow-left"></i>
             </button>
             <div className="bg-white p-2 rounded-2xl shadow-xl border border-blue-50">
-              <img src="/assets/logo-uarini.jpg" alt="Logo" className="w-12 h-12 object-contain" />
+              <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-12 h-12 object-contain" />
             </div>
           </div>
 

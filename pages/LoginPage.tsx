@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { useAuth } from '../contexts/AuthContext';
+import { useSettings } from '../contexts/SettingsContext';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
@@ -34,6 +35,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   };
 
   const { login } = useAuth();
+  const { appLogo } = useSettings();
 
   const handleAuth = async (role: UserRole) => {
     if (role === UserRole.ADMIN) { navigate('/admin/login'); return; }
@@ -126,7 +128,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="relative z-10 flex flex-col items-center">
           <div className="bg-white p-3.5 md:p-5 rounded-[30px] md:rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.4)] border border-white/20 mb-6 md:mb-8 transform hover:scale-105 transition-transform duration-500">
             <img
-              src="/assets/logo-uarini.jpg"
+              src={appLogo || "/assets/logo-uarini.jpg"}
               alt="Logo Uarini"
               className="w-24 h-24 md:w-48 md:h-48 object-contain"
             />

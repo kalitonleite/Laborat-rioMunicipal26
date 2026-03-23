@@ -16,6 +16,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Layout from './components/Layout';
 import { User, UserRole } from './types';
 import { useAuth } from './contexts/AuthContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 import { dbService } from './services/apiService';
 
 interface ProtectedRouteProps {
@@ -79,113 +80,115 @@ const App: React.FC = () => {
 
 
   return (
-    <HashRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={user ? <Navigate to="/dashboard" /> : <LoginPage onLogin={() => { }} />}
-        />
-        <Route
-          path="/register"
-          element={user ? <Navigate to="/dashboard" /> : <RegisterPage onLogin={() => { }} />}
-        />
+    <SettingsProvider>
+      <HashRouter>
+        <Routes>
+          <Route
+            path="/"
+            element={user ? <Navigate to="/dashboard" /> : <LoginPage onLogin={() => { }} />}
+          />
+          <Route
+            path="/register"
+            element={user ? <Navigate to="/dashboard" /> : <RegisterPage onLogin={() => { }} />}
+          />
 
-        {/* Medical Routes */}
-        <Route
-          path="/medical/login"
-          element={user ? <Navigate to="/dashboard" /> : <MedicalLoginPage onLogin={() => { }} />}
-        />
-        <Route
-          path="/medical/register"
-          element={user ? <Navigate to="/dashboard" /> : <MedicalRegisterPage onLogin={() => { }} />}
-        />
+          {/* Medical Routes */}
+          <Route
+            path="/medical/login"
+            element={user ? <Navigate to="/dashboard" /> : <MedicalLoginPage onLogin={() => { }} />}
+          />
+          <Route
+            path="/medical/register"
+            element={user ? <Navigate to="/dashboard" /> : <MedicalRegisterPage onLogin={() => { }} />}
+          />
 
-        {/* Reception Routes */}
-        <Route
-          path="/reception/login"
-          element={user ? <Navigate to="/dashboard" /> : <ReceptionLoginPage onLogin={() => { }} />}
-        />
-        <Route
-          path="/reception/register"
-          element={user ? <Navigate to="/dashboard" /> : <ReceptionRegisterPage onLogin={() => { }} />}
-        />
+          {/* Reception Routes */}
+          <Route
+            path="/reception/login"
+            element={user ? <Navigate to="/dashboard" /> : <ReceptionLoginPage onLogin={() => { }} />}
+          />
+          <Route
+            path="/reception/register"
+            element={user ? <Navigate to="/dashboard" /> : <ReceptionRegisterPage onLogin={() => { }} />}
+          />
 
-        {/* Admin Routes */}
-        <Route
-          path="/admin/login"
-          element={user ? <Navigate to="/dashboard" /> : <AdminLoginPage onLogin={() => { }} />}
-        />
-        <Route
-          path="/admin/register"
-          element={user ? <Navigate to="/dashboard" /> : <AdminRegisterPage onLogin={() => { }} />}
-        />
+          {/* Admin Routes */}
+          <Route
+            path="/admin/login"
+            element={user ? <Navigate to="/dashboard" /> : <AdminLoginPage onLogin={() => { }} />}
+          />
+          <Route
+            path="/admin/register"
+            element={user ? <Navigate to="/dashboard" /> : <AdminRegisterPage onLogin={() => { }} />}
+          />
 
-        {/* Dashboard Entry Point (Role Redirector) */}
-        <Route
-          path="/dashboard"
-          element={
-            user ? (
-              user.role === UserRole.PATIENT ? <Navigate to="/patient" /> :
-                user.role === UserRole.MEDICAL ? <Navigate to="/medical" /> :
-                  user.role === UserRole.RECEPTION ? <Navigate to="/reception" /> :
-                    user.role === UserRole.ADMIN ? <Navigate to="/admin" /> :
-                      <div className="flex h-screen items-center justify-center flex-col gap-4">
-                        <i className="fas fa-triangle-exclamation text-4xl text-amber-500"></i>
-                        <p className="font-bold text-slate-600">Perfil de usuário sem permissão definida.</p>
-                        <button onClick={signOut} className="text-blue-600 hover:underline">Sair</button>
-                      </div>
-            ) : <Navigate to="/" />
-          }
-        />
+          {/* Dashboard Entry Point (Role Redirector) */}
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                user.role === UserRole.PATIENT ? <Navigate to="/patient" /> :
+                  user.role === UserRole.MEDICAL ? <Navigate to="/medical" /> :
+                    user.role === UserRole.RECEPTION ? <Navigate to="/reception" /> :
+                      user.role === UserRole.ADMIN ? <Navigate to="/admin" /> :
+                        <div className="flex h-screen items-center justify-center flex-col gap-4">
+                          <i className="fas fa-triangle-exclamation text-4xl text-amber-500"></i>
+                          <p className="font-bold text-slate-600">Perfil de usuário sem permissão definida.</p>
+                          <button onClick={signOut} className="text-blue-600 hover:underline">Sair</button>
+                        </div>
+              ) : <Navigate to="/" />
+            }
+          />
 
-        {/* Protected Dashboard Routes */}
-        <Route
-          path="/patient"
-          element={
-            <ProtectedRoute user={user} allowedRoles={[UserRole.PATIENT]}>
-              <Layout user={user!} onLogout={signOut}>
-                <PatientDashboard user={user!} onUpdateUser={handleUpdateUser} />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected Dashboard Routes */}
+          <Route
+            path="/patient"
+            element={
+              <ProtectedRoute user={user} allowedRoles={[UserRole.PATIENT]}>
+                <Layout user={user!} onLogout={signOut}>
+                  <PatientDashboard user={user!} onUpdateUser={handleUpdateUser} />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/medical"
-          element={
-            <ProtectedRoute user={user} allowedRoles={[UserRole.MEDICAL]}>
-              <Layout user={user!} onLogout={signOut}>
-                <MedicalDashboard user={user!} onUpdateUser={handleUpdateUser} />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/medical"
+            element={
+              <ProtectedRoute user={user} allowedRoles={[UserRole.MEDICAL]}>
+                <Layout user={user!} onLogout={signOut}>
+                  <MedicalDashboard user={user!} onUpdateUser={handleUpdateUser} />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/reception"
-          element={
-            <ProtectedRoute user={user} allowedRoles={[UserRole.RECEPTION]}>
-              <Layout user={user!} onLogout={signOut}>
-                <ReceptionDashboard user={user!} onUpdateUser={handleUpdateUser} />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/reception"
+            element={
+              <ProtectedRoute user={user} allowedRoles={[UserRole.RECEPTION]}>
+                <Layout user={user!} onLogout={signOut}>
+                  <ReceptionDashboard user={user!} onUpdateUser={handleUpdateUser} />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute user={user} allowedRoles={[UserRole.ADMIN]}>
-              <Layout user={user!} onLogout={signOut}>
-                <AdminDashboard user={user!} onUpdateUser={handleUpdateUser} />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute user={user} allowedRoles={[UserRole.ADMIN]}>
+                <Layout user={user!} onLogout={signOut}>
+                  <AdminDashboard user={user!} onUpdateUser={handleUpdateUser} />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </HashRouter>
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </HashRouter>
+    </SettingsProvider>
   );
 };
 

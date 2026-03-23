@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
 import { authService } from '../services/apiService';
+import { useSettings } from '../contexts/SettingsContext';
 import { maskCPF, maskSUS, maskPhone } from '../services/masks';
 
 interface RegisterPageProps {
@@ -11,6 +12,7 @@ interface RegisterPageProps {
 
 const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
+  const { appLogo } = useSettings();
   const [formData, setFormData] = useState({
     name: '',
     cpf: '',
@@ -73,7 +75,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onLogin }) => {
                 <i className="fas fa-arrow-left"></i>
               </button>
               <div className="bg-white p-2 rounded-2xl shadow-xl border border-slate-50">
-                <img src="/assets/logo-uarini.jpg" alt="Logo" className="w-12 h-12 object-contain" />
+                <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-12 h-12 object-contain" />
               </div>
             </div>
 

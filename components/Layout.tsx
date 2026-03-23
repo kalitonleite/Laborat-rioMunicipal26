@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { User, UserRole } from '../types';
+import { useSettings } from '../contexts/SettingsContext';
 
 interface LayoutProps {
   user: User | null;
@@ -9,6 +10,7 @@ interface LayoutProps {
 }
 
 const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
+  const { appLogo } = useSettings();
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case UserRole.ADMIN: return 'PAINEL ADMINISTRADOR';
@@ -30,7 +32,7 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
             {/* Logo Relocado no lugar do Microscópio */}
             <div className="bg-white p-1.5 md:p-2 rounded-2xl shadow-2xl shadow-black/20 border border-white/10 hover:scale-105 transition-transform duration-300">
               <img
-                src="/assets/logo-uarini.jpg"
+                src={appLogo || "/assets/logo-uarini.jpg"}
                 alt="Uarini"
                 className="w-12 h-12 md:w-16 md:h-16 object-contain rounded-lg"
               />
