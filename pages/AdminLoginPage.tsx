@@ -45,7 +45,7 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin }) => {
             <button onClick={() => navigate('/')} className="text-slate-400 hover:text-[#002147] transition-all bg-slate-50 w-10 h-10 rounded-xl flex items-center justify-center border border-slate-100">
               <i className="fas fa-arrow-left"></i>
             </button>
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden w-12 h-12">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden w-20 h-20">
               <img src={appLogo || "/assets/logo-uarini.jpg"} alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
