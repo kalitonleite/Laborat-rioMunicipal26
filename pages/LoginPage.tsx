@@ -126,11 +126,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="absolute bottom-[-20%] right-[-10%] w-[80%] md:w-[60%] h-[100%] bg-[#22c55e]/10 blur-[80px] md:blur-[120px] rounded-full"></div>
 
         <div className="relative z-10 flex flex-col items-center">
-          <div className="rounded-[40px] md:rounded-[60px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/30 mb-8 md:mb-12 transform hover:scale-105 transition-all duration-500 overflow-hidden w-32 h-32 md:w-72 md:h-72 flex items-center justify-center bg-white">
+          <div className="rounded-[40px] md:rounded-[60px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/30 mb-8 md:mb-12 transform hover:scale-110 transition-all duration-500 overflow-hidden w-32 h-32 md:w-72 md:h-72 flex items-center justify-center bg-white">
             <img
               src={appLogo || "/assets/logo-uarini.jpg"}
               alt="Logo Uarini"
-              className="w-full h-full object-cover scale-[1.02]"
+              className="w-full h-full object-cover scale-[1.5]"
             />
           </div>
 
