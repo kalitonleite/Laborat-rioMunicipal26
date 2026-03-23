@@ -466,17 +466,29 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   }, [searchTerm, examsList]);
 
   const filteredAdmins = useMemo(() => {
-    return adminsList.filter(a =>
-      (a.name || '').toLowerCase().includes(adminSearchTerm.toLowerCase()) ||
-      (a.cpf || '').includes(adminSearchTerm)
-    );
+    if (!adminSearchTerm.trim()) return adminsList;
+    const term = adminSearchTerm.toLowerCase().trim();
+    const termDigits = adminSearchTerm.replace(/\D/g, '');
+
+    return adminsList.filter(a => {
+      const nameMatch = (a.name || '').toLowerCase().includes(term);
+      const rawCpfMatch = termDigits && (a.cpf || '').includes(termDigits);
+      const maskedCpfMatch = (maskCPF(a.cpf || '')).toLowerCase().includes(term);
+      return nameMatch || rawCpfMatch || maskedCpfMatch;
+    });
   }, [adminSearchTerm, adminsList]);
 
   const filteredPatients = useMemo(() => {
-    return patientsList.filter(p =>
-      (p.name || '').toLowerCase().includes(patientSearchTerm.toLowerCase()) ||
-      (p.cpf || '').includes(patientSearchTerm)
-    );
+    if (!patientSearchTerm.trim()) return patientsList;
+    const term = patientSearchTerm.toLowerCase().trim();
+    const termDigits = patientSearchTerm.replace(/\D/g, '');
+
+    return patientsList.filter(p => {
+      const nameMatch = (p.name || '').toLowerCase().includes(term);
+      const rawCpfMatch = termDigits && (p.cpf || '').includes(termDigits);
+      const maskedCpfMatch = (maskCPF(p.cpf || '')).toLowerCase().includes(term);
+      return nameMatch || rawCpfMatch || maskedCpfMatch;
+    });
   }, [patientSearchTerm, patientsList]);
 
   // Lógica de Relatórios
@@ -904,8 +916,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   value={adminSearchTerm}
                   onChange={e => {
                     const v = e.target.value;
-                    if (/^\d/.test(v)) setAdminSearchTerm(maskCPF(v));
-                    else setAdminSearchTerm(v);
+                    if (v.length > 0 && /^[0-9.\- ]+$/.test(v)) {
+                      setAdminSearchTerm(maskCPF(v));
+                    } else {
+                      setAdminSearchTerm(v);
+                    }
                   }}
                 />
               </div>
@@ -993,8 +1008,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                   value={patientSearchTerm}
                   onChange={e => {
                     const v = e.target.value;
-                    if (/^\d/.test(v)) setPatientSearchTerm(maskCPF(v));
-                    else setPatientSearchTerm(v);
+                    if (v.length > 0 && /^[0-9.\- ]+$/.test(v)) {
+                      setPatientSearchTerm(maskCPF(v));
+                    } else {
+                      setPatientSearchTerm(v);
+                    }
                   }}
                 />
               </div>
