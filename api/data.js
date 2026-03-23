@@ -62,16 +62,18 @@ module.exports = async function handler(req, res) {
       }
 
       const orderClause = order ? ` ORDER BY ${order.column} ${order.ascending ? 'ASC' : 'DESC'}` : '';
-      const results = await sql.query(query + orderClause, params);
-      return res.status(200).json(results);
+      const result = await sql.query(query + orderClause, params);
+      const rows = Array.isArray(result) ? result : (result.rows || []);
+      return res.status(200).json(rows);
     }
 
     if (action === 'insert') {
         const keys = Object.keys(data);
         const values = Object.values(data);
         const query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`;
-        const results = await sql.query(query, values);
-        return res.status(201).json(results);
+        const result = await sql.query(query, values);
+        const rows = Array.isArray(result) ? result : (result.rows || []);
+        return res.status(201).json(rows);
     }
 
     if (action === 'update') {
@@ -89,8 +91,9 @@ module.exports = async function handler(req, res) {
         }).join(' AND ');
 
         query += ' RETURNING *';
-        const results = await sql.query(query, values);
-        return res.status(200).json(results);
+        const result = await sql.query(query, values);
+        const rows = Array.isArray(result) ? result : (result.rows || []);
+        return res.status(200).json(rows);
     }
 
     if (action === 'delete') {
@@ -98,8 +101,9 @@ module.exports = async function handler(req, res) {
         const filterKeys = filter ? Object.keys(filter) : ['id'];
         const filterValues = filter ? Object.values(filter) : [id];
         const query = `DELETE FROM public.${table} WHERE ` + filterKeys.map((key, i) => `${key} = $${i + 1}`).join(' AND ') + ' RETURNING *';
-        const results = await sql.query(query, filterValues);
-        return res.status(200).json(results);
+        const result = await sql.query(query, filterValues);
+        const rows = Array.isArray(result) ? result : (result.rows || []);
+        return res.status(200).json(rows);
     }
 
     return res.status(400).json({ error: 'Ação inválida.' });
