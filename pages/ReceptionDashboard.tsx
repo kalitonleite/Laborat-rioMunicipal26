@@ -30,10 +30,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   const [isListViewOpen, setIsListViewOpen] = useState(false);
   const [newApp, setNewApp] = useState({ 
     patientName: '', 
-    patientCpf: '', 
-    patientAge: '', 
+    patientBirthDate: '', 
     patientGender: '', 
     patientSusNumber: '', 
+    patientAddress: '',
+    patientAge: '',
     date: '', 
     time: '' 
   });
@@ -50,6 +51,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           patientAge: a.patient_age,
           patientGender: a.patient_gender,
           patientSusNumber: a.patient_sus_number,
+          patientBirthDate: a.patient_birth_date,
+          patientAddress: a.patient_address,
           date: a.date,
           time: a.time
         }));
@@ -171,7 +174,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   const filtered = appointments.filter(a => {
     const searchClean = search.replace(/\D/g, '');
     return a.patientName.toLowerCase().includes(search.toLowerCase()) ||
-      (searchClean && a.patientCpf?.replace(/\D/g, '').includes(searchClean));
+      (a.patientBirthDate && a.patientBirthDate.includes(search));
   });
 
   const handleDownloadList = () => {
@@ -272,16 +275,13 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       return;
     }
 
-    const cleanCpf = newApp.patientCpf.replace(/\D/g, '');
-    const cleanSus = newApp.patientSusNumber.replace(/\D/g, '');
-
-    if (cleanCpf.length !== 11) {
-      alert("O CPF deve conter exatamente 11 dígitos.");
+    if (!newApp.patientBirthDate) {
+      alert("Por favor, informe a data de nascimento.");
       return;
     }
 
-    if (cleanSus.length > 0 && cleanSus.length !== 15) {
-      alert("O Cartão SUS deve conter exatamente 15 dígitos.");
+    if (newApp.patientAddress && newApp.patientAddress.length < 5) {
+      alert("O endereço deve ser mais detalhado.");
       return;
     }
 
@@ -302,10 +302,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       const data = await dbService.from('appointments').insert({
         patient_id: 'P-' + Math.floor(Math.random() * 1000),
         patient_name: newApp.patientName,
-        patient_cpf: newApp.patientCpf || '000.000.000-00',
+        patient_birth_date: newApp.patientBirthDate,
         patient_age: !isNaN(age) ? age : null,
         patient_gender: newApp.patientGender,
         patient_sus_number: newApp.patientSusNumber,
+        patient_address: newApp.patientAddress,
         date: formattedDate,
         time: newApp.time
       });
@@ -320,10 +321,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         id: data[0].id,
         patientId: data[0].patient_id,
         patientName: data[0].patient_name,
-        patientCpf: data[0].patient_cpf,
+        patientBirthDate: data[0].patient_birth_date,
         patientAge: data[0].patient_age,
         patientGender: data[0].patient_gender,
         patientSusNumber: data[0].patient_sus_number,
+        patientAddress: data[0].patient_address,
         date: data[0].date,
         time: data[0].time
       };
@@ -335,7 +337,16 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         return updated;
       });
       setIsModalOpen(false);
-      setNewApp({ patientName: '', patientCpf: '', patientAge: '', patientGender: '', patientSusNumber: '', date: '', time: '' });
+      setNewApp({ 
+        patientName: '', 
+        patientBirthDate: '', 
+        patientAge: '', 
+        patientGender: '', 
+        patientSusNumber: '', 
+        patientAddress: '',
+        date: '', 
+        time: '' 
+      });
       alert('Agendamento criado com sucesso!');
     } catch (error: any) {
       console.error('[ReceptionDashboard] Error adding appointment:', error);
@@ -412,7 +423,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   </div>
                   <div>
                     <h4 className="font-black text-slate-800 text-sm">{app.patientName}</h4>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{app.patientCpf || 'CPF NÃO INFORMADO'}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{app.patientBirthDate ? `NASC: ${app.patientBirthDate.split('-').reverse().join('/')}` : 'DATA NASC. NÃO INFORMADA'}</p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between md:justify-end gap-4 mt-4 md:mt-0">
@@ -709,8 +720,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
-                    <input type="text" placeholder="000.000.000-00" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={newApp.patientCpf} onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })} />
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data de Nascimento</label>
+                    <input required type="date" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientBirthDate} onChange={e => setNewApp({ ...newApp, patientBirthDate: e.target.value })} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS</label>
@@ -754,6 +765,15 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} />
                   </div>
                 </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Endereço Completo</label>
+                  <textarea 
+                    placeholder="Rua, Número, Bairro, Ponto de Referência..."
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold min-h-[100px]" 
+                    value={newApp.patientAddress} 
+                    onChange={e => setNewApp({ ...newApp, patientAddress: e.target.value })} 
+                  />
+                </div>
                 <button 
                    type="submit" 
                    disabled={isAdding}
@@ -791,10 +811,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
               <div className="grid grid-cols-7 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                 <span>Horário</span>
                 <span>Paciente</span>
-                <span>CPF</span>
+                <span>Nascimento</span>
                 <span>Idade</span>
                 <span>Sexo</span>
                 <span>SUS</span>
+                <span>Endereço</span>
                 <span>Data</span>
               </div>
 
@@ -803,10 +824,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   <div key={app.id} className="grid grid-cols-7 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
                     <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
                     <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
-                    <span className="text-xs font-medium text-slate-500">{app.patientCpf || '-'}</span>
+                    <span className="text-xs font-medium text-slate-500">{app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
                     <span className="text-xs font-medium text-slate-500">{app.patientAge || '-'}</span>
                     <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-50 w-fit px-2 py-1 rounded-md">{app.patientGender || '-'}</span>
                     <span className="text-xs font-medium text-slate-500">{app.patientSusNumber || '-'}</span>
+                    <span className="text-xs font-medium text-slate-400 truncate max-w-[150px]" title={app.patientAddress}>{app.patientAddress || '-'}</span>
                     <span className="text-xs font-bold text-slate-800">{app.date}</span>
                   </div>
                 )) : (
