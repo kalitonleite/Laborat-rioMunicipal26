@@ -443,19 +443,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   };
 
   const filteredExams = useMemo(() => {
-    const searchClean = searchTerm.replace(/\D/g, '');
-    const filteredExams = examsList.filter(exam => {
-      const term = searchTerm.toLowerCase();
+    if (!searchTerm.trim()) return examsList;
+    const term = searchTerm.toLowerCase().trim();
+    const termDigits = searchTerm.replace(/\D/g, '');
+    return examsList.filter(exam => {
       const pName = (exam.patientName || '').toLowerCase();
       const eName = (exam.examName || '').toLowerCase();
-      const pCpf = (exam.patientCpf || '').replace(/\D/g, '');
-      const sTermClean = searchTerm.replace(/\D/g, '');
+      const pCpfRaw = (exam.patientCpf || '').replace(/\D/g, '');
+      const pCpfMasked = maskCPF(exam.patientCpf || '').toLowerCase();
 
-      return pName.includes(term) ||
-        eName.includes(term) ||
-        (sTermClean && pCpf.includes(sTermClean));
+      if (pName.includes(term)) return true;
+      if (eName.includes(term)) return true;
+      if (termDigits && pCpfRaw.includes(termDigits)) return true;
+      if (pCpfMasked.includes(term)) return true;
+      return false;
     });
-    return filteredExams;
   }, [searchTerm, examsList]);
 
   const filteredAdmins = useMemo(() => {
