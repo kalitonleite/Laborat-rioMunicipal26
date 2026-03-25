@@ -13,6 +13,9 @@ import PatientDashboard from './pages/PatientDashboard';
 import MedicalDashboard from './pages/MedicalDashboard';
 import ReceptionDashboard from './pages/ReceptionDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ScannerPage from './pages/ScannerPage';
+import AtendimentoPage from './pages/AtendimentoPage';
+import QrDashboardTab from './components/QrDashboardTab';
 import Layout from './components/Layout';
 import { User, UserRole } from './types';
 import { useAuth } from './contexts/AuthContext';
@@ -184,6 +187,10 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* New Laboratorial Flow Routes */}
+          <Route path="/scanner" element={<ScannerPage />} />
+          <Route path="/atendimento/:id" element={<AtendimentoPage />} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

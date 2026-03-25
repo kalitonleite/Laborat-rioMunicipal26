@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, ExamResult, Campaign, UserRole } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import ProfileTab from '../components/ProfileTab';
+import QrDashboardTab from '../components/QrDashboardTab';
 import DashboardTabs, { TabItem } from '../components/DashboardTabs';
 import { maskCPF } from '../services/masks';
 import { dbService } from '../services/apiService';
@@ -17,7 +18,7 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil' | 'configuracoes'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil' | 'configuracoes' | 'qr'>('geral');
   const { appLogo, updateLogo } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
@@ -575,6 +576,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
           { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
           { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
+          { id: 'qr', label: 'Scanner QR', icon: 'fa-qrcode' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
           { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
         ]}
@@ -1524,6 +1526,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
             </div>
           </div>
         </div>
+      )}
+      {activeTab === 'qr' && (
+        <QrDashboardTab />
       )}
     </div>
   );

@@ -38,7 +38,7 @@ module.exports = async function handler(req, res) {
 
     if (!table) return res.status(400).json({ error: 'O nome da tabela é obrigatório.' });
 
-    const allowedTables = ['profiles', 'exams', 'campaigns', 'appointments', 'lab_settings', 'doctor_notes', 'authorization_codes'];
+    const allowedTables = ['profiles', 'exams', 'campaigns', 'appointments', 'lab_settings', 'doctor_notes', 'authorization_codes', 'qr_codes'];
     if (!allowedTables.includes(table)) {
       return res.status(403).json({ error: 'Acesso negado: Tabela não permitida.' });
     }

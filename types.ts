@@ -71,4 +71,15 @@ export interface Appointment {
   patientAddressNumber?: string;
   date: string;
   time: string;
+  status?: string;
+  setor?: string;
+  codigo_atendimento?: string;
+}
+
+export interface QrCode {
+  id: string;
+  token: string;
+  atendimento_id?: string;
+  status: 'active' | 'used';
+  created_at: string;
 }
