@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'react-qr-code';
 import { jsPDF } from 'jspdf';
 import { dbService } from '../services/apiService';
 import { QrCode, Appointment } from '../types';
@@ -166,7 +166,7 @@ const QrDashboardTab: React.FC = () => {
                     <div className="mt-8 p-6 bg-gray-50 rounded-[28px] border border-gray-100 flex flex-col items-center">
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Preview do Código</p>
                         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                            <QRCodeSVG value={generatedQr} size={200} />
+                            <QRCode value={generatedQr} size={200} viewBox={`0 0 256 256`} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
                         </div>
                         <p className="mt-4 font-black text-slate-800 text-xs">{generatedQr}</p>
                         <button 
@@ -238,7 +238,7 @@ const QrDashboardTab: React.FC = () => {
                     <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
                         {batchQrs.map((token, idx) => (
                             <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center gap-2 overflow-hidden">
-                                <QRCodeSVG id={`qr-batch-${idx}`} value={token} size={60} />
+                                <QRCode id={`qr-batch-${idx}`} value={token} size={60} viewBox={`0 0 256 256`} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
                                 <span className="text-[8px] font-black text-gray-400 truncate w-full text-center">{token.split('-')[1]}</span>
                             </div>
                         ))}

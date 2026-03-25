@@ -69,7 +69,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    // Carregar Exames do Supabase
+    // Carregar Exames do Banco (Neon)
     const fetchExams = async () => {
       try {
         const data = await dbService.from('exams').select({}, { column: 'created_at', ascending: false });
@@ -142,7 +142,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
         
         setAdminsList(staff);
         setPatientsList(patients);
-        setPatientStats({ total: patients.length, growth: 0 }); // Simplificado para este exemplo
+        setPatientStats({ total: patients.length, growth: 0 }); 
       } catch (error) {
         console.error('Erro ao buscar usuários:', error);
       }
