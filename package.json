@@ -35,5 +35,10 @@
     "@types/uuid": "^10.0.0",
     "@types/qrcode.react": "^3.1.0",
     "vite": "^6.2.0"
+  },
+  "overrides": {
+    "qrcode.react": {
+      "react": "$react"
+    }
   }
 }
