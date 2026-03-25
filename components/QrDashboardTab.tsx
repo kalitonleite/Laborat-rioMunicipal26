@@ -20,7 +20,15 @@ const QrDashboardTab: React.FC = () => {
         const fetchAppointments = async () => {
             try {
                 const data = await dbService.from('appointments').select({}, { column: 'created_at', ascending: false });
-                setAppointments(data || []);
+                const mapped = (data || []).map((item: any) => ({
+                    id: item.id,
+                    patientName: item.patient_name,
+                    patientCpf: item.patient_cpf,
+                    date: item.date,
+                    time: item.time,
+                    status: item.status
+                }));
+                setAppointments(mapped);
             } catch (err) {
                 console.error("Erro ao buscar atendimentos:", err);
             }
