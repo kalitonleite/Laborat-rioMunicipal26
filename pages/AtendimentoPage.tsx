@@ -18,7 +18,23 @@ const AtendimentoPage: React.FC = () => {
             try {
                 const results = await dbService.from('appointments').select({ id });
                 if (results && results.length > 0) {
-                    setAppointment(results[0]);
+                    const raw = results[0];
+                    const mapped: Appointment = {
+                        id: raw.id,
+                        patientId: raw.patient_id,
+                        patientName: raw.patient_name,
+                        patientCpf: raw.patient_cpf,
+                        patientAge: raw.patient_age,
+                        patientGender: raw.patient_gender,
+                        patientSusNumber: raw.patient_sus_number,
+                        patientAddress: raw.patient_address || raw.endereco,
+                        date: raw.date,
+                        time: raw.time,
+                        status: raw.status,
+                        setor: raw.setor,
+                        codigo_atendimento: raw.codigo_atendimento
+                    };
+                    setAppointment(mapped);
                 } else {
                     setError("Atendimento não encontrado.");
                 }
