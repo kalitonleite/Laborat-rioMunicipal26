@@ -156,7 +156,9 @@ const QrDashboardTab: React.FC = () => {
                         >
                             <option value="">Selecione um atendimento...</option>
                             {appointments.map(app => (
-                                <option key={app.id} value={app.id}>{app.patientName} - {app.date}</option>
+                                <option key={app.id} value={app.id}>
+                                    {app.patientName?.toUpperCase() || 'PACIENTE S/ NOME'} | {app.patientCpf || 'S/ CPF'} | {app.date}
+                                </option>
                             ))}
                         </select>
                     </div>
