@@ -1,0 +1,3 @@
+components/QrDashboardTab.tsx(3,27): error TS2307: Cannot find module 'qrcode.react' or its corresponding type declarations.
+components/QrDashboardTab.tsx(7,30): error TS2307: Cannot find module 'uuid' or its corresponding type declarations.
+pages/ScannerPage.tsx(3,36): error TS2307: Cannot find module 'html5-qrcode' or its corresponding type declarations.
