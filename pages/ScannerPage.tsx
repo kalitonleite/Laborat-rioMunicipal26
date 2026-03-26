@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { useNavigate } from 'react-router-dom';
 import { dbService } from '../services/apiService';
@@ -15,12 +15,14 @@ const ScannerPage: React.FC = () => {
 
     // IP Camera states
     const [mode, setMode] = useState<'camera' | 'ipcam'>('camera');
-    const [ipCamUrl, setIpCamUrl] = useState('http://192.168.1.100:8080/video');
+    const [ipBase, setIpBase] = useState('http://192.168.1.100:8080');
     const [ipCamActive, setIpCamActive] = useState(false);
-    const imgRef = useRef<HTMLImageElement>(null);
+    const [streamSrc, setStreamSrc] = useState('');
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const hiddenImgRef = useRef<HTMLImageElement>(null);
     const ipScanInterval = useRef<any>(null);
     const processedRef = useRef(false);
+    const alreadyProcessing = useRef(false);
 
     useEffect(() => {
         if (mode !== 'camera') return;
@@ -33,8 +35,8 @@ const ScannerPage: React.FC = () => {
         scannerRef.current.render(onScanSuccess, () => { });
 
         const interval = setInterval(() => {
-            const btnCam = document.getElementById('html5-qrcode-button-camera-permission');
-            if (btnCam) btnCam.innerText = 'Permitir Uso da Câmera';
+            document.getElementById('html5-qrcode-button-camera-permission')?.innerText === 'Grant permissions' &&
+                (document.getElementById('html5-qrcode-button-camera-permission')!.innerText = 'Permitir Câmera');
             const btnStart = document.getElementById('html5-qrcode-button-camera-start');
             if (btnStart) btnStart.innerText = 'Iniciar Câmera';
             const btnStop = document.getElementById('html5-qrcode-button-camera-stop');
@@ -49,35 +51,58 @@ const ScannerPage: React.FC = () => {
         };
     }, [mode]);
 
-    // IP Cam scanning loop
-    useEffect(() => {
-        if (!ipCamActive || mode !== 'ipcam') return;
-        processedRef.current = false;
+    // Poll /shot.jpg from IP Webcam — works without CORS headers
+    const pollFrame = useCallback(async () => {
+        if (processedRef.current || alreadyProcessing.current) return;
+        alreadyProcessing.current = true;
 
-        ipScanInterval.current = setInterval(() => {
-            const img = imgRef.current;
-            const canvas = canvasRef.current;
-            if (!img || !canvas || processedRef.current) return;
+        const snapshotUrl = `${ipBase}/shot.jpg?t=${Date.now()}`;
+        try {
+            const res = await fetch(snapshotUrl, { cache: 'no-store' });
+            if (!res.ok) throw new Error('Falha ao buscar frame');
 
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
+            const blob = await res.blob();
+            const objUrl = URL.createObjectURL(blob);
 
-            canvas.width = img.naturalWidth || 640;
-            canvas.height = img.naturalHeight || 480;
-            try {
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const img = new Image();
+            img.onload = () => {
+                const canvas = canvasRef.current;
+                if (!canvas) { URL.revokeObjectURL(objUrl); alreadyProcessing.current = false; return; }
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) { URL.revokeObjectURL(objUrl); alreadyProcessing.current = false; return; }
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(objUrl);
+
                 const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code && code.data) {
+                if (code?.data && !processedRef.current) {
                     processedRef.current = true;
                     clearInterval(ipScanInterval.current);
                     onScanSuccess(code.data);
                 }
-            } catch (_) { }
-        }, 500);
+                alreadyProcessing.current = false;
+            };
+            img.onerror = () => { URL.revokeObjectURL(objUrl); alreadyProcessing.current = false; };
+            img.src = objUrl;
+        } catch (e) {
+            alreadyProcessing.current = false;
+        }
+    }, [ipBase]);
 
+    useEffect(() => {
+        if (!ipCamActive || mode !== 'ipcam') return;
+        processedRef.current = false;
+        alreadyProcessing.current = false;
+
+        // Show live stream directly (no crossOrigin = no CORS issue)
+        setStreamSrc(`${ipBase}/video?${Date.now()}`);
+
+        // Poll /shot.jpg every 600ms for QR detection
+        ipScanInterval.current = setInterval(pollFrame, 600);
         return () => clearInterval(ipScanInterval.current);
-    }, [ipCamActive, mode]);
+    }, [ipCamActive, mode, ipBase, pollFrame]);
 
     const onScanSuccess = async (decodedText: string) => {
         let token = decodedText.trim();
@@ -113,9 +138,9 @@ const ScannerPage: React.FC = () => {
                 setStatus('IDLE');
                 scannerRef.current?.resume();
                 processedRef.current = false;
+                alreadyProcessing.current = false;
                 if (ipCamActive) {
-                    setIpCamActive(false);
-                    setTimeout(() => setIpCamActive(true), 300);
+                    ipScanInterval.current = setInterval(pollFrame, 600);
                 }
             }, 5000);
         }
@@ -130,12 +155,19 @@ const ScannerPage: React.FC = () => {
         setIpCamActive(false);
         clearInterval(ipScanInterval.current);
         if (newMode === 'ipcam' && scannerRef.current) {
-            scannerRef.current.clear().catch(() => {});
+            scannerRef.current.clear().catch(() => { });
             scannerRef.current = null;
         }
         setMode(newMode);
         setStatus('IDLE');
         setScannedResult(null);
+        setStreamSrc('');
+    };
+
+    const handleConnect = () => {
+        setIpCamActive(false);
+        setStreamSrc('');
+        setTimeout(() => setIpCamActive(true), 100);
     };
 
     return (
@@ -159,79 +191,101 @@ const ScannerPage: React.FC = () => {
                         onClick={() => switchMode('ipcam')}
                         className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${mode === 'ipcam' ? 'bg-white shadow text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                        <i className="fas fa-mobile-screen"></i> Câmera do Celular (IP)
+                        <i className="fas fa-mobile-screen"></i> Celular como Câmera
                     </button>
                 </div>
 
-                {/* Camera mode */}
+                {/* === PC CAMERA MODE === */}
                 {mode === 'camera' && (
                     <div id="reader" className="w-full rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-slate-50 relative">
                         <div className="absolute top-0 left-0 w-full h-[2px] bg-blue-500/50 animate-bounce z-10 opacity-30"></div>
                     </div>
                 )}
 
-                {/* IP Camera mode */}
+                {/* === IP CAMERA MODE === */}
                 {mode === 'ipcam' && (
                     <div className="w-full space-y-4">
-                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-left space-y-2">
-                            <p className="text-[10px] font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
-                                <i className="fas fa-circle-info"></i> Como usar:
+
+                        {/* Instructions */}
+                        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 text-left">
+                            <p className="text-[10px] font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2 mb-2">
+                                <i className="fas fa-circle-info"></i> Configuração (Android)
                             </p>
-                            <ol className="text-[10px] font-medium text-indigo-600 space-y-1 list-decimal list-inside">
-                                <li>Instale <strong>"IP Webcam"</strong> no Android (Play Store)</li>
-                                <li>Abra o app e toque em <strong>"Start server"</strong></li>
-                                <li>O app mostrará um IP, ex: <code className="bg-white px-1 rounded">192.168.1.5:8080</code></li>
-                                <li>Certifique-se que PC e celular estão na <strong>mesma rede Wi-Fi</strong></li>
-                                <li>Digite o endereço abaixo e clique em <strong>Conectar</strong></li>
+                            <ol className="text-[10px] font-medium text-indigo-600 space-y-1 list-decimal list-inside leading-relaxed">
+                                <li>Instale <strong>"IP Webcam"</strong> na Play Store</li>
+                                <li>Abra e role até o final → toque em <strong>"Start server"</strong></li>
+                                <li>Anote o endereço mostrado, ex: <code className="bg-white px-1 rounded font-mono">192.168.1.5:8080</code></li>
+                                <li>PC e celular devem estar na <strong>mesma rede Wi-Fi</strong></li>
+                                <li>Digite apenas o IP:PORTA abaixo e clique <strong>Conectar</strong></li>
                             </ol>
                         </div>
 
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                value={ipCamUrl}
-                                onChange={e => setIpCamUrl(e.target.value)}
-                                placeholder="http://192.168.1.100:8080/video"
-                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-indigo-400"
-                            />
-                            <button
-                                onClick={() => setIpCamActive(!ipCamActive)}
-                                className={`px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${ipCamActive ? 'bg-rose-500 text-white' : 'bg-indigo-600 text-white'}`}
-                            >
-                                {ipCamActive ? 'Parar' : 'Conectar'}
-                            </button>
+                        {/* URL Input */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-left block">
+                                Endereço IP do Celular
+                            </label>
+                            <div className="flex gap-2">
+                                <div className="flex-1 flex items-center bg-gray-50 border border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-400">
+                                    <span className="pl-4 text-[10px] font-bold text-gray-300 whitespace-nowrap">http://</span>
+                                    <input
+                                        type="text"
+                                        value={ipBase.replace('http://', '')}
+                                        onChange={e => setIpBase('http://' + e.target.value)}
+                                        placeholder="192.168.1.100:8080"
+                                        className="flex-1 bg-transparent px-2 py-3 text-xs font-bold text-slate-700 outline-none"
+                                    />
+                                </div>
+                                <button
+                                    onClick={ipCamActive ? () => { setIpCamActive(false); setStreamSrc(''); } : handleConnect}
+                                    className={`px-5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${ipCamActive ? 'bg-rose-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                                >
+                                    {ipCamActive ? <><i className="fas fa-stop mr-1"></i>Parar</> : <><i className="fas fa-plug mr-1"></i>Conectar</>}
+                                </button>
+                            </div>
                         </div>
 
-                        {ipCamActive && (
-                            <div className="relative w-full rounded-2xl overflow-hidden border border-indigo-100 bg-slate-900">
+                        {/* Live stream */}
+                        {ipCamActive && streamSrc && (
+                            <div className="relative w-full rounded-2xl overflow-hidden border-2 border-indigo-100 bg-slate-900 min-h-[200px] flex items-center justify-center">
                                 <img
-                                    ref={imgRef}
-                                    src={ipCamUrl}
-                                    alt="IP Camera Feed"
-                                    className="w-full"
-                                    crossOrigin="anonymous"
+                                    src={streamSrc}
+                                    alt="Live Camera"
+                                    className="w-full object-contain"
                                     onError={() => {
-                                        setErrorMsg('Não foi possível conectar. Verifique o IP e se o celular está na mesma rede Wi-Fi.');
+                                        setErrorMsg('Não foi possível conectar. Verifique o endereço IP e certifique-se que PC e celular estão na mesma rede Wi-Fi.');
                                         setStatus('ERROR');
                                         setIpCamActive(false);
+                                        setStreamSrc('');
                                     }}
                                 />
+                                {/* Scanning overlay */}
+                                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                    <div className="w-40 h-40 border-2 border-white/40 rounded-2xl relative">
+                                        <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-indigo-400 rounded-tl-lg"></div>
+                                        <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-indigo-400 rounded-tr-lg"></div>
+                                        <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-indigo-400 rounded-bl-lg"></div>
+                                        <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-indigo-400 rounded-br-lg"></div>
+                                    </div>
+                                </div>
                                 <div className="absolute top-2 right-2 bg-rose-500 text-white text-[8px] font-black px-2 py-1 rounded-lg flex items-center gap-1 animate-pulse">
                                     <span className="w-1.5 h-1.5 bg-white rounded-full inline-block"></span> AO VIVO
                                 </div>
-                                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-black text-white/60 uppercase tracking-widest whitespace-nowrap">
-                                    Aponte o QR Code para a câmera
+                                <div className="absolute bottom-2 left-0 right-0 text-center text-[9px] font-black text-white/50 uppercase tracking-widest">
+                                    Detectando QR automaticamente...
                                 </div>
-                                <canvas ref={canvasRef} className="hidden" />
                             </div>
                         )}
+
+                        {/* Hidden canvas for QR processing */}
+                        <canvas ref={canvasRef} className="hidden" />
                     </div>
                 )}
 
                 {/* Scanned result display */}
                 {scannedResult && (
                     <div className="mt-4 p-3 bg-gray-50 rounded-xl w-full border border-gray-100">
-                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 text-left">Código Escaneado:</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 text-left">Código Lido:</p>
                         <p className="text-[11px] font-mono font-bold text-slate-600 break-all text-left">{scannedResult}</p>
                     </div>
                 )}
@@ -246,10 +300,10 @@ const ScannerPage: React.FC = () => {
                 {status === 'ERROR' && (
                     <div className="mt-6 flex flex-col items-center gap-4 w-full">
                         <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl w-full flex items-start gap-3 text-rose-600">
-                            <i className="fas fa-circle-exclamation text-xl mt-1"></i>
+                            <i className="fas fa-circle-exclamation text-xl mt-1 shrink-0"></i>
                             <div className="text-left">
-                                <p className="text-[10px] font-black uppercase">Falha de Validação</p>
-                                <p className="text-[10px] font-medium mt-1">{errorMsg}</p>
+                                <p className="text-[10px] font-black uppercase">Erro de Conexão</p>
+                                <p className="text-[10px] font-medium mt-1 leading-relaxed">{errorMsg}</p>
                             </div>
                         </div>
                         <button onClick={() => { setStatus('IDLE'); scannerRef.current?.resume(); }} className="text-blue-600 font-black text-[10px] uppercase tracking-widest">
@@ -268,10 +322,11 @@ const ScannerPage: React.FC = () => {
 
                 {status === 'IDLE' && (
                     <form onSubmit={handleManualInput} className="mt-6 w-full">
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest mb-2 text-left">Ou insira o código manualmente:</p>
                         <div className="flex gap-2">
                             <input
                                 type="text"
-                                placeholder="Digite o código manual..."
+                                placeholder="ATD-0001-abc123..."
                                 className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
                                 value={scannedResult || ''}
                                 onChange={e => setScannedResult(e.target.value)}
