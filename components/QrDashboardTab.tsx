@@ -49,7 +49,8 @@ const QrDashboardTab: React.FC = () => {
                 atendimento_id: atendimentoId,
                 status: 'active'
             });
-            setGeneratedQr(token);
+            const fullUrl = `${window.location.origin}/#/scanner?token=${token}`;
+            setGeneratedQr(fullUrl);
             alert("QR Code gerado com sucesso!");
         } catch (err: any) {
             alert("Erro ao salvar QR Code: " + err.message);
@@ -60,17 +61,18 @@ const QrDashboardTab: React.FC = () => {
 
     const handleGenerateBatchQr = async () => {
         setLoading(true);
-        const tokens: string[] = [];
+        const fullUrls: string[] = [];
         try {
             for (let i = 0; i < quantidade; i++) {
                 const token = `${prefixo}-${(inicio + i).toString().padStart(4, '0')}-${uuidv4().substring(0, 8)}`;
-                tokens.push(token);
                 await dbService.from('qr_codes').insert({
                     token,
                     status: 'active'
                 });
+                const fullUrl = `${window.location.origin}/#/scanner?token=${token}`;
+                fullUrls.push(fullUrl);
             }
-            setBatchQrs(tokens);
+            setBatchQrs(fullUrls);
             alert(`${quantidade} QR Codes gerados no lote!`);
         } catch (err: any) {
             alert("Erro no lote: " + err.message);

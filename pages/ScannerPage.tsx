@@ -54,10 +54,10 @@ const ScannerPage: React.FC = () => {
         console.log(`Scan result: ${decodedText}`);
         let token = decodedText;
         
-        // Se o resultado for uma URL completa, extrai apenas o token
+        // Extração robusta do token (funciona com URLs Vercel e HashRouter)
         if (decodedText.includes('token=')) {
-            const url = new URL(decodedText.replace('/#/', '/')); // Ajuste para hash router se necessário
-            token = url.searchParams.get('token') || decodedText;
+            const parts = decodedText.split('token=');
+            token = parts[1].split('&')[0];
         }
 
         setScannedResult(token);
@@ -68,20 +68,21 @@ const ScannerPage: React.FC = () => {
         }
 
         try {
-            // Busca o QR no banco usando apenas o token
+            // Busca o QR no banco usando o token extraído
             const qrRecords = await dbService.from('qr_codes').select({ token });
             if (qrRecords && qrRecords.length > 0) {
                 const qr = qrRecords[0];
                 if (qr.atendimento_id) {
                     setStatus('SUCCESS');
-                    setTimeout(() => navigate(`/atendimento/${qr.atendimento_id}`), 500);
+                    // Aguarda o feedback visual antes de redirecionar
+                    setTimeout(() => navigate(`/atendimento/${qr.atendimento_id}`), 1000);
                 } else {
                     setStatus('IDLE');
-                    alert("⚠️ Código válido, mas não está vinculado a um atendimento.");
+                    alert(`⚠️ Código Válido (${token}), mas não está vinculado a um atendimento.`);
                     scannerRef.current?.resume();
                 }
             } else {
-                throw new Error("❌ Código INVÁLIDO ou não cadastrado no sistema");
+                throw new Error(`❌ Código de acesso (${token}) não cadastrado no banco de dados Neon`);
             }
         } catch (err: any) {
             setStatus('ERROR');
@@ -94,47 +95,90 @@ const ScannerPage: React.FC = () => {
     };
 
     const onScanFailure = (error: any) => {
-        // console.warn(`Code scan error: ${error}`);
+        // Ignorar erros de scan contínuo (quando não encontra nada no frame)
+    };
+
+    const handleManualInput = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (scannedResult) onScanSuccess(scannedResult);
     };
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6">
             <div className="w-full max-w-md bg-white rounded-[40px] shadow-xl p-8 border border-gray-100 flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-blue-50 rounded-[20px] mb-6 flex items-center justify-center text-blue-600">
-                    <i className="fas fa-camera text-2xl"></i>
+                    <i className="fas fa-barcode-read text-2xl"></i>
                 </div>
                 
-                <h1 className="text-2xl font-black text-slate-800 mb-2">Modo Scanner</h1>
-                <p className="text-sm font-bold text-gray-400 mb-8 uppercase tracking-widest px-4">Use o celular para escanear o QR Code da Ficha</p>
+                <h1 className="text-2xl font-black text-slate-800 mb-2">Validador QR</h1>
+                <p className="text-[10px] font-black text-gray-400 mb-8 uppercase tracking-[0.2em] px-4">Scanner Oficial Laboratório Uarini</p>
                 
-                <div id="reader" className="w-full rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-slate-50"></div>
+                <div id="reader" className="w-full rounded-3xl overflow-hidden border border-gray-100 shadow-inner bg-slate-50 relative">
+                     {/* Overlay animado no scanner */}
+                     <div className="absolute top-0 left-0 w-full h-[2px] bg-blue-500/50 animate-bounce z-10 opacity-30"></div>
+                </div>
+
+                {/* Exibição do que foi escaneado (Debug Visual) */}
+                {scannedResult && (
+                    <div className="mt-4 p-3 bg-gray-50 rounded-xl w-full border border-gray-100">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1 text-left">Código Escaneado:</p>
+                        <p className="text-[11px] font-mono font-bold text-slate-600 break-all text-left">{scannedResult}</p>
+                    </div>
+                )}
 
                 {status === 'SCANNING' && (
                     <div className="mt-8 flex flex-col items-center gap-2">
                         <i className="fas fa-spinner fa-spin text-blue-500 text-3xl"></i>
-                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Buscando Atendimento...</p>
+                        <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-[#1e40af]">Verificando segurança...</p>
                     </div>
                 )}
 
                 {status === 'ERROR' && (
-                    <div className="mt-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl w-full flex items-center gap-3 text-rose-600">
-                        <i className="fas fa-circle-exclamation text-xl"></i>
-                        <p className="text-[10px] font-black uppercase text-left leading-tight">{errorMsg}</p>
+                    <div className="mt-8 flex flex-col items-center gap-4 w-full">
+                        <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl w-full flex items-start gap-3 text-rose-600">
+                            <i className="fas fa-circle-exclamation text-xl mt-1"></i>
+                            <div className="text-left">
+                                <p className="text-[10px] font-black uppercase leading-tight">Falha de Validação</p>
+                                <p className="text-[10px] font-medium leading-relaxed mt-1">{errorMsg}</p>
+                            </div>
+                        </div>
+                        <button 
+                             onClick={() => { setStatus('IDLE'); scannerRef.current?.resume(); }}
+                             className="text-blue-600 font-black text-[10px] uppercase tracking-widest"
+                        >
+                            Tentar Novamente
+                        </button>
                     </div>
                 )}
 
                 {status === 'SUCCESS' && (
                     <div className="mt-8 flex flex-col items-center gap-2">
-                        <i className="fas fa-check-circle text-emerald-500 text-3xl"></i>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Sucesso! Redirecionando...</p>
+                        <i className="fas fa-check-circle text-emerald-500 text-4xl"></i>
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Identidade Confirmada!</p>
                     </div>
+                )}
+
+                {/* Entrada Manual de Emergência */}
+                {status === 'IDLE' && (
+                   <form onSubmit={handleManualInput} className="mt-8 w-full">
+                        <div className="flex gap-2">
+                             <input 
+                                type="text"
+                                placeholder="Digite o código manual..."
+                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-blue-500"
+                                value={scannedResult || ''}
+                                onChange={(e) => setScannedResult(e.target.value)}
+                             />
+                             <button type="submit" className="bg-slate-800 text-white px-4 rounded-xl text-[9px] font-black uppercase">IR</button>
+                        </div>
+                   </form>
                 )}
 
                 <button 
                     onClick={() => navigate('/dashboard')}
-                    className="mt-12 text-gray-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-800 transition-colors"
+                    className="mt-12 text-gray-300 font-black text-[9px] uppercase tracking-widest hover:text-slate-800 transition-colors"
                 >
-                    <i className="fas fa-arrow-left mr-2"></i> Voltar ao Painel
+                    <i className="fas fa-arrow-left mr-2"></i> Painel Administrativo
                 </button>
             </div>
             
