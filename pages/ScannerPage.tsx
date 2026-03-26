@@ -21,7 +21,29 @@ const ScannerPage: React.FC = () => {
 
         scannerRef.current.render(onScanSuccess, onScanFailure);
 
+        const interval = setInterval(() => {
+            const btnCam = document.getElementById('html5-qrcode-button-camera-permission');
+            if (btnCam) btnCam.innerText = 'Permitir Uso da Câmera';
+            
+            const btnStart = document.getElementById('html5-qrcode-button-camera-start');
+            if (btnStart) btnStart.innerText = 'Iniciar Câmera';
+
+            const btnStop = document.getElementById('html5-qrcode-button-camera-stop');
+            if (btnStop) btnStop.innerText = 'Parar Câmera';
+
+            const labRequest = document.querySelector('#reader__dashboard_section_csr span');
+            if (labRequest) labRequest.innerHTML = 'Solicitando permissão para usar câmera';
+
+            const labSelection = document.querySelector('#reader__header_message');
+            if (labSelection) labSelection.innerHTML = 'Selecione uma câmera';
+
+            // Remover o link do site da biblioteca para ficar mais limpo
+            const link = document.querySelector('div#reader a[href*="scanapp.org"]');
+            if (link) (link as HTMLElement).style.display = 'none';
+        }, 300);
+
         return () => {
+            clearInterval(interval);
             if (scannerRef.current) {
                 scannerRef.current.clear().catch(err => console.error("Falha ao limpar scanner:", err));
             }
@@ -30,7 +52,15 @@ const ScannerPage: React.FC = () => {
 
     const onScanSuccess = async (decodedText: string) => {
         console.log(`Scan result: ${decodedText}`);
-        setScannedResult(decodedText);
+        let token = decodedText;
+        
+        // Se o resultado for uma URL completa, extrai apenas o token
+        if (decodedText.includes('token=')) {
+            const url = new URL(decodedText.replace('/#/', '/')); // Ajuste para hash router se necessário
+            token = url.searchParams.get('token') || decodedText;
+        }
+
+        setScannedResult(token);
         setStatus('SCANNING');
         
         if (scannerRef.current) {
@@ -38,22 +68,20 @@ const ScannerPage: React.FC = () => {
         }
 
         try {
-            // Find QR code in database
-            const qrRecords = await dbService.from('qr_codes').select({ token: decodedText });
+            // Busca o QR no banco usando apenas o token
+            const qrRecords = await dbService.from('qr_codes').select({ token });
             if (qrRecords && qrRecords.length > 0) {
                 const qr = qrRecords[0];
                 if (qr.atendimento_id) {
-                    // Navigate to appointment details
                     setStatus('SUCCESS');
-                    navigate(`/atendimento/${qr.atendimento_id}`);
+                    setTimeout(() => navigate(`/atendimento/${qr.atendimento_id}`), 500);
                 } else {
-                    // Unlinked code - maybe prompt to link to a new appointment?
                     setStatus('IDLE');
-                    alert("Código válido, mas não está vinculado a um atendimento.");
+                    alert("⚠️ Código válido, mas não está vinculado a um atendimento.");
                     scannerRef.current?.resume();
                 }
             } else {
-                throw new Error("Código INVÁLIDO ou não encontrado");
+                throw new Error("❌ Código INVÁLIDO ou não cadastrado no sistema");
             }
         } catch (err: any) {
             setStatus('ERROR');
@@ -61,7 +89,7 @@ const ScannerPage: React.FC = () => {
             setTimeout(() => {
                 setStatus('IDLE');
                 scannerRef.current?.resume();
-            }, 3000);
+            }, 5000);
         }
     };
 
