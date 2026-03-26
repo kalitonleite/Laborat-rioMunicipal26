@@ -15,6 +15,15 @@ const AtendimentoPage: React.FC = () => {
     useEffect(() => {
         const fetchAppointment = async () => {
             if (!id) return;
+
+            // Validação de formato UUID para evitar erro de sintaxe no banco de dados
+            const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidPattern.test(id)) {
+                setError("O código de atendimento no URL não é um identificador válido (UUID).");
+                setLoading(false);
+                return;
+            }
+
             try {
                 const results = await dbService.from('appointments').select({ id });
                 if (results && results.length > 0) {

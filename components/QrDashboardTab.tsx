@@ -144,7 +144,13 @@ const QrDashboardTab: React.FC = () => {
                         <i className="fas fa-camera"></i> ABRIR SCANNER (CELULAR / WEBCAM)
                     </button>
                     <button 
-                         onClick={() => window.open('/#/atendimento/example', '_blank')}
+                         onClick={() => {
+                             if (atendimentoId) {
+                                 window.open(`/#/atendimento/${atendimentoId}`, '_blank');
+                             } else {
+                                 alert("Por favor, selecione um ID de atendimento na lista abaixo para visualizar o painel.");
+                             }
+                         }}
                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                     >
                         <i className="fas fa-eye"></i> PREVIEW PAINEL
