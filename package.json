@@ -18,13 +18,14 @@
     "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^2.5.1",
+    "jsqr": "^1.4.0",
     "pdfjs-dist": "^3.11.174",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-is": "^19.0.0",
     "react-qr-code": "^2.0.18",
     "react-router-dom": "^7.11.0",
     "recharts": "^2.15.1",
-    "react-is": "^19.0.0",
     "uuid": "^11.0.5"
   },
   "devDependencies": {
