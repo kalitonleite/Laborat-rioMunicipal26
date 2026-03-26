@@ -574,12 +574,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'geral', label: 'Início', icon: 'fa-chart-pie' },
           { id: 'exames', label: 'Registros', icon: 'fa-file-medical' },
           { id: 'relatorios', label: 'Relatórios', icon: 'fa-file-contract' },
-          { id: 'campanhas', label: 'Ads', icon: 'fa-bullhorn' },
+          { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
           { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
-          { id: 'usuarios', label: 'Users', icon: 'fa-users' },
+          { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
           { id: 'qr', label: 'Scanner', icon: 'fa-qrcode' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
-          { id: 'configuracoes', label: 'Config.', icon: 'fa-cog' },
+          { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
         ]}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as any)}
