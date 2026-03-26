@@ -20,7 +20,9 @@ module.exports = async function handler(req, res) {
     const { table, action, id, filter, order, data } = body;
 
     const isPublicCheck = (table === 'authorization_codes' && action === 'select') ||
-                          (table === 'lab_settings' && action === 'select');
+                          (table === 'lab_settings' && action === 'select') ||
+                          (table === 'qr_codes' && action === 'select') ||
+                          (table === 'appointments' && action === 'select' && filter && filter.id);
 
     if (!isPublicCheck) {
       const authHeader = req.headers.authorization;
