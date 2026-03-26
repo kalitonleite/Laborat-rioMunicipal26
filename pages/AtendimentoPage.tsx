@@ -47,10 +47,24 @@ const AtendimentoPage: React.FC = () => {
         fetchAppointment();
     }, [id]);
 
+    const handleStatusUpdate = async (newStatus: string) => {
+        if (!id) return;
+        try {
+            setLoading(true);
+            await dbService.from('appointments').update({ status: newStatus }, { id });
+            setAppointment(prev => prev ? { ...prev, status: newStatus } : null);
+            alert(`Status atualizado para: ${newStatus}`);
+        } catch (err: any) {
+            alert("Erro ao atualizar status: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 flex-col gap-4">
             <i className="fas fa-spinner fa-spin text-blue-800 text-4xl"></i>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Carregando Ficha...</p>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Processando...</p>
         </div>
     );
 
@@ -67,7 +81,14 @@ const AtendimentoPage: React.FC = () => {
                         <div>
                             <h1 className="text-2xl font-black text-slate-800 tracking-tighter">{appointment?.patientName || 'Paciente não identificado'}</h1>
                             <div className="flex gap-4 mt-2">
-                                <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">{appointment?.status || 'PENDENTE'}</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                                    appointment?.status === 'CONCLUIDO' ? 'bg-emerald-100 text-emerald-600' :
+                                    appointment?.status === 'COLETADO' ? 'bg-blue-100 text-blue-600' :
+                                    appointment?.status === 'CANCELADO' ? 'bg-rose-100 text-rose-600' :
+                                    'bg-amber-50 text-amber-600'
+                                }`}>
+                                    {appointment?.status || 'PENDENTE'}
+                                </span>
                                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2"><i className="fas fa-tag"></i> {appointment?.codigo_atendimento || appointment?.id.substring(0,8)}</span>
                             </div>
                         </div>
@@ -103,7 +124,7 @@ const AtendimentoPage: React.FC = () => {
                             </div>
                             <div className="grid grid-cols-3 gap-4">
                                <InfoField label="Idade" value={appointment?.patientAge ? `${appointment.patientAge} anos` : 'N/A'} />
-                               <InfoField label="Data Nasc." value={appointment?.patientBirthDate || 'N/A'} />
+                               <InfoField label="Mês Nasc." value={appointment?.patientBirthDate || 'N/A'} />
                                <InfoField label="Gênero" value={appointment?.patientGender || 'N/A'} />
                             </div>
                              <InfoField label="Endereço" value={appointment?.patientAddress || 'N/A'} />
@@ -123,11 +144,11 @@ const AtendimentoPage: React.FC = () => {
                             </div>
                             <InfoField label="Setor de Destino" value={appointment?.setor || 'Triagem / Recepção'} />
                             <div className="p-6 bg-slate-50 rounded-3xl border border-dashed border-gray-200 flex flex-col items-center gap-4">
-                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Status no Gerenciamento</p>
+                                 <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Alterar Status por Etapa</p>
                                  <div className="flex gap-2">
-                                     <StatusBtn label="CONCLUIR" color="bg-emerald-100 text-emerald-600" />
-                                     <StatusBtn label="COLETAR" color="bg-blue-100 text-blue-600" />
-                                     <StatusBtn label="CANCELAR" color="bg-red-100 text-red-600" />
+                                     <StatusBtn label="CONCLUIR" color="bg-emerald-100 text-emerald-600" onClick={() => handleStatusUpdate('CONCLUIDO')} />
+                                     <StatusBtn label="COLETAR" color="bg-blue-100 text-blue-600" onClick={() => handleStatusUpdate('COLETADO')} />
+                                     <StatusBtn label="CANCELAR" color="bg-rose-100 text-rose-600" onClick={() => handleStatusUpdate('CANCELADO')} />
                                  </div>
                             </div>
                         </div>
@@ -155,8 +176,11 @@ const InfoField = ({ label, value }: { label: string, value: any }) => (
     </div>
 );
 
-const StatusBtn = ({ label, color }: { label: string, color: string }) => (
-    <button className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform hover:scale-105 ${color}`}>
+const StatusBtn = ({ label, color, onClick }: { label: string, color: string, onClick: () => void }) => (
+    <button 
+        onClick={onClick}
+        className={`px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 hover:brightness-95 ${color}`}
+    >
         {label}
     </button>
 );
