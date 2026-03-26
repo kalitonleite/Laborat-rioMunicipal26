@@ -93,7 +93,12 @@ const QrDashboardTab: React.FC = () => {
         const perPageHeight = 4;
         const totalPerPage = perPageWidth * perPageHeight;
 
-        batchQrs.forEach((token, index) => {
+        batchQrs.forEach((url, index) => {
+            let token = url;
+            if (url.includes('token=')) {
+                token = url.split('token=')[1].split('&')[0];
+            }
+
             if (index > 0 && index % totalPerPage === 0) {
                 doc.addPage();
             }
@@ -104,10 +109,8 @@ const QrDashboardTab: React.FC = () => {
             const x = margin + col * (qrSize + 20);
             const y = margin + row * (qrSize + 20);
 
-            // Create a temporary SVG element to get a data URL for the PDF
-            // Simple alternative: draw text with token and qrcode in a layout
             doc.setFontSize(8);
-            doc.text(token, x, y - 5, { align: 'left', renderingMode: 'fill' });
+            doc.text(token.substring(0, 15), x, y - 5, { align: 'left' });
             // In a browser we can use canvas to get img data. 
             // For now, let's just use the doc.rect as placeholder or assuming we can use canvas
             const canvas = document.createElement('canvas');
@@ -248,12 +251,18 @@ const QrDashboardTab: React.FC = () => {
 
                 {batchQrs.length > 0 && (
                     <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
-                        {batchQrs.map((token, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center gap-2 overflow-hidden">
-                                <QRCode id={`qr-batch-${idx}`} value={token} size={60} viewBox={`0 0 256 256`} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
-                                <span className="text-[8px] font-black text-gray-400 truncate w-full text-center">{token.split('-')[1]}</span>
-                            </div>
-                        ))}
+                        {batchQrs.map((url, idx) => {
+                            let displayToken = url;
+                            if (url.includes('token=')) {
+                                displayToken = url.split('token=')[1];
+                            }
+                            return (
+                                <div key={idx} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex flex-col items-center gap-2 overflow-hidden">
+                                    <QRCode id={`qr-batch-${idx}`} value={url} size={60} viewBox={`0 0 256 256`} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+                                    <span className="text-[8px] font-black text-gray-400 truncate w-full text-center">{displayToken.split('-')[1] || displayToken.substring(0,8)}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

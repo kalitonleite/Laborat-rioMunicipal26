@@ -52,12 +52,12 @@ const ScannerPage: React.FC = () => {
 
     const onScanSuccess = async (decodedText: string) => {
         console.log(`Scan result: ${decodedText}`);
-        let token = decodedText;
+        let token = decodedText.trim();
         
-        // Extração robusta do token (funciona com URLs Vercel e HashRouter)
-        if (decodedText.includes('token=')) {
-            const parts = decodedText.split('token=');
-            token = parts[1].split('&')[0];
+        // Regex para capturar o valor de 'token=' independente da posição na URL ou fragmentos
+        const tokenMatch = decodedText.match(/[?&]token=([^&#\s]+)/);
+        if (tokenMatch) {
+            token = tokenMatch[1];
         }
 
         setScannedResult(token);
@@ -68,21 +68,25 @@ const ScannerPage: React.FC = () => {
         }
 
         try {
-            // Busca o QR no banco usando o token extraído
+            // Busca o QR no banco usando o token extraído (limpo)
             const qrRecords = await dbService.from('qr_codes').select({ token });
             if (qrRecords && qrRecords.length > 0) {
                 const qr = qrRecords[0];
                 if (qr.atendimento_id) {
+                    // Buscar o nome do paciente para confirmar na tela antes de ir
+                    const appData = await dbService.from('appointments').select({ id: qr.atendimento_id });
+                    const pName = appData && appData.length > 0 ? (appData[0].patient_name || 'Paciente') : 'Atendimento';
+                    
+                    setPatientData({ name: pName });
                     setStatus('SUCCESS');
-                    // Aguarda o feedback visual antes de redirecionar
-                    setTimeout(() => navigate(`/atendimento/${qr.atendimento_id}`), 1000);
+                    setTimeout(() => navigate(`/atendimento/${qr.atendimento_id}`), 2000);
                 } else {
                     setStatus('IDLE');
-                    alert(`⚠️ Código Válido (${token}), mas não está vinculado a um atendimento.`);
+                    alert(`⚠️ O código (${token}) é válido, mas não possui um atendimento vinculado.`);
                     scannerRef.current?.resume();
                 }
             } else {
-                throw new Error(`❌ Código de acesso (${token}) não cadastrado no banco de dados Neon`);
+                throw new Error(`❌ O código lido (${token}) não consta no nosso banco de dados.`);
             }
         } catch (err: any) {
             setStatus('ERROR');
@@ -152,9 +156,10 @@ const ScannerPage: React.FC = () => {
                 )}
 
                 {status === 'SUCCESS' && (
-                    <div className="mt-8 flex flex-col items-center gap-2">
-                        <i className="fas fa-check-circle text-emerald-500 text-4xl"></i>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Identidade Confirmada!</p>
+                    <div className="mt-8 flex flex-col items-center gap-2 animate-in zoom-in duration-300">
+                        <i className="fas fa-check-circle text-emerald-500 text-5xl"></i>
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-2">{patientData?.name || 'Localizado!'}</p>
+                        <p className="text-[9px] font-bold text-gray-400">Abrindo ficha em 2s...</p>
                     </div>
                 )}
 
