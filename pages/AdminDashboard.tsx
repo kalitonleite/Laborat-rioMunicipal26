@@ -137,7 +137,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
       try {
         const data = await dbService.from('profiles').select();
         const profiles = data || [];
-        const staff = profiles.filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION', 'PENDING_MEDICAL', 'PENDING_RECEPTION'].includes(p.role));
+        const staff = profiles.filter((p: any) => ['ADMIN', 'MEDICAL', 'RECEPTION', 'RECEPTIONIST', 'PENDING_MEDICAL', 'PENDING_RECEPTION'].includes(p.role));
         const patients = profiles.filter((p: any) => p.role === 'PATIENT');
         
         setAdminsList(staff);
@@ -151,6 +151,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
     fetchExams();
     fetchCampaigns();
     fetchUsers();
+    fetchPatientStats();
   }, []);
 
   // Estado para controle de edição
