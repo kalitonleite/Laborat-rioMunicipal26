@@ -770,24 +770,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
 
       {activeTab === 'relatorios' && (
         <div className="space-y-6 animate-in fade-in duration-500">
-          <div className="flex flex-wrap gap-3 justify-end">
+          <div className="flex justify-end">
             <button
               onClick={handleDownloadReportPDF}
               className="bg-[#1e40af] hover:bg-blue-800 text-white font-black px-6 py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-blue-600/20 transition-all flex items-center gap-2"
             >
-              <i className="fas fa-file-pdf"></i> Exportar PDF
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-6 py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2"
-            >
-              <i className="fas fa-file-csv"></i> Exportar CSV
-            </button>
-            <button
-              onClick={handleExportJSON}
-              className="bg-amber-500 hover:bg-amber-600 text-white font-black px-6 py-3 rounded-xl text-[10px] uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2"
-            >
-              <i className="fas fa-file-code"></i> Exportar JSON
+              <i className="fas fa-file-pdf"></i> Baixar Relatório PDF
             </button>
           </div>
 

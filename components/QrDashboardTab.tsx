@@ -81,6 +81,63 @@ const QrDashboardTab: React.FC = () => {
         }
     };
 
+    const handleExportPatientsCSV = async () => {
+        try {
+            const data = await dbService.from('appointments').select({}, { column: 'created_at', ascending: false });
+            const rows = (data || []).map((a: any) => ({
+                nome: a.patient_name || '-',
+                cpf: a.patient_cpf || '-',
+                sus: a.patient_sus_number || '-',
+                idade: a.patient_age || '-',
+                genero: a.patient_gender || '-',
+                data_agendada: a.date || '-',
+                horario: a.time || '-',
+                status: a.status || '-',
+                setor: a.setor || '-',
+                codigo: a.codigo_atendimento || a.id?.substring(0, 8) || '-',
+            }));
+            const header = Object.keys(rows[0] || {});
+            const csv = [header, ...rows.map(r => header.map(k => `"${(r as any)[k]}"`))]
+                .map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pacientes_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err: any) {
+            alert('Erro ao exportar CSV: ' + err.message);
+        }
+    };
+
+    const handleExportPatientsJSON = async () => {
+        try {
+            const data = await dbService.from('appointments').select({}, { column: 'created_at', ascending: false });
+            const rows = (data || []).map((a: any) => ({
+                nome: a.patient_name || '-',
+                cpf: a.patient_cpf || '-',
+                sus: a.patient_sus_number || '-',
+                idade: a.patient_age || '-',
+                genero: a.patient_gender || '-',
+                data_agendada: a.date || '-',
+                horario: a.time || '-',
+                status: a.status || '-',
+                setor: a.setor || '-',
+                codigo: a.codigo_atendimento || a.id?.substring(0, 8) || '-',
+            }));
+            const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pacientes_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err: any) {
+            alert('Erro ao exportar JSON: ' + err.message);
+        }
+    };
+
     const handleExportPdf = () => {
         if (batchQrs.length === 0) {
             alert("Gere um lote primeiro");
@@ -127,6 +184,34 @@ const QrDashboardTab: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl mx-auto">
+
+            {/* Card Exportar Cadastros */}
+            <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                        <i className="fas fa-file-export text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Exportar Cadastros de Pacientes</h2>
+                        <p className="text-[10px] font-bold text-gray-400 mt-0.5">Exporte todos os atendimentos e dados dos pacientes cadastrados no sistema</p>
+                    </div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    <button
+                        onClick={handleExportPatientsCSV}
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2"
+                    >
+                        <i className="fas fa-file-csv"></i> Exportar CSV
+                    </button>
+                    <button
+                        onClick={handleExportPatientsJSON}
+                        className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+                    >
+                        <i className="fas fa-file-code"></i> Exportar JSON
+                    </button>
+                </div>
+            </div>
+
             {/* Card Gerar Individual */}
             <div className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
                 <div className="flex items-center gap-3 mb-6">
