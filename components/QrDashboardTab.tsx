@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf';
 import { dbService } from '../services/apiService';
 import { QrCode, Appointment } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { useSettings } from '../contexts/SettingsContext';
 
 const QrDashboardTab: React.FC = () => {
     const [atendimentoId, setAtendimentoId] = useState('');
@@ -16,6 +17,8 @@ const QrDashboardTab: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [patients, setPatients] = useState<any[]>([]);
+    const [showPreview, setShowPreview] = useState(false);
+    const { appLogo } = useSettings();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -26,6 +29,7 @@ const QrDashboardTab: React.FC = () => {
                     id: item.id,
                     patientName: item.patient_name,
                     patientCpf: item.patient_cpf,
+                    patientSusNumber: item.patient_sus_number,
                     date: item.date,
                     time: item.time,
                     status: item.status
@@ -181,6 +185,66 @@ const QrDashboardTab: React.FC = () => {
         }
     };
 
+    const handleExportPatientsPDF = () => {
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        
+        // Header
+        if (appLogo) {
+            try {
+                doc.addImage(appLogo, 'JPEG', 15, 10, 25, 25);
+            } catch (e) {
+                console.error("Erro ao incluir logo no PDF", e);
+            }
+        }
+        
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.text("LABORATÓRIO MUNICIPAL DE UARINI", 50, 20);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text("Relatório Geral de Pacientes / Atendimentos", 50, 26);
+        doc.text(`Data de Emissão: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, 50, 31);
+        
+        doc.setLineWidth(0.5);
+        doc.line(15, 40, pageWidth - 15, 40);
+        
+        // Table Header
+        let y = 50;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("NOME", 15, y);
+        doc.text("CPF", 85, y);
+        doc.text("CARTÃO SUS", 125, y);
+        doc.text("DATA", 165, y);
+        doc.text("STATUS", 185, y);
+        
+        doc.setLineWidth(0.1);
+        doc.line(15, y + 2, pageWidth - 15, y + 2);
+        
+        y += 8;
+        doc.setFont("helvetica", "normal");
+        
+        // Table Rows
+        appointments.forEach((app, index) => {
+            if (y > 280) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            doc.text(app.patientName?.substring(0, 35) || '-', 15, y);
+            doc.text(app.patientCpf || '-', 85, y);
+            doc.text(app.patientSusNumber || '-', 125, y);
+            doc.text(app.date || '-', 165, y);
+            doc.text(app.status?.substring(0, 10) || 'PENDENTE', 185, y);
+            
+            y += 7;
+        });
+
+        doc.save(`relatorio_pacientes_${new Date().toISOString().split('T')[0]}.pdf`);
+        setShowPreview(false);
+    };
+
     const handleExportPdf = () => {
         if (batchQrs.length === 0) {
             alert("Gere um lote primeiro");
@@ -251,6 +315,12 @@ const QrDashboardTab: React.FC = () => {
                         className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
                     >
                         <i className="fas fa-file-code"></i> Exportar JSON
+                    </button>
+                    <button
+                        onClick={() => setShowPreview(true)}
+                        className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-slate-600/20 transition-all flex items-center justify-center gap-2"
+                    >
+                        <i className="fas fa-eye"></i> Visualizar PDF
                     </button>
                 </div>
             </div>
@@ -418,6 +488,82 @@ const QrDashboardTab: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Modal de Preview PDF */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white w-full max-w-5xl max-h-[90vh] flex flex-col rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                        <div className="bg-slate-800 p-8 text-white relative">
+                            <h2 className="text-2xl font-black">Visualização do Relatório</h2>
+                            <p className="text-slate-300 text-[10px] font-black uppercase tracking-[0.2em] mt-1">Confira a lista antes de exportar</p>
+                        </div>
+
+                        <div className="p-8 space-y-6 relative overflow-y-auto flex-1">
+                            <button onClick={() => setShowPreview(false)} className="absolute top-4 right-6 text-gray-400 hover:text-red-500 transition-all z-10">
+                                <i className="fas fa-times text-xl"></i>
+                            </button>
+                            
+                            <div className="bg-gray-50 rounded-[32px] border border-gray-100 p-8">
+                                <div className="flex justify-between items-start mb-10 border-b border-gray-100 pb-8">
+                                    <div className="flex items-center gap-4">
+                                        <img src={appLogo || "/assets/logo-uarini.jpg"} className="h-16 object-contain" alt="Logo" />
+                                        <div>
+                                            <h3 className="text-lg font-black text-slate-800">LABORATÓRIO MUNICIPAL DE UARINI</h3>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Relatório de Atendimentos Cadastrados</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gerado em:</p>
+                                        <p className="text-[11px] font-black text-slate-800">{new Date().toLocaleDateString('pt-BR')} às {new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'})}</p>
+                                    </div>
+                                </div>
+
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left">
+                                        <thead>
+                                            <tr className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-gray-100">
+                                                <th className="py-4 px-2">Nome Completo</th>
+                                                <th className="py-4 px-2">CPF</th>
+                                                <th className="py-4 px-2">SUS</th>
+                                                <th className="py-4 px-2">Data</th>
+                                                <th className="py-4 px-2 text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                            {appointments.map((app, i) => (
+                                                <tr key={i} className="text-[11px] font-bold text-slate-600">
+                                                    <td className="py-3 px-2 uppercase">{app.patientName}</td>
+                                                    <td className="py-3 px-2">{app.patientCpf}</td>
+                                                    <td className="py-3 px-2">{app.patientSusNumber || '-'}</td>
+                                                    <td className="py-3 px-2">{app.date}</td>
+                                                    <td className="py-3 px-2 text-center">
+                                                        <span className="bg-blue-50 text-blue-600 px-2 py-1 rounded-md text-[9px] font-black uppercase">{app.status}</span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-8 bg-gray-50 border-t border-gray-100 flex gap-4">
+                            <button
+                                onClick={() => setShowPreview(false)}
+                                className="flex-1 bg-white border border-gray-200 text-slate-500 font-black py-4 rounded-2xl hover:bg-gray-100 transition-all uppercase tracking-widest text-[11px]"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleExportPatientsPDF}
+                                className="flex-[2] bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl hover:bg-blue-700 transition-all uppercase tracking-widest text-[11px] flex items-center justify-center gap-2"
+                            >
+                                <i className="fas fa-download"></i> Baixar Relatório PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
