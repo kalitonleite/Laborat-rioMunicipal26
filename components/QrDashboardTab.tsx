@@ -15,12 +15,14 @@ const QrDashboardTab: React.FC = () => {
     const [batchQrs, setBatchQrs] = useState<string[]>([]);
     const [loading, setLoading] = useState(false);
     const [appointments, setAppointments] = useState<Appointment[]>([]);
+    const [patients, setPatients] = useState<any[]>([]);
 
     useEffect(() => {
-        const fetchAppointments = async () => {
+        const fetchData = async () => {
             try {
-                const data = await dbService.from('appointments').select({}, { column: 'created_at', ascending: false });
-                const mapped = (data || []).map((item: any) => ({
+                // Fetch Appointments
+                const appData = await dbService.from('appointments').select({}, { column: 'created_at', ascending: false });
+                const mappedApps = (appData || []).map((item: any) => ({
                     id: item.id,
                     patientName: item.patient_name,
                     patientCpf: item.patient_cpf,
@@ -28,12 +30,17 @@ const QrDashboardTab: React.FC = () => {
                     time: item.time,
                     status: item.status
                 }));
-                setAppointments(mapped);
+                setAppointments(mappedApps);
+
+                // Fetch Profiles (Patients)
+                const profileData = await dbService.from('profiles').select({ role: 'PATIENT' });
+                setPatients(profileData || []);
+
             } catch (err) {
-                console.error("Erro ao buscar atendimentos:", err);
+                console.error("Erro ao carregar dados do dashboard QR:", err);
             }
         };
-        fetchAppointments();
+        fetchData();
     }, []);
 
     const handleGenerateQr = async () => {
@@ -42,11 +49,47 @@ const QrDashboardTab: React.FC = () => {
             return;
         }
         setLoading(true);
-        const token = uuidv4();
+        let finalAtendimentoId = atendimentoId;
+
         try {
+            // Se for um novo paciente selecionado (sem atendimento prévio)
+            if (atendimentoId.startsWith('new:')) {
+                const profileId = atendimentoId.replace('new:', '');
+                const patient = patients.find(p => p.id === profileId);
+                
+                if (patient) {
+                    const today = new Date();
+                    const formattedDate = today.toLocaleDateString('pt-BR');
+                    const formattedTime = today.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    const newAppResult = await dbService.from('appointments').insert({
+                        patient_id: patient.id,
+                        patient_name: patient.name,
+                        patient_cpf: patient.cpf,
+                        date: formattedDate,
+                        time: formattedTime,
+                        status: 'PENDENTE'
+                    });
+
+                    if (newAppResult && newAppResult[0]) {
+                        finalAtendimentoId = newAppResult[0].id;
+                        // Atualiza a lista local de atendimentos para incluir o novo
+                        setAppointments(prev => [{
+                            id: newAppResult[0].id,
+                            patientName: patient.name,
+                            patientCpf: patient.cpf,
+                            date: formattedDate,
+                            time: formattedTime,
+                            status: 'PENDENTE'
+                        }, ...prev]);
+                    }
+                }
+            }
+
+            const token = uuidv4();
             await dbService.from('qr_codes').insert({
                 token,
-                atendimento_id: atendimentoId,
+                atendimento_id: finalAtendimentoId,
                 status: 'active'
             });
             const fullUrl = `${window.location.origin}/#/scanner?token=${token}`;
@@ -251,11 +294,29 @@ const QrDashboardTab: React.FC = () => {
                             onChange={(e) => setAtendimentoId(e.target.value)}
                         >
                             <option value="">Selecione um atendimento...</option>
-                            {appointments.map(app => (
-                                <option key={app.id} value={app.id}>
-                                    {app.patientName?.toUpperCase() || 'PACIENTE S/ NOME'} | {app.patientCpf || 'S/ CPF'} | {app.date}
-                                </option>
-                            ))}
+                            
+                            {appointments.length > 0 && (
+                                <optgroup label="Agendamentos Recentes / Em Aberto">
+                                    {appointments.map(app => (
+                                        <option key={app.id} value={app.id}>
+                                            {app.patientName?.toUpperCase() || 'PACIENTE S/ NOME'} | {app.patientCpf || 'S/ CPF'} | {app.date}
+                                        </option>
+                                    ))}
+                                </optgroup>
+                            )}
+
+                            {patients.length > 0 && (
+                                <optgroup label="Pacientes Cadastrados (Aguardando Atendimento)">
+                                    {patients
+                                        .filter(p => !appointments.some(a => a.patientCpf === p.cpf))
+                                        .map(p => (
+                                            <option key={p.id} value={`new:${p.id}`}>
+                                                {p.name?.toUpperCase() || 'PACIENTE S/ NOME'} | {p.cpf || 'S/ CPF'} | (CADASTRO RECENTE)
+                                            </option>
+                                        ))
+                                    }
+                                </optgroup>
+                            )}
                         </select>
                     </div>
                     <button
