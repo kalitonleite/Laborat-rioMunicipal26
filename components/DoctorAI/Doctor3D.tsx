@@ -46,13 +46,14 @@ const Doctor3D: React.FC<Doctor3DProps> = ({ expression, animation, isFocused })
       <Canvas
         shadows
         camera={{ position: [0, 0, 4.5], fov: 35 }}
-        gl={{ preserveDrawingBuffer: true, antialias: true }}
+        gl={{ preserveDrawingBuffer: true, antialias: true, alpha: true }}
       >
-        <ambientLight intensity={0.5} />
+        <color attach="background" args={['transparent']} />
+        <ambientLight intensity={0.8} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} castShadow />
         <pointLight position={[-10, -10, -10]} intensity={0.5} />
         
-        <Suspense fallback={null}>
+        <Suspense fallback={<mesh><boxGeometry /><meshBasicMaterial color="red" /></mesh>}>
             <Environment preset="city" />
             <DoctorModel 
                 expression={expression} 

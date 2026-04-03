@@ -8,14 +8,15 @@ import { User } from '../../types';
 import gsap from 'gsap';
 
 interface DoctorAIProps {
-  user: User;
+  user?: User | null;
 }
 
 const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
+  const userName = user?.name || 'Visitante';
   const [chatOpen, setChatOpen] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [bubbleMessage, setBubbleMessage] = useState<string | null>(
-    `Olá ${user.name}! Posso te ajudar com seus exames?`
+    `Bem-vindo! Precisa de ajuda para navegar no portal?`
   );
   const [expression, setExpression] = useState('neutral');
   const [animation, setAnimation] = useState('idle');
@@ -24,7 +25,8 @@ const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Initial entrance animation
+    // Initial entrance animation disabled for debugging
+    /*
     if (containerRef.current) {
         gsap.from(containerRef.current, {
             y: 400,
@@ -33,6 +35,8 @@ const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
             ease: 'power3.out'
         });
     }
+    */
+    console.log("DoctorAI mounted for user:", user?.name);
 
     // Auto-hide welcome bubble after 10 seconds
     const timer = setTimeout(() => {
@@ -128,8 +132,8 @@ const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
       <ChatDrawer 
         isOpen={chatOpen} 
         onClose={handleCloseChat}
-        userId={user.id}
-        userName={user.name}
+        userId={user?.id || 'visitor'}
+        userName={userName}
         onAIStartThinking={handleAIStartThinking}
         onAIStopThinking={handleAIStopThinking}
       />

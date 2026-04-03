@@ -15,12 +15,12 @@ import ReceptionDashboard from './pages/ReceptionDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ScannerPage from './pages/ScannerPage';
 import AtendimentoPage from './pages/AtendimentoPage';
-import QrDashboardTab from './components/QrDashboardTab';
 import Layout from './components/Layout';
 import { User, UserRole } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { dbService } from './services/apiService';
+import DoctorAI from './components/DoctorAI/DoctorAI';
 
 interface ProtectedRouteProps {
   user: User | null;
@@ -31,8 +31,6 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ user, allowedRoles, children }) => {
   if (!user) return <Navigate to="/" />;
   if (!allowedRoles.includes(user.role)) {
-    // Redirect to their appropriate dashboard if they try to access a wrong one
-    // Stop the loop: Don't redirect to dashboard if already rejected. Show forbidden.
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-slate-800">
         <div className="bg-white p-8 rounded-2xl shadow-xl text-center max-w-md border border-gray-100">
@@ -75,12 +73,7 @@ const App: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    // Se quiser manter algum efeito global, pode colocar aqui
-  }, []);
-
   if (loading) return <div className="flex h-screen items-center justify-center"><i className="fas fa-spinner fa-spin text-4xl text-blue-900"></i></div>;
-
 
   return (
     <SettingsProvider>
@@ -125,7 +118,7 @@ const App: React.FC = () => {
             element={user ? <Navigate to="/dashboard" /> : <AdminRegisterPage onLogin={() => { }} />}
           />
 
-          {/* Dashboard Entry Point (Role Redirector) */}
+          {/* Dashboard Entry Point */}
           <Route
             path="/dashboard"
             element={
@@ -188,16 +181,16 @@ const App: React.FC = () => {
             }
           />
 
-          {/* New Laboratorial Flow Routes */}
           <Route path="/scanner" element={<ScannerPage />} />
           <Route path="/atendimento/:id" element={<AtendimentoPage />} />
-
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+
+        {/* Dr. IA Global Assistant - Visible on all pages including Login/Register */}
+        <DoctorAI user={user} />
       </HashRouter>
     </SettingsProvider>
   );
 };
-
 
 export default App;

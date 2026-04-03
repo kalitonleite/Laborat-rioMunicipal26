@@ -14,9 +14,6 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
   const { appLogo } = useSettings();
   
-  // Conditionally render DoctorAI
-  const showDoctorAI = user && user.role === UserRole.PATIENT;
-
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case UserRole.ADMIN: return 'PAINEL ADMINISTRADOR';
@@ -91,9 +88,6 @@ const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
       <main className="flex-grow container mx-auto px-4 py-6 md:p-8 mt-2 relative pb-32 max-w-6xl">
         {children}
       </main>
-
-      {/* 3D Doctor Assistance - Only for Patients */}
-      {showDoctorAI && <DoctorAI user={user!} />}
 
       {/* Footer Fundo */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[180%] h-[200px] bg-[#1e40af]/5 rounded-t-[100%] z-0 pointer-events-none translate-y-24"></div>
