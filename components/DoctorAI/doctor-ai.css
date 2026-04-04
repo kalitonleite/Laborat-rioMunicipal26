@@ -2,15 +2,14 @@
 .doctor-ai-container {
   pointer-events: none;
   z-index: 9999; /* Ensure high priority */
-  border: 1px dashed rgba(255, 0, 0, 0.2); /* Debug border */
 }
 
 .doctor-ai-canvas-wrapper {
   position: fixed;
   bottom: 0;
   right: 0;
-  width: 400px;
-  height: 500px;
+  width: 200px;
+  height: 200px;
   pointer-events: auto;
   z-index: 100;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -18,11 +17,10 @@
 
 @media (max-width: 768px) {
   .doctor-ai-canvas-wrapper {
-    width: 250px;
-    height: 350px;
+    width: 150px;
+    height: 150px;
     right: 0;
     bottom: 0;
-    border: 2px solid blue; /* Debug */
   }
 }
 
