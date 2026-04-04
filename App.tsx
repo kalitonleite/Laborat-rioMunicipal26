@@ -20,7 +20,7 @@ import { User, UserRole } from './types';
 import { useAuth } from './contexts/AuthContext';
 import { SettingsProvider } from './contexts/SettingsContext';
 import { dbService } from './services/apiService';
-import DoctorAI from './components/DoctorAI/DoctorAI';
+
 
 interface ProtectedRouteProps {
   user: User | null;
@@ -186,8 +186,7 @@ const App: React.FC = () => {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
-        {/* Dr. IA Global Assistant - Visible on all pages including Login/Register */}
-        <DoctorAI user={user} />
+
       </HashRouter>
     </SettingsProvider>
   );

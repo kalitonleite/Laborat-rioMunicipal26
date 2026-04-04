@@ -3,7 +3,7 @@ import React from 'react';
 import { User, UserRole } from '../types';
 import { useSettings } from '../contexts/SettingsContext';
 
-import DoctorAI from './DoctorAI/DoctorAI';
+
 
 interface LayoutProps {
   user: User | null;

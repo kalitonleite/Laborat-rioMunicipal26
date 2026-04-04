@@ -4,6 +4,7 @@ import { Bot, User as UserIcon, Stethoscope, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SpeechBubble from './SpeechBubble';
 import ChatDrawer from './ChatDrawer';
+import Doctor3D from './Doctor3D';
 import './doctor-ai.css';
 import { User } from '../../types';
 import gsap from 'gsap';
@@ -27,7 +28,6 @@ const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
 
   useEffect(() => {
     // Initial entrance animation disabled for debugging
-    /*
     if (containerRef.current) {
         gsap.from(containerRef.current, {
             y: 400,
@@ -36,7 +36,6 @@ const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
             ease: 'power3.out'
         });
     }
-    */
     console.log("DoctorAI mounted for user:", user?.name);
 
     // Auto-hide welcome bubble after 10 seconds
@@ -122,50 +121,18 @@ const DoctorAI: React.FC<DoctorAIProps> = ({ user }) => {
         className="doctor-ai-canvas-wrapper flex items-end justify-end p-6"
         onClick={handleClickDoctor}
       >
-        <motion.div
-          className="relative cursor-pointer group"
-          initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: 1, rotate: 0 }}
-          whileHover={{ scale: 1.1, rotate: 5 }}
-          whileTap={{ scale: 0.9 }}
-          transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        >
-          {/* Glow Effect */}
-          <div className="absolute inset-0 bg-blue-500 rounded-full blur-2xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-          
-          <div className="relative bg-white/80 backdrop-blur-xl border-2 border-blue-100 p-4 rounded-full shadow-2xl flex items-center justify-center overflow-hidden w-24 h-24 md:w-32 md:h-32">
-             {isThinking ? (
-                <motion.div
-                  animate={{ 
-                    scale: [1, 1.2, 1],
-                    rotate: [0, 180, 360]
-                  }}
-                  transition={{ 
-                    duration: 2, 
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <Sparkles className="w-12 h-12 text-blue-600" />
-                </motion.div>
-             ) : (
-                <div className="relative">
-                   <div className="absolute -top-1 -right-1">
-                      <span className="flex h-4 w-4 relative">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 border-2 border-white"></span>
-                      </span>
-                   </div>
-                   <Bot className="w-12 h-12 md:w-16 md:h-16 text-blue-800" />
-                </div>
-             )}
-          </div>
+        <div className="relative w-full h-full">
+          <Doctor3D 
+            expression={expression} 
+            animation={animation} 
+            isFocused={isFocused} 
+          />
           
           {/* Label */}
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-lg">
-             DR. IA
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-bold px-4 py-1.5 rounded-full whitespace-nowrap shadow-xl border border-white/20 z-10">
+             ASSISTENTE VIRTUAL
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Interaction Modal / Drawer */}

@@ -8,8 +8,8 @@
   position: fixed;
   bottom: 0;
   right: 0;
-  width: 200px;
-  height: 200px;
+  width: 350px;
+  height: 450px;
   pointer-events: auto;
   z-index: 100;
   transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -17,8 +17,8 @@
 
 @media (max-width: 768px) {
   .doctor-ai-canvas-wrapper {
-    width: 150px;
-    height: 150px;
+    width: 250px;
+    height: 350px;
     right: 0;
     bottom: 0;
   }

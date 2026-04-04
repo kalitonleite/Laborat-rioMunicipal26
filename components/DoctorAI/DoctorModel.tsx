@@ -13,7 +13,7 @@ interface DoctorModelProps {
 const DoctorModel: React.FC<DoctorModelProps> = ({ expression, animation, mousePosition }) => {
   const group = useRef<THREE.Group>(null);
   // Use GLTF loader with the path to the model
-  const { scene, animations, nodes, materials } = useGLTF('/medico.glb') as any;
+  const { scene, animations, nodes, materials } = useGLTF('/medico-caminhando.gltf') as any;
   const { actions, names } = useAnimations(animations, group);
 
   const [currentAction, setCurrentAction] = useState<string>('idle');
@@ -96,4 +96,4 @@ const DoctorModel: React.FC<DoctorModelProps> = ({ expression, animation, mouseP
 export default DoctorModel;
 
 // Preload the model
-useGLTF.preload('/medico.glb');
+useGLTF.preload('/medico-caminhando.gltf');
