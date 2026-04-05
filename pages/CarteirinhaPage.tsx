@@ -74,9 +74,9 @@ const CarteirinhaPage: React.FC = () => {
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait',
         unit: 'mm',
-        format: [140, 85] // Approximated card size in mm
+        format: [85, 140] // Vertical card size
       });
       
       pdf.setProperties({
@@ -85,7 +85,7 @@ const CarteirinhaPage: React.FC = () => {
         author: 'LabLaudo System'
       });
       
-      pdf.addImage(imgData, 'PNG', 0, 0, 140, 85);
+      pdf.addImage(imgData, 'PNG', 0, 0, 85, 140);
       pdf.save(`carteirinha_${paciente.nome.replace(/\s+/g, '_').toLowerCase()}.pdf`);
       
     } catch (err: any) {
