@@ -141,8 +141,8 @@ const AdminCarteirinha: React.FC = () => {
         body: formData,
       });
 
-      if (!response.ok) throw new Error('Falha no upload');
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Falha no upload');
       
       if (field === 'foto_url') {
         setEditingPaciente({ ...editingPaciente, [field]: data.url });

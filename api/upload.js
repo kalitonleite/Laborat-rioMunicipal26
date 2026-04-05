@@ -2,19 +2,14 @@ const { put } = require('@vercel/blob');
 const { IncomingForm } = require('formidable');
 const fs = require('fs');
 
-// Vercel serverless functions don't support traditional multipart/form-data easily 
-// but formidable can help. However, for Vercel, it's often easier to send JSON or raw body.
-// But let's try to support multipart.
-
-module.exports.config = {
-  api: {
-    bodyParser: false,
-  },
-};
-
-module.exports = async function handler(req, res) {
+const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método não permitido' });
+  }
+
+  // Ensure BLOB_READ_WRITE_TOKEN is set
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return res.status(500).json({ error: 'TOKEN_MISSING: O token do Vercel Blob não está configurado nas variáveis de ambiente da Vercel.' });
   }
 
   try {
@@ -28,9 +23,12 @@ module.exports = async function handler(req, res) {
       });
     });
 
-    const file = files.file; // The field name is 'file'
+    // In modern formidable, files.file could be an array
+    const file = Array.isArray(files.file) ? files.file[0] : files.file;
+    
     if (!file) {
-      return res.status(400).json({ error: 'Arquivo não encontrado no formulário' });
+      console.log('No file found. Field names:', Object.keys(files));
+      return res.status(400).json({ error: 'Arquivo não encontrado. Use o campo "file".' });
     }
 
     const fileBuffer = fs.readFileSync(file.filepath);
@@ -40,13 +38,25 @@ module.exports = async function handler(req, res) {
     // Upload to Vercel Blob
     const blob = await put(filename, fileBuffer, {
       access: 'public',
-      contentType
+      contentType,
+      token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
     return res.status(200).json({ url: blob.url });
 
   } catch (err) {
-    console.error('Upload error:', err);
-    return res.status(500).json({ error: 'Erro no upload: ' + err.message });
+    console.error('Upload Error Details:', err);
+    return res.status(500).json({ 
+      error: 'Erro Interno no Upload: ' + err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+    });
   }
 };
+
+handler.config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
+module.exports = handler;
