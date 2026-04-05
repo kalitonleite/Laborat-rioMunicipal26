@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { dbService } from '../services/apiService';
 import CarteirinhaCard from '../components/CarteirinhaCard';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const CarteirinhaPage: React.FC = () => {
   const navigate = useNavigate();
@@ -11,6 +13,8 @@ const CarteirinhaPage: React.FC = () => {
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (user) {
@@ -56,6 +60,41 @@ const CarteirinhaPage: React.FC = () => {
       setLoading(false);
     }
   };
+  
+  const handleDownloadPDF = async () => {
+    if (!cardRef.current || !paciente) return;
+    
+    try {
+      setDownloading(true);
+      const canvas = await html2canvas(cardRef.current, {
+        scale: 4, // High quality
+        useCORS: true, 
+        backgroundColor: null,
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [140, 85] // Approximated card size in mm
+      });
+      
+      pdf.setProperties({
+        title: `Carteirinha - ${paciente.nome}`,
+        subject: 'Carteirinha Digital SUS - LabLaudo',
+        author: 'LabLaudo System'
+      });
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, 140, 85);
+      pdf.save(`carteirinha_${paciente.nome.replace(/\s+/g, '_').toLowerCase()}.pdf`);
+      
+    } catch (err: any) {
+      console.error('PDF error:', err);
+      alert('Erro ao gerar PDF: ' + err.message);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (loading) return <div className="p-20 text-center text-slate-500 font-bold uppercase tracking-widest"><i className="fas fa-spinner fa-spin mr-3"></i>Gerando sua carteirinha...</div>;
 
@@ -98,10 +137,12 @@ const CarteirinhaPage: React.FC = () => {
                <i className="fas fa-print text-xl"></i>
             </button>
             <button 
-               className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 transition-all active:scale-95"
+               onClick={handleDownloadPDF}
+               disabled={downloading}
+               className="flex items-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-8 py-5 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl shadow-blue-200 transition-all active:scale-95 disabled:opacity-50"
             >
-               <i className="fas fa-download"></i>
-               <span>Salvar Digital</span>
+               <i className={downloading ? "fas fa-spinner fa-spin" : "fas fa-download"}></i>
+               <span>{downloading ? "Gerando..." : "Baixar Digital"}</span>
             </button>
          </div>
       </header>
@@ -109,7 +150,7 @@ const CarteirinhaPage: React.FC = () => {
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
          {/* Card Section */}
          <div className="lg:col-span-6 flex justify-center">
-            <div className="w-full max-w-[500px] transform hover:rotate-[-1deg] transition-transform duration-500">
+            <div ref={cardRef} className="w-full max-w-[500px] transform hover:rotate-[-1deg] transition-transform duration-500">
                <CarteirinhaCard paciente={paciente} config={config} />
             </div>
          </div>
