@@ -123,11 +123,12 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente, config }) =
            <p className="text-[8px] opacity-40 italic">{config.texto_rodape}</p>
         </div>
 
-        {/* QR Code - Adjusted position and rotation to avoid clipping */}
-        <div className="mb-2 mr-2 p-1 bg-white rounded-xl shadow-lg transform hover:scale-110 transition-transform">
-          <div className="bg-white p-1 rounded-lg">
-             <QRCode value={qrValue} size={64} bgColor="#FFFFFF" fgColor="#000000" />
-          </div>
+      </div>
+      
+      {/* QR Code - Absolute positioned for precise alignment and no clipping */}
+      <div className="absolute bottom-5 right-5 p-1 bg-white rounded-xl shadow-2xl transition-transform hover:scale-110">
+        <div className="bg-white p-1 rounded-lg">
+           <QRCode value={qrValue} size={54} bgColor="#FFFFFF" fgColor="#000000" />
         </div>
       </div>
       
