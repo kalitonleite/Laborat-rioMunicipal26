@@ -22,14 +22,27 @@ const CarteirinhaPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch patient by CPF (linking current user to patient record)
-      // If the user profile doesn't have a direct link, we use CPF
-      const pacientes = await dbService.from('pacientes').select({ cpf: user?.cpf });
+      // Resilient CPF matching (try clean and masked to overcome data format drift)
+      const rawCpf = user?.cpf || '';
+      const cleanCpf = rawCpf.replace(/\D/g, '');
+      const maskedCpf = cleanCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+      
+      let pacientes = await dbService.from('pacientes').select({ cpf: cleanCpf });
+      
+      // If not found with clean CPF, try with masked CPF
+      if (!pacientes || pacientes.length === 0) {
+        pacientes = await dbService.from('pacientes').select({ cpf: maskedCpf });
+        
+        // Also try original user.cpf as fallback
+        if (!pacientes || pacientes.length === 0) {
+          pacientes = await dbService.from('pacientes').select({ cpf: rawCpf });
+        }
+      }
       
       if (pacientes && pacientes.length > 0) {
         setPaciente(pacientes[0]);
       } else {
-        setError('Carteirinha não encontrada para este usuário. Entre em contato com a administração.');
+        setError('Carteirinha não encontrada para este usuário. Entre em contato com a administração para vincular seu prontuário digital.');
       }
 
       // Fetch config

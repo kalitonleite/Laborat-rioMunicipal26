@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dbService } from '../services/apiService';
 import CarteirinhaCard from '../components/CarteirinhaCard';
+import { maskCPF } from '../services/masks';
 import { User, UserRole } from '../types';
 
 interface Paciente {
@@ -365,9 +366,11 @@ const AdminCarteirinha: React.FC = () => {
                           <input 
                             required
                             type="text" 
+                            maxLength={14}
                             value={editingPaciente?.cpf || ''} 
-                            onChange={e => setEditingPaciente({...editingPaciente, cpf: e.target.value})}
-                            className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold"
+                            onChange={e => setEditingPaciente({...editingPaciente, cpf: maskCPF(e.target.value)})}
+                            className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 ring-blue-100 placeholder:opacity-30"
+                            placeholder="000.000.000-00"
                           />
                        </div>
                        <div>
