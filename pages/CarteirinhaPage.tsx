@@ -150,7 +150,7 @@ const CarteirinhaPage: React.FC = () => {
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
          {/* Card Section */}
          <div className="lg:col-span-6 flex justify-center">
-            <div ref={cardRef} className="w-full max-w-[500px] transform hover:rotate-[-1deg] transition-transform duration-500">
+            <div ref={cardRef} className="w-full max-w-[400px] transition-all duration-500">
                <CarteirinhaCard paciente={paciente} config={config} />
             </div>
          </div>
