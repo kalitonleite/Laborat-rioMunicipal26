@@ -22,6 +22,8 @@ module.exports = async function handler(req, res) {
     const isPublicCheck = (table === 'authorization_codes' && action === 'select') ||
                           (table === 'lab_settings' && action === 'select') ||
                           (table === 'qr_codes' && action === 'select') ||
+                          (table === 'configuracoes_carteirinha' && action === 'select') ||
+                          (table === 'pacientes' && action === 'select' && filter && (filter.id || filter.qr_token)) ||
                           (table === 'appointments' && (action === 'select' || action === 'update') && filter && filter.id);
 
     if (!isPublicCheck) {
@@ -40,7 +42,7 @@ module.exports = async function handler(req, res) {
 
     if (!table) return res.status(400).json({ error: 'O nome da tabela é obrigatório.' });
 
-    const allowedTables = ['profiles', 'exams', 'campaigns', 'appointments', 'lab_settings', 'doctor_notes', 'authorization_codes', 'qr_codes'];
+    const allowedTables = ['profiles', 'exams', 'campaigns', 'appointments', 'lab_settings', 'doctor_notes', 'authorization_codes', 'qr_codes', 'pacientes', 'configuracoes_carteirinha'];
     if (!allowedTables.includes(table)) {
       return res.status(403).json({ error: 'Acesso negado: Tabela não permitida.' });
     }

@@ -344,6 +344,38 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
       {activeTab === 'dashboard' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* BANNER CARTEIRINHA DIGITAL */}
+          <div 
+            className="w-full bg-gradient-to-r from-[#0f2a44] to-[#0a1f33] p-8 rounded-[40px] shadow-2xl border border-white/5 relative overflow-hidden cursor-pointer group hover:scale-[1.01] transition-all"
+            onClick={() => window.location.hash = '#/carteirinha'}
+          >
+            <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-[#00ff95]/10 rounded-full blur-3xl group-hover:bg-[#00ff95]/20 transition-all"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 bg-white/10 rounded-[28px] flex items-center justify-center text-3xl text-[#00ff95] border border-white/10 backdrop-blur-md shadow-xl group-hover:rotate-12 transition-transform">
+                  <i className="fas fa-id-card"></i>
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="px-3 py-1 bg-[#00ff95]/20 text-[#00ff95] text-[10px] font-black uppercase tracking-widest rounded-lg border border-[#00ff95]/30">Documento Ativo CLI</span>
+                    <span className="w-2 h-2 rounded-full bg-[#00ff95] animate-pulse"></span>
+                  </div>
+                  <h2 className="text-3xl font-black text-white tracking-tight">Minha Carteirinha Digital</h2>
+                  <p className="text-white/50 font-medium text-sm mt-1 uppercase tracking-widest">Acesse seu QR Code para atendimento rápido</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="hidden md:block text-right">
+                  <p className="text-[10px] font-black text-white/30 uppercase tracking-[3px] mb-1">Sincronizado via</p>
+                  <p className="text-white font-bold text-sm tracking-widest opacity-80">LABLAUDO CLOUD</p>
+                </div>
+                <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center text-white/40 border border-white/10 hover:bg-white hover:text-black transition-all">
+                   <i className="fas fa-arrow-right text-xl"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {campaigns.map((camp, idx) => {
               const [y, m, d] = (camp.date || '').split('-');

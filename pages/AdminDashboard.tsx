@@ -629,6 +629,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
                 <span className="text-[10px] font-black">94% taxa de sucesso</span>
               </div>
             </div>
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6 rounded-[24px] shadow-lg shadow-slate-200 border border-slate-700 col-span-1 sm:col-span-2 md:col-span-1 cursor-pointer hover:scale-[1.02] transition-transform" onClick={() => window.location.hash = '#/admin/carteirinha'}>
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Carteirinha Digital</p>
+                  <h3 className="text-xl font-black text-white">Gestão SUS</h3>
+                  <p className="text-[10px] text-slate-400 font-bold mt-1">Emitir, editar e customizar layout.</p>
+                </div>
+                <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center text-blue-400 border border-white/10">
+                  <i className="fas fa-id-card text-lg"></i>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest bg-emerald-400/10 px-2 py-1 rounded-lg border border-emerald-400/20">Sistema Ativo</span>
+                <i className="fas fa-arrow-right text-white/40 text-xs"></i>
+              </div>
+            </div>
           </div>
 
           <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100">

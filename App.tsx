@@ -15,6 +15,9 @@ import ReceptionDashboard from './pages/ReceptionDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import ScannerPage from './pages/ScannerPage';
 import AtendimentoPage from './pages/AtendimentoPage';
+import AdminCarteirinha from './pages/AdminCarteirinha';
+import CarteirinhaPage from './pages/CarteirinhaPage';
+import ValidacaoQR from './pages/ValidacaoQR';
 import Layout from './components/Layout';
 import { User, UserRole } from './types';
 import { useAuth } from './contexts/AuthContext';
@@ -183,6 +186,30 @@ const App: React.FC = () => {
 
           <Route path="/scanner" element={<ScannerPage />} />
           <Route path="/atendimento/:id" element={<AtendimentoPage />} />
+          
+          {/* Carteirinha Digital Routes */}
+          <Route 
+            path="/carteirinha" 
+            element={
+              <ProtectedRoute user={user} allowedRoles={[UserRole.PATIENT, UserRole.ADMIN, UserRole.MEDICAL, UserRole.RECEPTION]}>
+                <Layout user={user!} onLogout={signOut}>
+                  <CarteirinhaPage />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/carteirinha" 
+            element={
+              <ProtectedRoute user={user} allowedRoles={[UserRole.ADMIN]}>
+                <Layout user={user!} onLogout={signOut}>
+                  <AdminCarteirinha />
+                </Layout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/paciente/:id" element={<ValidacaoQR />} />
+
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
 
