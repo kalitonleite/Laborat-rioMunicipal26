@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { dbService } from '../services/apiService';
 import CarteirinhaCard from '../components/CarteirinhaCard';
 
 const CarteirinhaPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [paciente, setPaciente] = useState<any>(null);
   const [config, setConfig] = useState<any>(null);
@@ -51,12 +53,24 @@ const CarteirinhaPage: React.FC = () => {
         </div>
         <h2 className="text-2xl font-black text-slate-800 mb-2">Ops! Algo deu errado</h2>
         <p className="text-slate-400 font-medium max-w-md">{error}</p>
-        <button onClick={fetchData} className="mt-8 bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold transition-transform active:scale-95">Tentar Novamente</button>
+        <div className="flex gap-4 mt-8">
+           <button onClick={() => navigate(-1)} className="bg-slate-100 text-slate-600 px-8 py-3 rounded-2xl font-bold transition-all hover:bg-slate-200">Voltar</button>
+           <button onClick={fetchData} className="bg-slate-900 text-white px-8 py-3 rounded-2xl font-bold transition-transform active:scale-95">Tentar Novamente</button>
+        </div>
      </div>
   );
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-12 min-h-screen animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <button 
+        onClick={() => navigate(-1)}
+        className="mb-8 flex items-center gap-2 text-slate-400 hover:text-slate-800 font-bold text-sm transition-colors group"
+      >
+        <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center group-hover:bg-slate-100 transition-all">
+           <i className="fas fa-arrow-left"></i>
+        </div>
+        Voltar para o Início
+      </button>
       <header className="mb-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
          <div>
             <span className="px-4 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-100">Documento Oficial Digital</span>

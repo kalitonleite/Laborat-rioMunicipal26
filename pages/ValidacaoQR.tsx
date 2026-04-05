@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { dbService } from '../services/apiService';
 import CarteirinhaCard from '../components/CarteirinhaCard';
 
 const ValidacaoQR: React.FC = () => {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -131,6 +132,12 @@ const ValidacaoQR: React.FC = () => {
                 <i className="fas fa-lock text-xs"></i>
                 <span className="text-[10px] font-black uppercase tracking-[3px]">LabLaudo Secure Cloud</span>
              </div>
+             <button 
+               onClick={() => navigate('/')} 
+               className="mt-8 text-blue-600 font-bold text-sm hover:underline"
+             >
+               Ir para página inicial
+             </button>
           </footer>
        </div>
     </div>

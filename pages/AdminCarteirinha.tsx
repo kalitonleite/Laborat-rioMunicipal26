@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { dbService } from '../services/apiService';
 import CarteirinhaCard from '../components/CarteirinhaCard';
 import { User, UserRole } from '../types';
@@ -30,6 +31,7 @@ interface Config {
 }
 
 const AdminCarteirinha: React.FC = () => {
+  const navigate = useNavigate();
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [config, setConfig] = useState<Config>({
     logo_url: '',
@@ -158,6 +160,15 @@ const AdminCarteirinha: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 min-h-screen animate-in fade-in duration-700">
+      <button 
+        onClick={() => navigate(-1)}
+        className="mb-8 flex items-center gap-2 text-slate-400 hover:text-slate-800 font-bold text-sm transition-colors group"
+      >
+        <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center group-hover:bg-slate-100 transition-all">
+           <i className="fas fa-arrow-left"></i>
+        </div>
+        Voltar para o Dashboard
+      </button>
       <header className="mb-12 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[32px] shadow-sm border border-slate-100">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Gestão de Carteirinhas</h1>
