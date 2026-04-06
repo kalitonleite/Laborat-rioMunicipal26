@@ -174,7 +174,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       {/* ═══════════ TITLE ═══════════ */}
       <div style={{ position: 'relative', zIndex: 1, padding: '0 20px 0 20px' }}>
         <h1 style={{
-          fontSize: '26px',
+          fontSize: '14px',
           fontWeight: 900,
           lineHeight: 1.15,
           margin: 0,
@@ -253,7 +253,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
             <div style={{ fontSize: '8.5px', fontWeight: 700, opacity: 0.4, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '2px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: 1.1 }}>
+            <div style={{ fontSize: '14px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: 1.1 }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
@@ -308,41 +308,9 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'center',
           gap: '10px',
         }}>
-          {/* Left label */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '6px',
-            width: '80px',
-          }}>
-            <div style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
-              border: '1.5px solid rgba(255,255,255,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <ShieldCheck size={20} color="rgba(255,255,255,0.25)" />
-            </div>
-            <span style={{
-              fontSize: '8px',
-              fontWeight: 700,
-              textAlign: 'center',
-              opacity: 0.35,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-              lineHeight: 1.4,
-            }}>
-              ESCANEIE PARA VALIDAR A IDENTIDADE
-            </span>
-          </div>
-
           {/* QR Code - centered and large */}
           <div style={{
             background: 'white',
@@ -360,38 +328,6 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
               bgColor="#FFFFFF"
               fgColor="#000000"
             />
-          </div>
-
-          {/* Right label */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '6px',
-            width: '80px',
-          }}>
-            <div style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
-              border: '1.5px solid rgba(255,255,255,0.12)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <ShieldCheck size={20} color="rgba(255,255,255,0.25)" />
-            </div>
-            <span style={{
-              fontSize: '8px',
-              fontWeight: 700,
-              textAlign: 'center',
-              opacity: 0.35,
-              letterSpacing: '0.5px',
-              textTransform: 'uppercase',
-              lineHeight: 1.4,
-            }}>
-              USO EXCLUSIVO EM UNIDADES DE SAÚDE
-            </span>
           </div>
         </div>
 
