@@ -1,15 +1,15 @@
 import React from 'react';
 import QRCode from 'react-qr-code';
-import { 
-  Droplet, 
-  AlertTriangle, 
-  Phone, 
-  Calendar, 
-  ShieldCheck, 
-  MapPin, 
+import {
+  Droplet,
+  AlertTriangle,
+  Phone,
+  Calendar,
+  ShieldCheck,
+  MapPin,
   User,
   CreditCard,
-  Check
+  CheckCircle,
 } from 'lucide-react';
 
 interface CarteirinhaCardProps {
@@ -41,229 +41,454 @@ interface CarteirinhaCardProps {
 const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente, config }) => {
   const qrValue = `https://laborat-rio-municipal26.vercel.app/#/validacao/${paciente.id || paciente.qr_token}?token=${paciente.qr_token}`;
 
-  const accentColor = "#00ff95";
-  const darkBlue = "#0b2a44";
-  const deepBlue = "#051320";
-
-  // Formato da data para exibição
   const formatDate = (dateString: string) => {
-    if (!dateString) return "--/--/----";
+    if (!dateString) return '--/--/----';
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('pt-BR');
-    } catch (e) {
-      return "--/--/----";
+      return new Date(dateString).toLocaleDateString('pt-BR');
+    } catch {
+      return '--/--/----';
     }
   };
 
   return (
-    <div 
+    <div
       id="carteirinha-digital"
-      className="relative w-full max-w-[440px] aspect-[1/1.65] rounded-[50px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] font-sans text-white border border-white/5 transition-all duration-500 select-none"
-      style={{ 
-        background: `linear-gradient(180deg, ${darkBlue} 0%, ${deepBlue} 100%)`,
+      style={{
+        width: '100%',
+        maxWidth: '420px',
+        background: 'linear-gradient(180deg, #0d2d4a 0%, #071c30 50%, #091e35 100%)',
+        borderRadius: '28px',
+        overflow: 'hidden',
+        fontFamily: "'Inter', 'Segoe UI', sans-serif",
+        color: 'white',
+        boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        position: 'relative',
       }}
     >
-      {/* Premium Background Waves & Refraction */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Deep background gradients */}
-        <div className="absolute top-[-10%] right-[-15%] w-[100%] h-[50%] bg-cyan-400/10 blur-[120px] rounded-full rotate-[-15deg] transition-all duration-1000" />
-        <div className="absolute bottom-[20%] left-[-20%] w-[100%] h-[60%] bg-blue-600/10 blur-[130px] rounded-full" />
-        
-        {/* Subtle Wave Shapes */}
-        <div className="absolute inset-0 transition-opacity duration-1000">
-          <svg className="absolute top-0 left-0 w-full h-full opacity-[0.07]" viewBox="0 0 400 800" preserveAspectRatio="none">
-            <path d="M0,150 C120,200 280,100 400,150 L400,0 L0,0 Z" fill="white" />
-            <path d="M0,350 C150,450 250,250 400,350 L400,800 L0,800 Z" fill="rgba(64, 150, 255, 0.2)" />
-            <path d="M0,500 C100,550 300,450 400,550 L400,800 L0,800 Z" fill="rgba(0, 255, 149, 0.1)" />
-          </svg>
-        </div>
-        
-        {/* Glass glare */}
-        <div className="absolute top-0 left-0 w-full h-[30%] bg-gradient-to-b from-white/5 to-transparent skew-y-[-10deg] translate-y-[-50%]" />
+      {/* Background wave decoration */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        overflow: 'hidden',
+        zIndex: 0,
+      }}>
+        <div style={{
+          position: 'absolute',
+          bottom: '38%',
+          left: '-20%',
+          width: '140%',
+          height: '60%',
+          background: 'radial-gradient(ellipse, rgba(0,120,200,0.12) 0%, transparent 70%)',
+          borderRadius: '50%',
+          transform: 'rotate(-5deg)',
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: '-10%',
+          right: '-10%',
+          width: '60%',
+          height: '40%',
+          background: 'radial-gradient(ellipse, rgba(0,200,150,0.06) 0%, transparent 70%)',
+          borderRadius: '50%',
+        }} />
+        {/* Wave separator between patient info and QR */}
+        <svg
+          style={{ position: 'absolute', top: '42%', left: 0, width: '100%' }}
+          viewBox="0 0 420 60"
+          preserveAspectRatio="none"
+        >
+          <path
+            d="M0,30 C80,60 180,0 280,30 C350,50 400,20 420,30 L420,60 L0,60 Z"
+            fill="rgba(0,100,180,0.12)"
+          />
+          <path
+            d="M0,40 C100,20 200,60 320,35 C370,25 400,40 420,40 L420,60 L0,60 Z"
+            fill="rgba(0,80,160,0.08)"
+          />
+        </svg>
       </div>
 
-      {/* Header Area */}
-      <header className="relative px-8 pt-10 pb-4 flex justify-between items-start z-30">
-        {/* SUS DIGITAL Badge */}
-        <div className="bg-[#00c978] shadow-[0_8px_20px_rgba(0,201,120,0.3)] px-5 py-2.5 rounded-2xl flex items-center gap-2 border border-white/20">
-           <div className="bg-white rounded-md p-1 flex items-center justify-center shadow-lg w-4 h-4">
-             <Check size={10} strokeWidth={4} className="text-[#00c978]" />
-           </div>
-           <span className="text-[12px] font-black uppercase tracking-[1.5px] text-white">SUS DIGITAL</span>
+      {/* ═══════════ HEADER ═══════════ */}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        padding: '20px 22px 12px 22px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+      }}>
+        {/* SUS DIGITAL badge */}
+        <div style={{
+          background: 'rgba(0, 200, 120, 0.15)',
+          border: '1.5px solid rgba(0, 200, 120, 0.5)',
+          borderRadius: '20px',
+          padding: '5px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }}>
+          <CheckCircle size={13} color="#00e896" fill="rgba(0,200,120,0.3)" />
+          <span style={{
+            fontSize: '10px',
+            fontWeight: 900,
+            letterSpacing: '1.5px',
+            color: '#00e896',
+            textTransform: 'uppercase',
+          }}>SUS DIGITAL</span>
         </div>
-        
-        {/* Prefeitura Logo */}
-        <div className="flex flex-col items-end">
-           {config.logo_url ? (
-             <img src={config.logo_url} alt="Logo" className="h-[60px] w-auto object-contain drop-shadow-xl" />
-           ) : (
-             <div className="flex flex-col items-center">
-                <svg width="40" height="30" viewBox="0 0 100 80" className="mb-1 drop-shadow-lg">
-                  <circle cx="50" cy="20" r="10" fill="white" />
-                  <circle cx="30" cy="40" r="8" fill="white" opacity="0.7" />
-                  <circle cx="70" cy="40" r="8" fill="white" opacity="0.7" />
-                  <path d="M20,70 Q50,40 80,70" stroke="white" strokeWidth="4" fill="none" />
-                </svg>
-                <div className="text-center leading-[1.1]">
-                   <p className="text-[7px] font-bold opacity-70 tracking-widest leading-none">PREFEITURA DE</p>
-                   <p className="text-[20px] font-black tracking-tight leading-none text-white">UARINI</p>
-                </div>
-             </div>
-           )}
-        </div>
-      </header>
 
-      {/* Main Title Area */}
-      <div className="relative px-8 mt-2 z-30 text-center">
-         <h1 className="text-[28px] font-black tracking-tight leading-[1.05] text-white drop-shadow-lg mb-2">
-           {config.nome_sistema || "Laboratório Municipal de Uarini"}
-         </h1>
-         <div className="flex items-center justify-center gap-3">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff95] shadow-[0_0_10px_#00ff95]"></span>
-            <span className="text-[13px] font-black tracking-[5px] text-[#00ff95] uppercase drop-shadow-md">ANÁLISES CLÍNICAS</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-[#00ff95] shadow-[0_0_10px_#00ff95]"></span>
-         </div>
-      </div>
-
-      {/* Patient Section */}
-      <div className="relative px-8 flex items-center gap-8 mt-10 z-30">
-         {/* Photo Frame */}
-         <div className="relative flex-shrink-0">
-            <div className="w-[140px] h-[140px] rounded-full p-1.5 bg-gradient-to-br from-white/20 to-transparent shadow-2xl overflow-hidden backdrop-blur-sm">
-               <div className="w-full h-full rounded-full border-[1px] border-white/10 overflow-hidden bg-[#1a3a5a]/80 flex items-center justify-center relative">
-                  {paciente.foto_url ? (
-                     <img src={paciente.foto_url} alt="Foto" className="w-full h-full object-cover" />
-                  ) : (
-                     <User size={70} className="text-white/5" />
-                  )}
-                  {/* Subtle inner shadow for depth */}
-                  <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] rounded-full"></div>
-               </div>
-            </div>
-            
-            {/* ATIVA Badge */}
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#00c978] shadow-[0_10px_25px_rgba(0,201,120,0.4)] rounded-full px-6 py-2 flex items-center gap-2.5 z-40 border border-white/20">
-               <div className="bg-white rounded-full p-0.5 flex items-center justify-center w-3 h-3">
-                  <Check size={8} strokeWidth={5} className="text-[#00c978]" />
-               </div>
-               <span className="text-[12px] font-black tracking-[1.5px] text-white">ATIVA</span>
-            </div>
-         </div>
-
-         {/* Patient Details */}
-         <div className="flex-1 min-w-0">
-            <div className="mb-6">
-               <p className="text-[10px] font-bold uppercase tracking-[2px] text-white/40 mb-1">NOME DO PACIENTE</p>
-               <h2 className="text-[26px] font-black leading-tight tracking-tight text-white drop-shadow-lg">{paciente.nome || "João da Silva"}</h2>
-            </div>
-            
-            <div className="flex items-center gap-0 relative">
-               <div className="flex-1 pr-4 border-r border-white/10">
-                  <p className="text-[9px] font-black text-white/20 tracking-[2px] uppercase mb-1.5">NÚMERO DO SUS</p>
-                  <div className="flex items-center gap-2">
-                    <CreditCard size={16} className="text-[#00ff95]/80" />
-                    <p className="text-[14px] font-black tracking-[1px] leading-none">{paciente.numero_sus || "123 4567 8901"}</p>
-                  </div>
-               </div>
-               <div className="flex-1 pl-4">
-                  <p className="text-[9px] font-black text-white/20 tracking-[2px] uppercase mb-1.5">DATA NASC.</p>
-                  <div className="flex items-center gap-2">
-                    <Calendar size={16} className="text-[#00ff95]/80" />
-                    <p className="text-[14px] font-black leading-none">{formatDate(paciente.data_nascimento)}</p>
-                  </div>
-               </div>
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-white/5">
-               <p className="text-[9px] font-black text-white/20 tracking-[2px] uppercase mb-1.5">UNIDADE DE REFERÊNCIA</p>
-               <div className="flex items-center gap-2">
-                 <MapPin size={16} className="text-[#00ff95]" />
-                 <p className="text-[13px] font-black text-white/90 truncate leading-none">{paciente.unidade_saude || "UBS Central de Uarini"}</p>
-               </div>
-            </div>
-         </div>
-      </div>
-
-      {/* QR Code & Identity Validation Section */}
-      <div className="relative px-8 mt-14 z-30">
-         <div className="flex items-center justify-between gap-6">
-            <div className="flex flex-col items-center gap-3 w-[100px]">
-               <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 shadow-lg">
-                  <ShieldCheck size={28} className="text-white/30" />
-               </div>
-               <p className="text-[8px] font-black text-center text-white/30 uppercase leading-snug tracking-wider">ESCANEIE PARA VALIDAR A IDENTIDADE</p>
-            </div>
-            
-            <div className="relative group">
-              {/* Animated Glow behind QR */}
-              <div className="absolute -inset-6 bg-[#00ff95]/5 blur-[40px] rounded-full animate-pulse"></div>
-              <div className="relative bg-white p-6 rounded-[35px] shadow-[0_25px_60px_rgba(0,0,0,0.7)] group-hover:scale-[1.02] transition-transform duration-500">
-                 <div className="bg-white">
-                    <QRCode 
-                      value={qrValue} 
-                      size={120} 
-                      level="Q" 
-                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                    />
-                 </div>
+        {/* Logo Prefeitura */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {config.logo_url ? (
+            <img src={config.logo_url} alt="Logo" style={{ height: '52px', width: 'auto', objectFit: 'contain' }} />
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              {/* Prefeitura icon placeholder */}
+              <svg width="44" height="32" viewBox="0 0 88 64" fill="none">
+                <circle cx="44" cy="12" r="9" fill="white" opacity="0.9" />
+                <circle cx="24" cy="28" r="7" fill="white" opacity="0.6" />
+                <circle cx="64" cy="28" r="7" fill="white" opacity="0.6" />
+                <path d="M10,55 Q44,28 78,55" stroke="white" strokeWidth="3.5" fill="none" opacity="0.8" strokeLinecap="round" />
+              </svg>
+              <div style={{ marginTop: '2px' }}>
+                <div style={{ fontSize: '7px', fontWeight: 700, opacity: 0.6, letterSpacing: '1px', lineHeight: 1 }}>PREFEITURA DE</div>
+                <div style={{ fontSize: '15px', fontWeight: 900, letterSpacing: '2px', lineHeight: 1, marginTop: '2px' }}>UARINI</div>
               </div>
             </div>
-
-            <div className="flex flex-col items-center gap-3 w-[100px]">
-               <div className="p-2.5 rounded-2xl bg-white/5 border border-white/10 shadow-lg">
-                  <ShieldCheck size={28} className="text-white/30" />
-               </div>
-               <p className="text-[8px] font-black text-center text-white/30 uppercase leading-snug tracking-wider">USO EXCLUSIVO EM UNIDADES DE SAÚDE</p>
-            </div>
-         </div>
-
-         {/* Valid Banner - Premium Glassmorphism */}
-         <div className="mt-10 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-blue-500/10 backdrop-blur-xl border border-white/10 rounded-[24px] py-4 px-8 flex items-center justify-center gap-4 shadow-xl">
-            <div className="bg-[#00ff95]/20 p-1.5 rounded-full ring-4 ring-[#00ff95]/5">
-              <ShieldCheck size={18} className="text-[#00ff95]" />
-            </div>
-            <p className="text-[11px] font-bold text-white/70 leading-tight">Carteirinha válida em todas as unidades de saúde do município.</p>
-         </div>
+          )}
+        </div>
       </div>
 
-      {/* Footer Metadata Grid */}
-      <footer className="absolute bottom-0 left-0 w-full bg-[#051320]/70 backdrop-blur-3xl border-t border-white/10 p-10 z-40">
-         <div className="grid grid-cols-4 gap-0 mb-8 border-b border-white/5 pb-8">
-            <div className="flex flex-col items-center gap-3 border-r border-white/5 pr-2">
-               <Droplet size={22} className="text-[#60a5fa] drop-shadow-[0_0_8px_rgba(96,165,250,0.4)]" strokeWidth={2.5} />
-               <div className="text-center">
-                  <p className="text-[8px] font-black text-white/30 uppercase mb-1 tracking-widest">SANGUE</p>
-                  <p className="text-[18px] font-black text-white">{paciente.tipo_sanguineo || "O+"}</p>
-               </div>
-            </div>
-            <div className="flex flex-col items-center gap-3 border-r border-white/5 px-2">
-               <AlertTriangle size={22} className="text-[#fbbf24] drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]" strokeWidth={2.5} />
-               <div className="text-center max-w-full">
-                  <p className="text-[8px] font-black text-white/30 uppercase mb-1 tracking-widest">ALERGIAS</p>
-                  <p className="text-[13px] font-black text-white truncate w-full px-1">{paciente.alergias || "Dipirona"}</p>
-               </div>
-            </div>
-            <div className="flex flex-col items-center gap-3 border-r border-white/5 px-2">
-               <Phone size={22} className="text-[#34d399] drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]" strokeWidth={2.5} />
-               <div className="text-center">
-                  <p className="text-[8px] font-black text-white/30 uppercase mb-1 tracking-widest">CONTATO</p>
-                  <p className="text-[11px] font-black text-white leading-tight">{(paciente.contato_emergencia || "92 9999-9999").replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")}</p>
-               </div>
-            </div>
-            <div className="flex flex-col items-center gap-3 pl-2">
-               <Calendar size={22} className="text-[#60a5fa] drop-shadow-[0_0_8px_rgba(96,165,250,0.4)]" strokeWidth={2.5} />
-               <div className="text-center">
-                  <p className="text-[8px] font-black text-white/30 uppercase mb-1 tracking-widest">EMISSÃO</p>
-                  <p className="text-[14px] font-black text-white">{paciente.data_emissao ? formatDate(paciente.data_emissao) : "10/05/2024"}</p>
-               </div>
-            </div>
-         </div>
+      {/* ═══════════ TITLE ═══════════ */}
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 22px 0 22px' }}>
+        <h1 style={{
+          fontSize: '26px',
+          fontWeight: 900,
+          lineHeight: 1.15,
+          margin: 0,
+          letterSpacing: '-0.5px',
+        }}>
+          {config.nome_sistema || 'Laboratório Municipal de Uarini'}
+        </h1>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginTop: '6px',
+        }}>
+          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#00e896', display: 'inline-block' }} />
+          <span style={{
+            fontSize: '11px',
+            fontWeight: 900,
+            color: '#00e896',
+            letterSpacing: '3.5px',
+            textTransform: 'uppercase',
+          }}>ANÁLISES CLÍNICAS</span>
+          <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#00e896', display: 'inline-block' }} />
+        </div>
+      </div>
 
-         <div className="text-center pt-2">
-            <p className="text-[11px] font-bold uppercase tracking-[4px] text-white/20 whitespace-nowrap">Esta carteirinha é pessoal e intransferível.</p>
-         </div>
-      </footer>
+      {/* ═══════════ PATIENT INFO ═══════════ */}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        padding: '18px 22px 0 22px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '18px',
+      }}>
+        {/* Photo column */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {/* Photo circle */}
+          <div style={{
+            width: '110px',
+            height: '110px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #1a4a6e, #0d2d4a)',
+            border: '3px solid rgba(100,180,255,0.25)',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.4), 0 0 0 6px rgba(100,160,255,0.08)',
+          }}>
+            {paciente.foto_url ? (
+              <img src={paciente.foto_url} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <User size={52} color="rgba(255,255,255,0.15)" />
+            )}
+          </div>
+
+          {/* ATIVA badge */}
+          <div style={{
+            background: '#00b87a',
+            borderRadius: '20px',
+            padding: '5px 14px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+            boxShadow: '0 4px 15px rgba(0,184,122,0.35)',
+          }}>
+            <ShieldCheck size={11} color="white" fill="rgba(255,255,255,0.3)" />
+            <span style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '1px', color: 'white' }}>ATIVA</span>
+          </div>
+        </div>
+
+        {/* Details column */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Name */}
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '8.5px', fontWeight: 700, opacity: 0.4, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '2px' }}>
+              NOME DO PACIENTE
+            </div>
+            <div style={{ fontSize: '22px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: 1.1 }}>
+              {paciente.nome || 'João da Silva'}
+            </div>
+          </div>
+
+          {/* SUS + Nascimento in a row */}
+          <div style={{ display: 'flex', gap: '16px', marginBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '10px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.35, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '3px' }}>
+                NÚMERO DO SUS
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <CreditCard size={13} color="rgba(255,255,255,0.5)" />
+                <span style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  {paciente.numero_sus || '123 4567 8901'}
+                </span>
+              </div>
+            </div>
+            <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '16px' }}>
+              <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.35, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '3px' }}>
+                DATA DE NASCIMENTO
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Calendar size={13} color="rgba(255,255,255,0.5)" />
+                <span style={{ fontSize: '13px', fontWeight: 700 }}>
+                  {formatDate(paciente.data_nascimento)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Unidade */}
+          <div>
+            <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.35, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '3px' }}>
+              UNIDADE DE REFERÊNCIA
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <MapPin size={13} color="#00e896" />
+              <span style={{ fontSize: '13px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {paciente.unidade_saude || 'UBS Central de Uarini'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══════════ QR CODE SECTION ═══════════ */}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        padding: '22px 22px 0 22px',
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '10px',
+        }}>
+          {/* Left label */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            width: '80px',
+          }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '12px',
+              border: '1.5px solid rgba(255,255,255,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <ShieldCheck size={20} color="rgba(255,255,255,0.25)" />
+            </div>
+            <span style={{
+              fontSize: '8px',
+              fontWeight: 700,
+              textAlign: 'center',
+              opacity: 0.35,
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase',
+              lineHeight: 1.4,
+            }}>
+              ESCANEIE PARA VALIDAR A IDENTIDADE
+            </span>
+          </div>
+
+          {/* QR Code - centered and large */}
+          <div style={{
+            background: 'white',
+            borderRadius: '22px',
+            padding: '14px',
+            boxShadow: '0 15px 50px rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <QRCode
+              value={qrValue}
+              size={148}
+              level="Q"
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+            />
+          </div>
+
+          {/* Right label */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '6px',
+            width: '80px',
+          }}>
+            <div style={{
+              width: '38px',
+              height: '38px',
+              borderRadius: '12px',
+              border: '1.5px solid rgba(255,255,255,0.12)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <ShieldCheck size={20} color="rgba(255,255,255,0.25)" />
+            </div>
+            <span style={{
+              fontSize: '8px',
+              fontWeight: 700,
+              textAlign: 'center',
+              opacity: 0.35,
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase',
+              lineHeight: 1.4,
+            }}>
+              USO EXCLUSIVO EM UNIDADES DE SAÚDE
+            </span>
+          </div>
+        </div>
+
+        {/* Valid banner */}
+        <div style={{
+          marginTop: '16px',
+          background: 'rgba(30, 90, 160, 0.25)',
+          border: '1px solid rgba(80, 140, 220, 0.2)',
+          borderRadius: '14px',
+          padding: '10px 18px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+        }}>
+          <ShieldCheck size={16} color="#5ab0ff" />
+          <span style={{ fontSize: '11px', fontWeight: 600, opacity: 0.8, lineHeight: 1.4 }}>
+            Carteirinha válida em todas as unidades de saúde do município.
+          </span>
+        </div>
+      </div>
+
+      {/* ═══════════ FOOTER ═══════════ */}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        marginTop: '18px',
+        borderTop: '1px solid rgba(255,255,255,0.07)',
+        background: 'rgba(0,0,0,0.2)',
+        backdropFilter: 'blur(10px)',
+        padding: '16px 22px 18px 22px',
+      }}>
+        {/* 4-column grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr 1fr',
+          gap: '4px',
+          marginBottom: '14px',
+        }}>
+          {/* Sangue */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <Droplet size={20} color="#5ab0ff" fill="rgba(90,176,255,0.15)" />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 700, opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                TIPO SANGUÍNEO
+              </div>
+              <div style={{ fontSize: '16px', fontWeight: 900 }}>
+                {paciente.tipo_sanguineo || 'O+'}
+              </div>
+            </div>
+          </div>
+
+          {/* Alergias */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+            borderLeft: '1px solid rgba(255,255,255,0.07)',
+          }}>
+            <AlertTriangle size={20} color="#f59e0b" fill="rgba(245,158,11,0.15)" />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 700, opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                ALERGIAS
+              </div>
+              <div style={{ fontSize: '13px', fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>
+                {paciente.alergias || 'Dipirona'}
+              </div>
+            </div>
+          </div>
+
+          {/* Contato */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+            borderLeft: '1px solid rgba(255,255,255,0.07)',
+          }}>
+            <Phone size={20} color="#34d399" fill="rgba(52,211,153,0.1)" />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 700, opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                CONTATO
+              </div>
+              <div style={{ fontSize: '10px', fontWeight: 900, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70px' }}>
+                {paciente.contato_emergencia || '(92) 99999-9999'}
+              </div>
+            </div>
+          </div>
+
+          {/* Emissão */}
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+            borderLeft: '1px solid rgba(255,255,255,0.07)',
+          }}>
+            <Calendar size={20} color="#818cf8" fill="rgba(129,140,248,0.1)" />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 700, opacity: 0.35, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '2px' }}>
+                EMISSÃO
+              </div>
+              <div style={{ fontSize: '12px', fontWeight: 900 }}>
+                {paciente.data_emissao ? formatDate(paciente.data_emissao) : '10/05/2024'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom disclaimer */}
+        <div style={{ textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+          <span style={{ fontSize: '9.5px', fontWeight: 600, opacity: 0.25, letterSpacing: '1px', textTransform: 'uppercase' }}>
+            Esta carteirinha é pessoal e intransferível.
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
