@@ -126,8 +126,8 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         zIndex: 1,
         padding: '16px 20px 8px 20px',
         display: 'flex',
-        justifyContent: 'flex-end', // align the logo to the right if the badge is gone
-        alignItems: 'flex-start',
+        justifyContent: 'center',
+        alignItems: 'center',
       }}>
 
         {/* Logo Prefeitura */}
@@ -153,7 +153,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       </div>
 
       {/* ═══════════ TITLE ═══════════ */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 20px 0 20px' }}>
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 20px 0 20px', textAlign: 'center' }}>
         <h1 style={{
           fontSize: '14px',
           fontWeight: 900,
@@ -166,6 +166,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         <div style={{
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'center',
           gap: '8px',
           marginTop: '6px',
         }}>
