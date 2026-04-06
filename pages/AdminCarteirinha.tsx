@@ -62,7 +62,7 @@ const AdminCarteirinha: React.FC = () => {
       setPacientes(pacientesData || []);
 
       // Fetch config
-      const configs = await dbService.from('configuracoes_carteirinha').select('*');
+      const configs = await dbService.from('configuracoes_carteirinha').select({}, { column: 'updated_at', ascending: false });
       if (configs && configs.length > 0) {
         setConfig(configs[0]);
       }
@@ -76,10 +76,15 @@ const AdminCarteirinha: React.FC = () => {
   const handleSaveConfig = async () => {
     try {
       setUploading(true);
+      const dataToSave = { ...config, updated_at: new Date().toISOString() };
+      
       if (config.id) {
-        await dbService.from('configuracoes_carteirinha').update(config, { id: config.id });
+        await dbService.from('configuracoes_carteirinha').update(dataToSave, { id: config.id });
       } else {
-        await dbService.from('configuracoes_carteirinha').insert(config);
+        const res = await dbService.from('configuracoes_carteirinha').insert(dataToSave);
+        if (res && res.length > 0) {
+          setConfig(prev => ({ ...prev, id: res[0].id }));
+        }
       }
       alert('Configurações salvas com sucesso!');
     } catch (err: any) {
@@ -158,19 +163,23 @@ const AdminCarteirinha: React.FC = () => {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-
-          // Compress to jpeg to guarantee support
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-          console.log("Original Image Size: ", img.width, "x", img.height);
-          console.log("Compressed Image Size: ", width, "x", height);
-          console.log("Base64 string length: ", compressedBase64.length);
-
-          if (field === 'foto_url') {
-            setEditingPaciente(prev => ({ ...prev, [field]: compressedBase64 }) as Partial<Paciente>);
-          } else {
+          
+          if (field === 'logo_url') {
+            // Use image/png for logos to preserve transparency
+            ctx?.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/png');
             setConfig(prev => ({ ...prev, [field]: compressedBase64 }));
+          } else {
+            // Provide white background for jpeg photos to avoid black background if image has transparency
+            if (ctx) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            ctx?.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            setEditingPaciente(prev => ({ ...prev, [field]: compressedBase64 }) as Partial<Paciente>);
           }
+          
           setUploading(false);
         };
         img.src = reader.result as string;
