@@ -130,6 +130,9 @@ const AdminCarteirinha: React.FC = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'foto_url' | 'logo_url') => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Reset input to allow selecting same file again to re-trigger compression
+    e.target.value = '';
 
     try {
       setUploading(true);

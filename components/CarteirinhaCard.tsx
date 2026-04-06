@@ -124,7 +124,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       <div style={{
         position: 'relative',
         zIndex: 1,
-        padding: '20px 22px 12px 22px',
+        padding: '16px 20px 8px 20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
@@ -172,7 +172,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       </div>
 
       {/* ═══════════ TITLE ═══════════ */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '0 22px 0 22px' }}>
+      <div style={{ position: 'relative', zIndex: 1, padding: '0 20px 0 20px' }}>
         <h1 style={{
           fontSize: '26px',
           fontWeight: 900,
@@ -204,17 +204,17 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       <div style={{
         position: 'relative',
         zIndex: 1,
-        padding: '18px 22px 0 22px',
+        padding: '14px 20px 0 20px',
         display: 'flex',
         alignItems: 'flex-start',
-        gap: '18px',
+        gap: '14px',
       }}>
         {/* Photo column */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           {/* Photo circle */}
           <div style={{
-            width: '110px',
-            height: '110px',
+            width: '95px',
+            height: '95px',
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #1a4a6e, #0d2d4a)',
             border: '3px solid rgba(100,180,255,0.25)',
@@ -303,7 +303,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       <div style={{
         position: 'relative',
         zIndex: 1,
-        padding: '22px 22px 0 22px',
+        padding: '16px 20px 0 20px',
       }}>
         <div style={{
           display: 'flex',
@@ -346,8 +346,8 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           {/* QR Code - centered and large */}
           <div style={{
             background: 'white',
-            borderRadius: '22px',
-            padding: '14px',
+            borderRadius: '20px',
+            padding: '12px',
             boxShadow: '0 15px 50px rgba(0,0,0,0.5)',
             display: 'flex',
             alignItems: 'center',
@@ -355,7 +355,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           }}>
             <QRCode
               value={qrValue}
-              size={148}
+              size={135}
               level="Q"
               bgColor="#FFFFFF"
               fgColor="#000000"
@@ -397,11 +397,11 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
 
         {/* Valid banner */}
         <div style={{
-          marginTop: '16px',
+          marginTop: '12px',
           background: 'rgba(30, 90, 160, 0.25)',
           border: '1px solid rgba(80, 140, 220, 0.2)',
-          borderRadius: '14px',
-          padding: '10px 18px',
+          borderRadius: '12px',
+          padding: '8px 14px',
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
@@ -417,11 +417,11 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       <div style={{
         position: 'relative',
         zIndex: 1,
-        marginTop: '18px',
+        marginTop: '14px',
         borderTop: '1px solid rgba(255,255,255,0.07)',
         background: 'rgba(0,0,0,0.2)',
         backdropFilter: 'blur(10px)',
-        padding: '16px 22px 18px 22px',
+        padding: '12px 20px 14px 20px',
       }}>
         {/* 4-column grid */}
         <div style={{
