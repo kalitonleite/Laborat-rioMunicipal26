@@ -133,26 +133,27 @@ const AdminCarteirinha: React.FC = () => {
 
     try {
       setUploading(true);
-      // We will create a real upload route later, for now we can use a mock or try/catch with the new /api/upload
-      const formData = new FormData();
-      formData.append('file', file);
       
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        if (field === 'foto_url') {
+          setEditingPaciente(prev => ({ ...prev, [field]: base64String }) as Partial<Paciente>);
+        } else {
+          setConfig(prev => ({ ...prev, [field]: base64String }));
+        }
+        setUploading(false);
+      };
+      
+      reader.onerror = () => {
+        alert('Erro ao ler a imagem.');
+        setUploading(false);
+      };
+      
+      reader.readAsDataURL(file);
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Falha no upload');
-      
-      if (field === 'foto_url') {
-        setEditingPaciente({ ...editingPaciente, [field]: data.url });
-      } else {
-        setConfig({ ...config, [field]: data.url });
-      }
     } catch (err: any) {
       alert('Erro no upload: ' + err.message);
-    } finally {
       setUploading(false);
     }
   };
