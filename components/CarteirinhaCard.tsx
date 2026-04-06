@@ -126,28 +126,9 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         zIndex: 1,
         padding: '16px 20px 8px 20px',
         display: 'flex',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-end', // align the logo to the right if the badge is gone
         alignItems: 'flex-start',
       }}>
-        {/* SUS DIGITAL badge */}
-        <div style={{
-          background: 'rgba(0, 200, 120, 0.15)',
-          border: '1.5px solid rgba(0, 200, 120, 0.5)',
-          borderRadius: '20px',
-          padding: '5px 12px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-        }}>
-          <CheckCircle size={13} color="#00e896" fill="rgba(0,200,120,0.3)" />
-          <span style={{
-            fontSize: '10px',
-            fontWeight: 900,
-            letterSpacing: '1.5px',
-            color: '#00e896',
-            textTransform: 'uppercase',
-          }}>SUS DIGITAL</span>
-        </div>
 
         {/* Logo Prefeitura */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
