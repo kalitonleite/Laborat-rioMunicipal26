@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, ExamResult, Campaign, UserRole } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -1459,7 +1459,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               <div className="space-y-6">
                 <div className="flex flex-col items-center justify-center bg-gray-50 rounded-[32px] border-2 border-dashed border-gray-200 group relative overflow-hidden h-72">
                   <img
-                    src={appLogo || "/assets/logo-uarini.jpg"}
+                    src={appLogo || "/assets/logo-uarini.png"}
                     alt="Logo Atual"
                     className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500"
                   />

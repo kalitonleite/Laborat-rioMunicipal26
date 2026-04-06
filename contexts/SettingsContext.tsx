@@ -1,4 +1,4 @@
-
+﻿
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { dbService } from '../services/apiService';
 
@@ -24,11 +24,11 @@ export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (settings && settings.length > 0 && settings[0].value && settings[0].value.url) {
         setAppLogo(settings[0].value.url);
       } else {
-        setAppLogo('/assets/logo-uarini.jpg'); // Default fallback
+        setAppLogo('/assets/logo-uarini.png'); // Default fallback
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
-      setAppLogo('/assets/logo-uarini.jpg'); // Default fallback on error
+      setAppLogo('/assets/logo-uarini.png'); // Default fallback on error
     } finally {
       setLoading(false);
     }
@@ -75,3 +75,4 @@ export const useSettings = () => {
   }
   return context;
 };
+

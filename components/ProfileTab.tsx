@@ -247,3 +247,4 @@ const InfoRow = ({ icon, label, value }: { icon: string, label: string, value: s
 );
 
 export default ProfileTab;
+

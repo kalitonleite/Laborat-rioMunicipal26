@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { jsPDF } from 'jspdf';
@@ -506,7 +506,7 @@ const QrDashboardTab: React.FC = () => {
                             <div className="bg-gray-50 rounded-[32px] border border-gray-100 p-8">
                                 <div className="flex justify-between items-start mb-10 border-b border-gray-100 pb-8">
                                     <div className="flex items-center gap-4">
-                                        <img src={appLogo || "/assets/logo-uarini.jpg"} className="h-16 object-contain" alt="Logo" />
+                                        <img src={appLogo || "/assets/logo-uarini.png"} className="h-16 object-contain" alt="Logo" />
                                         <div>
                                             <h3 className="text-lg font-black text-slate-800">LABORATÓRIO MUNICIPAL DE UARINI</h3>
                                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Relatório de Atendimentos Cadastrados</p>
@@ -569,3 +569,4 @@ const QrDashboardTab: React.FC = () => {
 };
 
 export default QrDashboardTab;
+

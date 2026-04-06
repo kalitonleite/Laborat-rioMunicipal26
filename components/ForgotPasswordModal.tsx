@@ -169,3 +169,4 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({ role, onClose
 };
 
 export default ForgotPasswordModal;
+
