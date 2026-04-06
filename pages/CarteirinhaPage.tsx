@@ -177,13 +177,6 @@ const CarteirinhaPage: React.FC = () => {
                         <p className="text-sm text-slate-500 font-medium mt-1">Qualquer alteração em seus dados será refletida automaticamente aqui sem necessidade de uma nova via física.</p>
                      </div>
                   </li>
-                  <li className="flex gap-4">
-                     <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center font-black text-xs text-slate-400 flex-shrink-0">03</div>
-                     <div>
-                        <h4 className="font-bold text-slate-700">Validada em todo território</h4>
-                        <p className="text-sm text-slate-500 font-medium mt-1">Este documento segue as diretrizes nacionais de identificação digital do SUS.</p>
-                     </div>
-                  </li>
                </ul>
             </div>
 
