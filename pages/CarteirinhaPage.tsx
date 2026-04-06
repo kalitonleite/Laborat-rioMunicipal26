@@ -126,7 +126,7 @@ const CarteirinhaPage: React.FC = () => {
       <header className="mb-12 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
          <div>
             <span className="px-4 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-widest rounded-full border border-green-100">Documento Oficial Digital</span>
-            <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tighter mt-4">Minha Carteirinha SUS</h1>
+            <h1 className="text-4xl md:text-5xl font-black text-slate-800 tracking-tighter mt-4">Minha Carteirinha</h1>
             <p className="text-slate-400 font-medium text-lg max-w-xl mt-2">Acesse sua identificação digital validada para atendimentos e exames.</p>
          </div>
          <div className="flex gap-4">
