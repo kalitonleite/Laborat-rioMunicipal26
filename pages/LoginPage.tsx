@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types';
@@ -126,46 +126,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         <div className="absolute bottom-[-20%] right-[-10%] w-[80%] md:w-[60%] h-[100%] bg-[#22c55e]/10 blur-[80px] md:blur-[120px] rounded-full"></div>
 
         <div className="relative z-10 flex flex-col items-center">
-          <div className="rounded-[40px] md:rounded-[60px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/30 mb-8 md:mb-12 transform hover:scale-110 transition-all duration-500 overflow-hidden w-48 h-48 md:w-96 md:h-96 flex items-center justify-center bg-white/10 backdrop-blur-sm">
-            {appLogo ? (
-              <img
-                src={appLogo}
-                alt="Logo Uarini"
-                className="w-full h-full object-contain p-6"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const parent = target.parentElement;
-                  if (parent && !parent.querySelector('svg.lab-fallback')) {
-                    parent.innerHTML = `<div class="flex flex-col items-center justify-center gap-4 text-white p-8">
-                      <svg class="lab-fallback" width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="50" cy="30" r="16" fill="white" opacity="0.9"/>
-                        <circle cx="26" cy="54" r="11" fill="white" opacity="0.6"/>
-                        <circle cx="74" cy="54" r="11" fill="white" opacity="0.6"/>
-                        <path d="M14,85 Q50,52 86,85" stroke="white" stroke-width="5" fill="none" opacity="0.8" stroke-linecap="round"/>
-                      </svg>
-                      <div style="text-align:center">
-                        <div style="font-size:10px;font-weight:700;opacity:0.7;letter-spacing:2px">PREFEITURA DE</div>
-                        <div style="font-size:28px;font-weight:900;letter-spacing:3px">UARINI</div>
-                      </div>
-                    </div>`;
-                  }
-                }}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-4 text-white p-8">
-                <svg width="80" height="80" viewBox="0 0 100 100" fill="none">
-                  <circle cx="50" cy="30" r="16" fill="white" opacity="0.9"/>
-                  <circle cx="26" cy="54" r="11" fill="white" opacity="0.6"/>
-                  <circle cx="74" cy="54" r="11" fill="white" opacity="0.6"/>
-                  <path d="M14,85 Q50,52 86,85" stroke="white" strokeWidth="5" fill="none" opacity="0.8" strokeLinecap="round"/>
-                </svg>
-                <div className="text-center">
-                  <div className="text-[10px] font-bold opacity-70 tracking-[3px]">PREFEITURA DE</div>
-                  <div className="text-[32px] font-black tracking-[4px]">UARINI</div>
-                </div>
-              </div>
-            )}
+          <div className="rounded-[40px] md:rounded-[60px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] border border-white/30 mb-8 md:mb-12 transform hover:scale-110 transition-all duration-500 overflow-hidden w-48 h-48 md:w-96 md:h-96 flex items-center justify-center bg-white">
+            <img
+              src={appLogo || '/assets/logo-uarini.png'}
+              alt="Logo Uarini"
+              className="w-full h-full object-contain p-6"
+            />
           </div>
 
           <h1 className="text-2xl md:text-5xl font-black text-white text-center leading-tight tracking-tighter drop-shadow-2xl px-4 md:px-6">

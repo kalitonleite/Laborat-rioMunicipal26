@@ -1,4 +1,4 @@
-﻿
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { dbService } from '../services/apiService';
 
@@ -15,7 +15,7 @@ interface SettingsContextType extends Settings {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [appLogo, setAppLogo] = useState<string | null>(null);
+  const [appLogo, setAppLogo] = useState<string | null>('/assets/logo-uarini.png');
   const [loading, setLoading] = useState(true);
 
   const refreshSettings = useCallback(async () => {
