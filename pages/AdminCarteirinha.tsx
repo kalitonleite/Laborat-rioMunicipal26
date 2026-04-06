@@ -157,8 +157,11 @@ const AdminCarteirinha: React.FC = () => {
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
 
-          // Compress to webp for even smaller payload
-          const compressedBase64 = canvas.toDataURL('image/webp', 0.8);
+          // Compress to jpeg to guarantee support
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+          console.log("Original Image Size: ", img.width, "x", img.height);
+          console.log("Compressed Image Size: ", width, "x", height);
+          console.log("Base64 string length: ", compressedBase64.length);
 
           if (field === 'foto_url') {
             setEditingPaciente(prev => ({ ...prev, [field]: compressedBase64 }) as Partial<Paciente>);
