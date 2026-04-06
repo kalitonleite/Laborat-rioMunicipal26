@@ -76,7 +76,7 @@ const CarteirinhaPage: React.FC = () => {
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: [85, 140] // Vertical card size
+        format: [90, 130] // Adjusted vertical card size
       });
       
       pdf.setProperties({
@@ -85,7 +85,7 @@ const CarteirinhaPage: React.FC = () => {
         author: 'LabLaudo System'
       });
       
-      pdf.addImage(imgData, 'PNG', 0, 0, 85, 140);
+      pdf.addImage(imgData, 'PNG', 0, 0, 90, 130);
       pdf.save(`carteirinha_${paciente.nome.replace(/\s+/g, '_').toLowerCase()}.pdf`);
       
     } catch (err: any) {
@@ -150,7 +150,7 @@ const CarteirinhaPage: React.FC = () => {
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
          {/* Card Section */}
          <div className="lg:col-span-6 flex justify-center">
-            <div ref={cardRef} className="w-full max-w-[400px] transition-all duration-500">
+            <div ref={cardRef} className="w-full max-w-[420px] transition-all duration-500">
                <CarteirinhaCard paciente={paciente} config={config} />
             </div>
          </div>
