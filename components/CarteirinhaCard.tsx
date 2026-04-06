@@ -38,13 +38,23 @@ interface CarteirinhaCardProps {
   };
 }
 
-const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente, config }) => {
-  const qrValue = `https://laborat-rio-municipal26.vercel.app/#/validacao/${paciente.id || paciente.qr_token}?token=${paciente.qr_token}`;
+const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw, config: configRaw }) => {
+  // Safe defaults so card never crashes on null/undefined props
+  const paciente = pacienteRaw || {} as CarteirinhaCardProps['paciente'];
+  const config = configRaw || {} as CarteirinhaCardProps['config'];
+
+  const qrToken = paciente.qr_token || '';
+  const pacienteId = paciente.id || qrToken;
+  const qrValue = qrToken
+    ? `https://laborat-rio-municipal26.vercel.app/#/validacao/${pacienteId}?token=${qrToken}`
+    : 'https://laborat-rio-municipal26.vercel.app';
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '--/--/----';
     try {
-      return new Date(dateString).toLocaleDateString('pt-BR');
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return '--/--/----';
+      return d.toLocaleDateString('pt-BR');
     } catch {
       return '--/--/----';
     }
@@ -142,7 +152,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente, config }) =
         {/* Logo Prefeitura */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {config.logo_url ? (
-            <img src={config.logo_url} alt="Logo" style={{ height: '52px', width: 'auto', objectFit: 'contain' }} />
+            <img src={config.logo_url} alt="Logo Uarini" style={{ height: '52px', width: 'auto', objectFit: 'contain' }} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
           ) : (
             <div style={{ textAlign: 'center' }}>
               {/* Prefeitura icon placeholder */}

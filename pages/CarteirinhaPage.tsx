@@ -151,7 +151,7 @@ const CarteirinhaPage: React.FC = () => {
          {/* Card Section */}
          <div className="lg:col-span-6 flex justify-center">
             <div ref={cardRef} className="w-full max-w-[420px] transition-all duration-500">
-               <CarteirinhaCard paciente={paciente} config={config} />
+               <CarteirinhaCard paciente={paciente} config={config || { logo_url: '', cor_primaria: '', cor_secundaria: '', cor_destaque: '', nome_sistema: 'Laboratório Municipal de Uarini', texto_rodape: '' }} />
             </div>
          </div>
 
