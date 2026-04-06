@@ -45,9 +45,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
 
   const qrToken = paciente.qr_token || '';
   const pacienteId = paciente.id || qrToken;
-  const qrValue = qrToken
-    ? `https://laborat-rio-municipal26.vercel.app/#/validacao/${pacienteId}?token=${qrToken}`
-    : 'https://laborat-rio-municipal26.vercel.app';
+  const qrValue = 'https://laborat-rio-municipal26.vercel.app/';
 
   const formatDate = (dateString: string) => {
     if (!dateString) return '--/--/----';
