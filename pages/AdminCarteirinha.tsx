@@ -248,16 +248,16 @@ const AdminCarteirinha: React.FC = () => {
             {pacientes.map(p => (
               <div key={p.id} className="group relative">
                 <CarteirinhaCard paciente={p} config={config} />
-                <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-[-10px] group-hover:translate-y-0">
+                <div className="absolute top-4 right-4 flex gap-2 z-50">
                   <button 
                     onClick={() => { setEditingPaciente(p); setIsModalOpen(true); }}
-                    className="bg-white/90 backdrop-blur text-blue-600 p-3 rounded-xl shadow-xl hover:bg-blue-600 hover:text-white transition-all"
+                    className="bg-white/90 backdrop-blur text-blue-600 p-3 rounded-xl shadow-xl hover:bg-blue-600 hover:text-white transition-all border border-blue-100"
                   >
                     <i className="fas fa-edit"></i>
                   </button>
                   <button 
                     onClick={() => handleDeletePaciente(p.id)}
-                    className="bg-white/90 backdrop-blur text-red-600 p-3 rounded-xl shadow-xl hover:bg-red-600 hover:text-white transition-all"
+                    className="bg-white/90 backdrop-blur text-red-600 p-3 rounded-xl shadow-xl hover:bg-red-600 hover:text-white transition-all border border-red-100"
                   >
                     <i className="fas fa-trash"></i>
                   </button>

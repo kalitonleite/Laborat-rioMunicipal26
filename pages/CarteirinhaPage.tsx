@@ -50,7 +50,7 @@ const CarteirinhaPage: React.FC = () => {
       }
 
       // Fetch config
-      const configs = await dbService.from('configuracoes_carteirinha').select();
+      const configs = await dbService.from('configuracoes_carteirinha').select({}, { column: 'updated_at', ascending: false });
       if (configs && configs.length > 0) {
         setConfig(configs[0]);
       }
