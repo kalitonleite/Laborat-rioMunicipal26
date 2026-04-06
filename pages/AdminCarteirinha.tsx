@@ -136,13 +136,38 @@ const AdminCarteirinha: React.FC = () => {
       
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
-        if (field === 'foto_url') {
-          setEditingPaciente(prev => ({ ...prev, [field]: base64String }) as Partial<Paciente>);
-        } else {
-          setConfig(prev => ({ ...prev, [field]: base64String }));
-        }
-        setUploading(false);
+        const img = new Image();
+        img.onload = () => {
+          // Resize image using canvas to avoid 4.5MB Vercel Serverless limit
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 500; // Logos and photos don't need to be huge
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height && width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          } else if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          // Compress to webp for even smaller payload
+          const compressedBase64 = canvas.toDataURL('image/webp', 0.8);
+
+          if (field === 'foto_url') {
+            setEditingPaciente(prev => ({ ...prev, [field]: compressedBase64 }) as Partial<Paciente>);
+          } else {
+            setConfig(prev => ({ ...prev, [field]: compressedBase64 }));
+          }
+          setUploading(false);
+        };
+        img.src = reader.result as string;
       };
       
       reader.onerror = () => {
