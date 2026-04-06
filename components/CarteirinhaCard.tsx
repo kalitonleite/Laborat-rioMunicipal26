@@ -304,7 +304,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           }}>
             <QRCode
               value={qrValue}
-              size={135}
+              size={90}
               level="Q"
               bgColor="#FFFFFF"
               fgColor="#000000"
@@ -312,22 +312,6 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
         </div>
 
-        {/* Valid banner */}
-        <div style={{
-          marginTop: '12px',
-          background: 'rgba(30, 90, 160, 0.25)',
-          border: '1px solid rgba(80, 140, 220, 0.2)',
-          borderRadius: '12px',
-          padding: '8px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-        }}>
-          <ShieldCheck size={16} color="#5ab0ff" />
-          <span style={{ fontSize: '11px', fontWeight: 600, opacity: 0.8, lineHeight: 1.4 }}>
-            Carteirinha válida em todas as unidades de saúde do município.
-          </span>
-        </div>
       </div>
 
       {/* ═══════════ FOOTER ═══════════ */}
