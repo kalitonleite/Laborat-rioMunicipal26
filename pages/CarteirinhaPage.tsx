@@ -74,9 +74,9 @@ const CarteirinhaPage: React.FC = () => {
       
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
-        orientation: 'portrait',
+        orientation: 'landscape',
         unit: 'mm',
-        format: [90, 130] // Adjusted vertical card size
+        format: [85.6, 54] // Standard credit card size
       });
       
       pdf.setProperties({
@@ -85,7 +85,7 @@ const CarteirinhaPage: React.FC = () => {
         author: 'LabLaudo System'
       });
       
-      pdf.addImage(imgData, 'PNG', 0, 0, 90, 130);
+      pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
       pdf.save(`carteirinha_${paciente.nome.replace(/\s+/g, '_').toLowerCase()}.pdf`);
       
     } catch (err: any) {
@@ -149,8 +149,8 @@ const CarteirinhaPage: React.FC = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
          {/* Card Section */}
-         <div className="lg:col-span-6 flex justify-center">
-            <div ref={cardRef} className="w-full max-w-[420px] transition-all duration-500">
+         <div className="lg:col-span-12 flex justify-center">
+            <div ref={cardRef} className="w-full max-w-[560px] transition-all duration-500 shadow-2xl rounded-3xl overflow-hidden">
                <CarteirinhaCard paciente={paciente} config={config || { logo_url: '', cor_primaria: '', cor_secundaria: '', cor_destaque: '', nome_sistema: 'Laboratório Municipal de Uarini', texto_rodape: '' }} />
             </div>
          </div>

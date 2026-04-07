@@ -244,7 +244,7 @@ const AdminCarteirinha: React.FC = () => {
              </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
             {pacientes.map(p => (
               <div key={p.id} className="group relative">
                 <CarteirinhaCard paciente={p} config={config} />
@@ -267,9 +267,10 @@ const AdminCarteirinha: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-           <div className="bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-6">
-              <h3 className="text-xl font-bold text-slate-800 border-b pb-4">Aparência da Carteirinha</h3>
+        <div className="flex flex-col space-y-12">
+           <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
+              <div className="lg:col-span-2 bg-white p-8 rounded-[32px] shadow-sm border border-slate-100 space-y-6 flex flex-col">
+                 <h3 className="text-xl font-bold text-slate-800 border-b pb-4">Aparência da Carteirinha</h3>
               
               <div className="grid grid-cols-2 gap-6">
                  <div>
@@ -353,27 +354,31 @@ const AdminCarteirinha: React.FC = () => {
               </button>
            </div>
 
-           <div className="flex flex-col items-center justify-center space-y-8">
-              <h3 className="text-sm font-black text-slate-400 uppercase tracking-[4px]">Pré-visualização em Tempo Real</h3>
-              <CarteirinhaCard 
-                paciente={{
-                  nome: 'NOME DO PACIENTE EXEMPLO',
-                  cpf: '000.000.000-00',
-                  numero_sus: '1234 5678 9012 3456',
-                  data_nascimento: '1990-01-01',
-                  foto_url: '',
-                  tipo_sanguineo: 'O+',
-                  alergias: 'Nenhuma',
-                  contato_emergencia: '(92) 99999-9999',
-                  unidade_saude: 'Hospital Municipal de Uarini',
-                  status: 'ativo',
-                  qr_token: 'PREVIEW_TOKEN'
-                }}
-                config={config}
-              />
-              <p className="max-w-[300px] text-center text-xs text-slate-400 font-medium italic">
-                * As alterações de cores e textos serão refletidas instantaneamente em todas as carteirinhas digitais emitidas pelo sistema.
-              </p>
+              <div className="lg:col-span-3 flex flex-col items-center justify-center space-y-8 bg-slate-50 p-8 rounded-[40px] border border-slate-100">
+                 <h3 className="text-sm font-black text-slate-400 uppercase tracking-[4px]">Pré-visualização em Tempo Real</h3>
+                 <div className="shadow-2xl rounded-3xl overflow-hidden max-w-[560px] w-full">
+                    <CarteirinhaCard 
+                      paciente={{
+                        nome: 'NOME DO PACIENTE EXEMPLO',
+                        cpf: '000.000.000-00',
+                        numero_sus: '1234 5678 9012 3456',
+                        data_nascimento: '1990-01-01',
+                        foto_url: '',
+                        tipo_sanguineo: 'O+',
+                        alergias: 'Nenhuma',
+                        contato_emergencia: '(92) 99999-9999',
+                        unidade_saude: 'Hospital Municipal de Uarini',
+                        status: 'ativo',
+                        qr_token: 'PREVIEW_TOKEN',
+                        data_emissao: new Date().toISOString()
+                      }}
+                      config={config}
+                    />
+                 </div>
+                 <p className="max-w-[300px] text-center text-xs text-slate-400 font-medium italic">
+                   * As alterações de cores e textos serão refletidas instantaneamente em todas as carteirinhas digitais emitidas pelo sistema.
+                 </p>
+              </div>
            </div>
         </div>
       )}
