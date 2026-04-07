@@ -229,7 +229,8 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
             borderRadius: '14px',
             padding: '8px',
             boxShadow: '0 12px 30px rgba(0,0,0,0.5)',
-            marginTop: 'auto',
+            marginTop: '10px',
+            marginBottom: 'auto',
           }}>
             <QRCode value={qrValue} size={70} level="Q" />
           </div>
