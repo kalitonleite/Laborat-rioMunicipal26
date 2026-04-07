@@ -58,12 +58,20 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
     }
   };
 
+  const formatSUS = (sus: string) => {
+    if (!sus) return '--- ---- ---- ----';
+    const clean = sus.replace(/\D/g, '');
+    // Standard format for 15 digits: 000 0000 0000 0000
+    // We can also support 11 or other lengths with generic spacing
+    return clean.replace(/(\d{3})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4').trim();
+  };
+
   return (
     <div
       id="carteirinha-digital"
       style={{
         width: '560px',
-        height: '354px', // 560 / 1.58
+        height: '354px',
         background: 'linear-gradient(180deg, #0d2d4a 0%, #071c30 50%, #091e35 100%)',
         borderRadius: '24px',
         overflow: 'hidden',
@@ -86,93 +94,101 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       }}>
         <div style={{
           position: 'absolute',
-          bottom: '20%',
-          left: '-10%',
-          width: '120%',
-          height: '60%',
-          background: 'radial-gradient(ellipse, rgba(0,120,200,0.1) 0%, transparent 70%)',
+          bottom: '10%',
+          left: '-20%',
+          width: '140%',
+          height: '80%',
+          background: 'radial-gradient(ellipse at center, rgba(0,120,200,0.15) 0%, transparent 80%)',
           borderRadius: '50%',
           transform: 'rotate(-5deg)',
         }} />
         <div style={{
           position: 'absolute',
-          top: '-10%',
+          top: '-20%',
           right: '-10%',
-          width: '50%',
-          height: '50%',
-          background: 'radial-gradient(ellipse, rgba(0,200,150,0.05) 0%, transparent 70%)',
+          width: '70%',
+          height: '70%',
+          background: 'radial-gradient(ellipse at center, rgba(0,200,150,0.08) 0%, transparent 80%)',
           borderRadius: '50%',
         }} />
       </div>
 
-      {/* ═══════════ CONTENT ═══════════ */}
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flex: 1, padding: '20px 24px 0 24px', gap: '24px' }}>
+      {/* ═══════════ CONTENT GRID ═══════════ */}
+      <div style={{ 
+        position: 'relative', 
+        zIndex: 1, 
+        display: 'grid', 
+        gridTemplateColumns: '120px 1fr 120px',
+        flex: 1, 
+        padding: '24px 28px 0 28px', 
+        gap: '24px' 
+      }}>
         
         {/* LEFT COLUMN: Photo & Status */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <div style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '16px',
+            width: '105px',
+            height: '105px',
+            borderRadius: '20px',
             background: 'linear-gradient(135deg, #1a4a6e, #0d2d4a)',
-            border: '2px solid rgba(100,180,255,0.25)',
+            border: '2.5px solid rgba(100,180,255,0.3)',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.4)',
+            boxShadow: '0 12px 35px rgba(0,0,0,0.5)',
           }}>
             {paciente.foto_url ? (
               <img src={paciente.foto_url} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <User size={50} color="rgba(255,255,255,0.15)" />
+              <User size={55} color="rgba(255,255,255,0.15)" />
             )}
           </div>
 
           <div style={{
             background: '#00b87a',
-            borderRadius: '8px',
-            padding: '4px 12px',
+            borderRadius: '10px',
+            padding: '5px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            boxShadow: '0 4px 15px rgba(0,184,122,0.3)',
+            boxShadow: '0 6px 20px rgba(0,184,122,0.4)',
           }}>
-            <ShieldCheck size={12} color="white" fill="rgba(255,255,255,0.3)" />
-            <span style={{ fontSize: '10px', fontWeight: 900, letterSpacing: '0.5px' }}>ATIVA</span>
+            <ShieldCheck size={13} color="white" fill="rgba(255,255,255,0.3)" />
+            <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1px' }}>ATIVA</span>
           </div>
         </div>
 
         {/* MIDDLE COLUMN: Patient Details */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0, paddingRight: '10px' }}>
           <div style={{ marginBottom: '4px' }}>
-            <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '2px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, opacity: 0.5, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: 1.1, color: '#fff' }}>
+            <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '-0.5px', lineHeight: 1.1, color: '#fff' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            <div>
-              <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '3px' }}>
+          <div style={{ display: 'flex', gap: '24px' }}>
+            <div style={{ flex: 1.2 }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NÚMERO DO SUS
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CreditCard size={14} color="#00e896" />
-                <span style={{ fontSize: '13px', fontWeight: 800 }}>
-                  {paciente.numero_sus || '123 4567 8901'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <CreditCard size={15} color="#00e896" />
+                <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                  {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
             </div>
-            <div>
-              <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '3px' }}>
+            <div style={{ flex: 0.8 }}>
+              <div style={{ fontSize: '8.5px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NASCIMENTO
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Calendar size={14} color="#5ab0ff" />
-                <span style={{ fontSize: '13px', fontWeight: 800 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <Calendar size={15} color="#5ab0ff" />
+                <span style={{ fontSize: '14px', fontWeight: 800 }}>
                   {formatDate(paciente.data_nascimento)}
                 </span>
               </div>
@@ -180,12 +196,12 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
 
           <div>
-            <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '3px' }}>
+            <div style={{ fontSize: '8.5px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
               UNIDADE DE REFERÊNCIA
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <MapPin size={14} color="#00e896" />
-              <span style={{ fontSize: '12px', fontWeight: 700, opacity: 0.9 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+              <MapPin size={15} color="#00e896" />
+              <span style={{ fontSize: '13px', fontWeight: 700, opacity: 0.9 }}>
                 {paciente.unidade_saude || 'UBS Central de Uarini'}
               </span>
             </div>
@@ -193,63 +209,64 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         </div>
 
         {/* RIGHT COLUMN: Logo & QR Code */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'space-between', gap: '10px' }}>
-          <div style={{ textAlign: 'right' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', alignSelf: 'start' }}>
+          <div style={{ textAlign: 'center', width: '100%' }}>
             {config.logo_url ? (
-              <img src={config.logo_url} alt="Logo" style={{ height: '38px', width: 'auto' }} />
+              <img src={config.logo_url} alt="Logo" style={{ height: '40px', width: 'auto', margin: '0 auto' }} />
             ) : (
-              <div style={{ fontSize: '12px', fontWeight: 900 }}>UARINI</div>
+              <div style={{ fontSize: '14px', fontWeight: 900 }}>UARINI</div>
             )}
-            <div style={{ fontSize: '9px', fontWeight: 900, color: '#00e896', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '4px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 900, color: '#00e896', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '6px' }}>
               ANÁLISES CLÍNICAS
             </div>
           </div>
 
           <div style={{
             background: 'white',
-            borderRadius: '12px',
-            padding: '8px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+            borderRadius: '16px',
+            padding: '10px',
+            boxShadow: '0 15px 40px rgba(0,0,0,0.5)',
+            marginTop: 'auto',
           }}>
-            <QRCode value={qrValue} size={65} level="Q" />
+            <QRCode value={qrValue} size={75} level="Q" />
           </div>
         </div>
       </div>
 
       {/* ═══════════ FOOTER GRID ═══════════ */}
-      <div style={{ position: 'relative', zIndex: 1, padding: '12px 24px 16px 24px', background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Droplet size={18} color="#5ab0ff" fill="rgba(90,176,255,0.1)" />
+      <div style={{ position: 'relative', zIndex: 1, padding: '14px 28px 20px 28px', background: 'rgba(0,0,0,0.25)', borderTop: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(5px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Droplet size={20} color="#5ab0ff" fill="rgba(90,176,255,0.1)" />
             <div>
-              <div style={{ fontSize: '7px', opacity: 0.5, fontWeight: 700 }}>SANGUE</div>
-              <div style={{ fontSize: '13px', fontWeight: 900 }}>{paciente.tipo_sanguineo || 'O+'}</div>
+              <div style={{ fontSize: '7.5px', opacity: 0.5, fontWeight: 700 }}>SANGUE</div>
+              <div style={{ fontSize: '14px', fontWeight: 900 }}>{paciente.tipo_sanguineo || 'O+'}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
-            <AlertTriangle size={18} color="#f59e0b" fill="rgba(245,158,11,0.1)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
+            <AlertTriangle size={20} color="#f59e0b" fill="rgba(245,158,11,0.1)" />
             <div>
-              <div style={{ fontSize: '7px', opacity: 0.5, fontWeight: 700 }}>ALERGIAS</div>
-              <div style={{ fontSize: '11px', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70px' }}>{paciente.alergias || 'Nenhuma'}</div>
+              <div style={{ fontSize: '7.5px', opacity: 0.5, fontWeight: 700 }}>ALERGIAS</div>
+              <div style={{ fontSize: '12px', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '75px' }}>{paciente.alergias || 'Nenhuma'}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
-            <Phone size={18} color="#34d399" fill="rgba(52,211,153,0.1)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
+            <Phone size={20} color="#34d399" fill="rgba(52,211,153,0.1)" />
             <div>
-              <div style={{ fontSize: '7px', opacity: 0.5, fontWeight: 700 }}>CONTATO</div>
-              <div style={{ fontSize: '10px', fontWeight: 900 }}>{paciente.contato_emergencia || 'N/A'}</div>
+              <div style={{ fontSize: '7.5px', opacity: 0.5, fontWeight: 700 }}>CONTATO</div>
+              <div style={{ fontSize: '11px', fontWeight: 900 }}>{paciente.contato_emergencia || 'N/A'}</div>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
-            <Calendar size={18} color="#818cf8" fill="rgba(129,140,248,0.1)" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
+            <Calendar size={20} color="#818cf8" fill="rgba(129,140,248,0.1)" />
             <div>
-              <div style={{ fontSize: '7px', opacity: 0.5, fontWeight: 700 }}>EMISSÃO</div>
-              <div style={{ fontSize: '11px', fontWeight: 900 }}>{paciente.data_emissao ? formatDate(paciente.data_emissao) : '05/04/2026'}</div>
+              <div style={{ fontSize: '7.5px', opacity: 0.5, fontWeight: 700 }}>EMISSÃO</div>
+              <div style={{ fontSize: '12px', fontWeight: 900 }}>{paciente.data_emissao ? formatDate(paciente.data_emissao) : '05/04/2026'}</div>
             </div>
           </div>
         </div>
         
-        <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '8px', fontWeight: 600, opacity: 0.3, letterSpacing: '0.5px' }}>
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '9px', fontWeight: 600, opacity: 0.3, letterSpacing: '0.8px' }}>
           ESTA CARTEIRINHA É PESSOAL E INTRANSFERÍVEL.
         </div>
       </div>
