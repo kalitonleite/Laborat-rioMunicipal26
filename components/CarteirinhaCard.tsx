@@ -162,11 +162,11 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
 
         {/* MIDDLE COLUMN: Patient Details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
-          <div style={{ marginBottom: '2px' }}>
+          <div style={{ marginBottom: '4px' }}>
             <div style={{ fontSize: '8px', fontWeight: 700, opacity: 0.5, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '17px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: 1.1, color: '#fff' }}>
+            <div style={{ fontSize: '17px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: '1.2', color: '#fff', padding: '2px 0' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
@@ -178,7 +178,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CreditCard size={14} color="#00e896" />
-                <span style={{ fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: '1.4', padding: '1px 0' }}>
                   {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
@@ -189,7 +189,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Calendar size={14} color="#5ab0ff" />
-                <span style={{ fontSize: '13px', fontWeight: 800 }}>
+                <span style={{ fontSize: '13px', fontWeight: 800, lineHeight: '1.4', padding: '1px 0' }}>
                   {formatDate(paciente.data_nascimento)}
                 </span>
               </div>
@@ -202,7 +202,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <MapPin size={14} color="#00e896" />
-              <span style={{ fontSize: '12px', fontWeight: 700, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4', padding: '1px 0' }}>
                 {paciente.unidade_saude || 'UBS Central de Uarini'}
               </span>
             </div>
