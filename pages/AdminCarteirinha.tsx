@@ -24,6 +24,7 @@ interface Paciente {
 interface Config {
   id?: string;
   logo_url: string;
+  background_url?: string;
   cor_primaria: string;
   cor_secundaria: string;
   cor_destaque: string;
@@ -36,6 +37,7 @@ const AdminCarteirinha: React.FC = () => {
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [config, setConfig] = useState<Config>({
     logo_url: '',
+    background_url: '',
     cor_primaria: '#0f2a44',
     cor_secundaria: '#0a1f33',
     cor_destaque: '#00ff95',
@@ -132,7 +134,7 @@ const AdminCarteirinha: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'foto_url' | 'logo_url') => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'foto_url' | 'logo_url' | 'background_url') => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -148,7 +150,7 @@ const AdminCarteirinha: React.FC = () => {
         img.onload = () => {
           // Resize image using canvas to avoid 4.5MB Vercel Serverless limit
           const canvas = document.createElement('canvas');
-          const MAX_SIZE = 500; // Logos and photos don't need to be huge
+          const MAX_SIZE = field === 'background_url' ? 1200 : 500; // Backgrounds can be larger
           let width = img.width;
           let height = img.height;
 
@@ -164,10 +166,11 @@ const AdminCarteirinha: React.FC = () => {
           canvas.height = height;
           const ctx = canvas.getContext('2d');
           
-          if (field === 'logo_url') {
-            // Use image/png for logos to preserve transparency
+          if (field === 'logo_url' || field === 'background_url') {
+            // Use image/png for logos to preserve transparency, jpeg for background if needed
             ctx?.drawImage(img, 0, 0, width, height);
-            const compressedBase64 = canvas.toDataURL('image/png');
+            const type = field === 'logo_url' ? 'image/png' : 'image/jpeg';
+            const compressedBase64 = canvas.toDataURL(type, 0.85);
             setConfig(prev => ({ ...prev, [field]: compressedBase64 }));
           } else {
             // Provide white background for jpeg photos to avoid black background if image has transparency
@@ -331,7 +334,7 @@ const AdminCarteirinha: React.FC = () => {
                       className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm"
                     />
                  </div>
-                 <div>
+                  <div>
                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Logo da Unidade</label>
                     <div className="flex items-center gap-4">
                        {config.logo_url && <img src={config.logo_url} className="h-12 w-auto object-contain" />}
@@ -342,7 +345,19 @@ const AdminCarteirinha: React.FC = () => {
                          className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                        />
                     </div>
-                 </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Fundo Personalizado (Opcional)</label>
+                    <div className="flex items-center gap-4">
+                       {config.background_url && <img src={config.background_url} className="h-12 w-20 object-cover rounded-lg border shadow-sm" />}
+                       <input 
+                         type="file" 
+                         accept="image/*"
+                         onChange={e => handleFileUpload(e, 'background_url')}
+                         className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                       />
+                    </div>
+                  </div>
               </div>
 
               <button 
