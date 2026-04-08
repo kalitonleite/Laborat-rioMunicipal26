@@ -334,7 +334,7 @@ const AdminCarteirinha: React.FC = () => {
                       className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm"
                     />
                  </div>
-                  <div>
+                  <div className="border-t pt-4">
                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Logo da Unidade</label>
                     <div className="flex items-center gap-4">
                        {config.logo_url && <img src={config.logo_url} className="h-12 w-auto object-contain" />}
@@ -346,16 +346,19 @@ const AdminCarteirinha: React.FC = () => {
                        />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Fundo Personalizado (Opcional)</label>
-                    <div className="flex items-center gap-4">
-                       {config.background_url && <img src={config.background_url} className="h-12 w-20 object-cover rounded-lg border shadow-sm" />}
-                       <input 
-                         type="file" 
-                         accept="image/*"
-                         onChange={e => handleFileUpload(e, 'background_url')}
-                         className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                       />
+                  <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50">
+                    <label className="block text-xs font-black text-blue-600 uppercase tracking-widest mb-2">Fundo Personalizado (Estilo Premium)</label>
+                    <div className="flex flex-col gap-3">
+                       <div className="flex items-center gap-4">
+                          {config.background_url && <img src={config.background_url} className="h-16 w-24 object-cover rounded-xl border-2 border-white shadow-sm" />}
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={e => handleFileUpload(e, 'background_url')}
+                            className="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 transition-all"
+                          />
+                       </div>
+                       <p className="text-[10px] text-slate-400 font-medium">Recomendado: Imagem 560x354px para melhor encaixe.</p>
                     </div>
                   </div>
               </div>
@@ -363,7 +366,7 @@ const AdminCarteirinha: React.FC = () => {
               <button 
                 onClick={handleSaveConfig}
                 disabled={uploading}
-                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all disabled:opacity-50"
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all disabled:opacity-50 mt-4 shadow-xl shadow-slate-200"
               >
                 {uploading ? 'Salvando...' : 'Salvar Personalização'}
               </button>
@@ -374,18 +377,19 @@ const AdminCarteirinha: React.FC = () => {
                  <div className="shadow-2xl rounded-3xl overflow-hidden max-w-[560px] w-full">
                     <CarteirinhaCard 
                       paciente={{
-                        nome: 'NOME DO PACIENTE EXEMPLO',
-                        cpf: '000.000.000-00',
-                        numero_sus: '1234 5678 9012 3456',
-                        data_nascimento: '1990-01-01',
+                        id: 'PREVIEW',
+                        nome: 'KALITON GONÇALVES LEITE',
+                        cpf: '111.111.111-11',
+                        numero_sus: '111 1111 1111 1111',
+                        data_nascimento: '1983-05-05',
                         foto_url: '',
                         tipo_sanguineo: 'O+',
-                        alergias: 'Nenhuma',
-                        contato_emergencia: '(92) 99999-9999',
-                        unidade_saude: 'Hospital Municipal de Uarini',
+                        alergias: 'Sem',
+                        contato_emergencia: '(92) 98464-0563',
+                        unidade_saude: 'UBS Central de Uarini',
                         status: 'ativo',
                         qr_token: 'PREVIEW_TOKEN',
-                        data_emissao: new Date().toISOString()
+                        data_emissao: '2026-04-05'
                       }}
                       config={config}
                     />
