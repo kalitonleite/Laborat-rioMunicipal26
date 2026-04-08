@@ -80,19 +80,27 @@ const AdminCarteirinha: React.FC = () => {
       setUploading(true);
       const dataToSave = { ...config, updated_at: new Date().toISOString() };
       
+      // Remove any temporary ID properties if they are not string or empty to prevent database errors
+      if (dataToSave.id === undefined || dataToSave.id === null || dataToSave.id === '') {
+        delete (dataToSave as any).id;
+      }
+
       if (config.id) {
-        console.log('Updating config with id:', config.id);
-        await dbService.from('configuracoes_carteirinha').update(dataToSave, { id: config.id });
+        console.log('UPDATING config with id:', config.id);
+        const res = await dbService.from('configuracoes_carteirinha').update(dataToSave, { id: config.id });
+        console.log('Update result:', res);
       } else {
-        console.log('Inserting new config');
+        console.log('INSERTING new config (no ID found in state)');
         const res = await dbService.from('configuracoes_carteirinha').insert(dataToSave);
+        console.log('Insert result:', res);
         if (res && res.length > 0) {
           setConfig(prev => ({ ...prev, id: res[0].id }));
         }
       }
-      alert('Configurações salvas com sucesso!');
+      alert('Configurações salvas com sucesso! As mudanças podem levar até 2 minutos para aparecer na carteirinha devido ao cache.');
+      fetchData(); // Refresh to ensure we have the latest ID and state
     } catch (err: any) {
-      console.error('Error saving config:', err);
+      console.error('CRITICAL ERROR saving config:', err);
       alert('Erro ao salvar: ' + (err.message || 'Verifique o tamanho da imagem ou sua conexão.'));
     } finally {
       setUploading(false);
