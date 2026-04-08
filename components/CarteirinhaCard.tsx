@@ -294,8 +294,3 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
 };
 
 export default CarteirinhaCard;
-  );
-};
-
-export default CarteirinhaCard;
-
