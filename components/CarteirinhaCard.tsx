@@ -253,30 +253,38 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <i className="fas fa-tint" style={{ fontSize: '18px', color: '#5ab0ff' }}></i>
-              <div>
-                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>SANGUE</div>
-                <div style={{ fontSize: '13px', fontWeight: 900 }}>{paciente.tipo_sanguineo || 'O+'}</div>
+              <div style={{ padding: '2px 0' }}>
+                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700, lineHeight: '1.2' }}>SANGUE</div>
+                <div style={{ fontSize: '13px', fontWeight: 900, lineHeight: '1.2' }}>{paciente.tipo_sanguineo || 'O+'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
               <i className="fas fa-exclamation-triangle" style={{ fontSize: '18px', color: '#f59e0b' }}></i>
-              <div>
-                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>ALERGIAS</div>
-                <div style={{ fontSize: '11px', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '75px' }}>{paciente.alergias || 'Sem'}</div>
+              <div style={{ padding: '2px 0' }}>
+                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700, lineHeight: '1.2' }}>ALERGIAS</div>
+                <div style={{ 
+                  fontSize: '11px', 
+                  fontWeight: 900, 
+                  lineHeight: '1.4', /* Mais espaço para evitar corte */
+                  whiteSpace: 'nowrap', 
+                  maxWidth: '75px' 
+                }} title={paciente.alergias || 'Sem'}>
+                  {paciente.alergias || 'Sem'}
+                </div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
               <i className="fas fa-phone" style={{ fontSize: '18px', color: '#34d399' }}></i>
-              <div>
-                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>CONTATO</div>
-                <div style={{ fontSize: '10px', fontWeight: 900 }}>{paciente.contato_emergencia || 'N/A'}</div>
+              <div style={{ padding: '2px 0' }}>
+                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700, lineHeight: '1.2' }}>CONTATO</div>
+                <div style={{ fontSize: '10px', fontWeight: 900, lineHeight: '1.2' }}>{paciente.contato_emergencia || 'N/A'}</div>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
               <i className="fas fa-calendar-day" style={{ fontSize: '18px', color: '#818cf8' }}></i>
-              <div>
-                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>EMISSÃO</div>
-                <div style={{ fontSize: '11px', fontWeight: 900 }}>{paciente.data_emissao ? formatDate(paciente.data_emissao) : '05/04/2026'}</div>
+              <div style={{ padding: '2px 0' }}>
+                <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700, lineHeight: '1.2' }}>EMISSÃO</div>
+                <div style={{ fontSize: '11px', fontWeight: 900, lineHeight: '1.2' }}>{paciente.data_emissao ? formatDate(paciente.data_emissao) : '05/04/2026'}</div>
               </div>
             </div>
           </div>
