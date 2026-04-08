@@ -135,59 +135,77 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           display: 'flex', 
           flexDirection: 'column', 
           alignItems: 'center',
+          justifyContent: 'center',
           textAlign: 'center',
-          gap: '16px', 
+          gap: '12px', 
           minWidth: 0, 
-          padding: '20px',
-          background: 'rgba(0, 0, 0, 0.35)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          padding: '20px 15px',
+          background: 'rgba(0, 0, 0, 0.4)',
+          backdropFilter: 'blur(15px)',
+          WebkitBackdropFilter: 'blur(15px)',
           borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-          flex: 1
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.4)',
+          flex: 1.2, /* Slightly more space for the middle info */
+          overflow: 'hidden'
         }}>
-          <div>
-            <div style={{ fontSize: '8px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
+          <div style={{ width: '100%' }}>
+            <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.6, color: '#fff', letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: '2px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '15.5px', fontWeight: 900, letterSpacing: '0.2px', lineHeight: '1.3', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
+            <div style={{ 
+              fontSize: '15px', 
+              fontWeight: 900, 
+              lineHeight: '1.2', 
+              color: '#fff', 
+              textShadow: '0 2px 4px rgba(0,0,0,0.5)', 
+              textTransform: 'uppercase',
+              width: '100%'
+            }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', width: '100%', marginTop: '4px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontSize: '7px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '6.5px', fontWeight: 800, opacity: 0.6, color: '#fff', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NÚMERO DO SUS
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-                <i className="fas fa-id-card" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                <i className="fas fa-id-card" style={{ fontSize: '11px', color: config.cor_destaque || "#00ff95" }}></i>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff', whiteSpace: 'nowrap' }}>
                   {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontSize: '7px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '6.5px', fontWeight: 800, opacity: 0.6, color: '#fff', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NASCIMENTO
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-                <i className="fas fa-calendar-alt" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center' }}>
+                <i className="fas fa-calendar-alt" style={{ fontSize: '11px', color: config.cor_destaque || "#00ff95" }}></i>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>
                   {formatDate(paciente.data_nascimento)}
                 </span>
               </div>
             </div>
           </div>
 
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <div style={{ fontSize: '7px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ width: '100%', marginTop: '4px' }}>
+            <div style={{ fontSize: '6.5px', fontWeight: 800, opacity: 0.6, color: '#fff', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>
               UNIDADE DE REFERÊNCIA
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
-              <i className="fas fa-map-marker-alt" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
-              <span style={{ fontSize: '12px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'center', width: '100%' }}>
+              <i className="fas fa-map-marker-alt" style={{ fontSize: '11px', color: config.cor_destaque || "#00ff95" }}></i>
+              <span style={{ 
+                fontSize: '11px', 
+                fontWeight: 700, 
+                color: '#fff', 
+                maxWidth: '180px',
+                overflow: 'hidden', 
+                textOverflow: 'ellipsis', 
+                whiteSpace: 'nowrap' 
+              }}>
                 {paciente.unidade_saude || config.unidade_padrao || 'UBS Central de Uarini'}
               </span>
             </div>
