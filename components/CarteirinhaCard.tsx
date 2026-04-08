@@ -173,19 +173,19 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           gap: '14px', 
           minWidth: 0, 
           padding: '20px',
-          background: 'rgba(0, 0, 0, 0.2)',
+          background: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           borderRadius: '24px',
           border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           flex: 1
         }}>
           <div style={{ marginBottom: '2px' }}>
             <div style={{ fontSize: '8px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '16px', fontWeight: 900, letterSpacing: '0.2px', lineHeight: '1.3', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '15px', fontWeight: 900, letterSpacing: '0.2px', lineHeight: '1.3', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>

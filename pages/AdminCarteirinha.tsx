@@ -81,8 +81,10 @@ const AdminCarteirinha: React.FC = () => {
       const dataToSave = { ...config, updated_at: new Date().toISOString() };
       
       if (config.id) {
+        console.log('Updating config with id:', config.id);
         await dbService.from('configuracoes_carteirinha').update(dataToSave, { id: config.id });
       } else {
+        console.log('Inserting new config');
         const res = await dbService.from('configuracoes_carteirinha').insert(dataToSave);
         if (res && res.length > 0) {
           setConfig(prev => ({ ...prev, id: res[0].id }));
@@ -90,7 +92,8 @@ const AdminCarteirinha: React.FC = () => {
       }
       alert('Configurações salvas com sucesso!');
     } catch (err: any) {
-      alert('Erro ao salvar configurações: ' + err.message);
+      console.error('Error saving config:', err);
+      alert('Erro ao salvar: ' + (err.message || 'Verifique o tamanho da imagem ou sua conexão.'));
     } finally {
       setUploading(false);
     }
@@ -150,7 +153,7 @@ const AdminCarteirinha: React.FC = () => {
         img.onload = () => {
           // Resize image using canvas to avoid 4.5MB Vercel Serverless limit
           const canvas = document.createElement('canvas');
-          const MAX_SIZE = field === 'background_url' ? 1200 : 500; // Backgrounds can be larger
+          const MAX_SIZE = field === 'background_url' ? 1000 : 500; // Backgrounds can be larger, but capped to avoid payload limits
           let width = img.width;
           let height = img.height;
 
@@ -170,7 +173,8 @@ const AdminCarteirinha: React.FC = () => {
             // Use image/png for logos to preserve transparency, jpeg for background if needed
             ctx?.drawImage(img, 0, 0, width, height);
             const type = field === 'logo_url' ? 'image/png' : 'image/jpeg';
-            const compressedBase64 = canvas.toDataURL(type, 0.85);
+            const quality = field === 'background_url' ? 0.7 : 0.85; // Capping quality for background
+            const compressedBase64 = canvas.toDataURL(type, quality);
             setConfig(prev => ({ ...prev, [field]: compressedBase64 }));
           } else {
             // Provide white background for jpeg photos to avoid black background if image has transparency
