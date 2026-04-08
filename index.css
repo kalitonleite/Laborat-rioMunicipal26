@@ -113,21 +113,22 @@ input {
   /* Container do Cartão para Impressão */
   #carteirinha-digital {
     visibility: visible !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 560px !important;  /* Mantemos o tamanho em px que projetamos... */
+    position: relative !important;
+    margin: 20mm auto !important; /* Centraliza na folha e dá margem de topo */
+    width: 560px !important;
     height: 354px !important;
-    transform: scale(0.577); /* ...e diminuímos para caber em 85.6mm (560*0.577 ≈ 323px ≈ 85.6mm a 96DPI) */
-    transform-origin: top left !important;
-    margin: 0 !important;
-    box-shadow: none !important; /* Sem sombras na impressão */
+    transform: scale(0.57); /* Reduzi um pouquinho para dar mais margem de segurança */
+    transform-origin: center top !important;
+    box-shadow: none !important;
+    border: 0.5pt solid #ddd !important; /* Borda fina para guiar o corte manual */
     page-break-inside: avoid;
+    -webkit-print-color-adjust: exact !important; /* Força cores e fundos */
+    print-color-adjust: exact !important;
   }
 
   /* Ajuste de Margens da Página */
   @page {
     size: auto;
-    margin: 10mm;
+    margin: 0; /* O controle agora é pelo margin do item acima */
   }
 }

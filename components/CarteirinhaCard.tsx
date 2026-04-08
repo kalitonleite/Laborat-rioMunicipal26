@@ -282,7 +282,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
         </div>
         
-        <div style={{ textAlign: 'center', marginTop: '14px', fontSize: '9px', fontWeight: 700, opacity: 0.4, letterSpacing: '1px' }}>
+        <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '9px', fontWeight: 700, opacity: 0.5, letterSpacing: '1px' }}>
           ESTA CARTEIRINHA É PESSOAL E INTRANSFERÍVEL.
         </div>
       </div>
