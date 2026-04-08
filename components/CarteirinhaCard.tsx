@@ -25,6 +25,7 @@ interface CarteirinhaCardProps {
     cor_destaque: string;
     nome_sistema: string;
     texto_rodape: string;
+    unidade_padrao?: string;
   };
 }
 
@@ -156,22 +157,22 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', width: '100%' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ fontSize: '7px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
                 NÚMERO DO SUS
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
                 <i className="fas fa-id-card" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
                 <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ fontSize: '7px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
                 NASCIMENTO
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
                 <i className="fas fa-calendar-alt" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
                 <span style={{ fontSize: '13px', fontWeight: 800, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatDate(paciente.data_nascimento)}
@@ -180,14 +181,14 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
             </div>
           </div>
 
-          <div>
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontSize: '7px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
               UNIDADE DE REFERÊNCIA
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', width: '100%' }}>
               <i className="fas fa-map-marker-alt" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
               <span style={{ fontSize: '12px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
-                {paciente.unidade_saude || 'UBS Central de Uarini'}
+                {paciente.unidade_saude || config.unidade_padrao || 'UBS Central de Uarini'}
               </span>
             </div>
           </div>

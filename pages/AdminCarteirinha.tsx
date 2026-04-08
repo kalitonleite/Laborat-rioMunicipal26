@@ -30,6 +30,7 @@ interface Config {
   cor_destaque: string;
   nome_sistema: string;
   texto_rodape: string;
+  unidade_padrao?: string;
 }
 
 const AdminCarteirinha: React.FC = () => {
@@ -42,7 +43,8 @@ const AdminCarteirinha: React.FC = () => {
     cor_secundaria: '#0a1f33',
     cor_destaque: '#00ff95',
     nome_sistema: 'LabLaudo - Carteirinha Digital SUS',
-    texto_rodape: 'Válido em todo território nacional'
+    texto_rodape: 'Válido em todo território nacional',
+    unidade_padrao: 'UBS Central de Uarini'
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -346,6 +348,16 @@ const AdminCarteirinha: React.FC = () => {
                       className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm"
                     />
                  </div>
+                  <div>
+                    <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Unidade de Saúde Padrão (Fallback)</label>
+                    <input 
+                      type="text" 
+                      value={config.unidade_padrao} 
+                      onChange={e => setConfig({...config, unidade_padrao: e.target.value})}
+                      className="w-full bg-slate-50 border-none rounded-2xl p-4 text-sm font-bold text-blue-600"
+                      placeholder="Ex: UBS Central de Uarini"
+                    />
+                  </div>
                   <div className="border-t pt-4">
                     <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Logo da Unidade</label>
                     <div className="flex items-center gap-4">
