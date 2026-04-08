@@ -169,33 +169,33 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         {/* MIDDLE COLUMN: Patient Details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0, paddingTop: '4px' }}>
           <div style={{ marginBottom: '2px' }}>
-            <div style={{ fontSize: '8px', fontWeight: 600, opacity: 0.4, letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div style={{ fontSize: '8px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '6px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: '1.2', color: '#fff' }}>
+            <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: '1.2', color: '#000', textShadow: '0 0 1px rgba(255,255,255,0.5)' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '16px' }}>
             <div>
-              <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.4, letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
                 NÚMERO DO SUS
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CreditCard size={15} color="#00e896" />
-                <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: '1.4' }}>
+                <CreditCard size={15} color="#0d4d3b" />
+                <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: '1.4', color: '#000' }}>
                   {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.4, letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
                 NASCIMENTO
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calendar size={15} color="#5ab0ff" />
-                <span style={{ fontSize: '14px', fontWeight: 800, lineHeight: '1.4' }}>
+                <Calendar size={15} color="#0056b3" />
+                <span style={{ fontSize: '14px', fontWeight: 800, lineHeight: '1.4', color: '#000' }}>
                   {formatDate(paciente.data_nascimento)}
                 </span>
               </div>
@@ -203,12 +203,12 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
 
           <div>
-            <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.4, letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
               UNIDADE DE REFERÊNCIA
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={15} color="#00e896" />
-              <span style={{ fontSize: '14px', fontWeight: 700, opacity: 0.9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4' }}>
+              <MapPin size={15} color="#0d4d3b" />
+              <span style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4', color: '#000' }}>
                 {paciente.unidade_saude || 'UBS Central de Uarini'}
               </span>
             </div>
