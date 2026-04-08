@@ -87,3 +87,47 @@ input {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* 
+  CONFIGURAÇÃO DE IMPRESSÃO (TAMANHO CARTÃO DE CRÉDITO)
+  Padrão CR80: 85.6mm x 53.98mm
+*/
+@media print {
+  /* Oculta tudo que não for o cartão */
+  body {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  header, footer, nav, button, .instructions-section, .no-print {
+    display: none !important;
+  }
+
+  #root {
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: auto !important;
+  }
+
+  /* Container do Cartão para Impressão */
+  #carteirinha-digital {
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 560px !important;  /* Mantemos o tamanho em px que projetamos... */
+    height: 354px !important;
+    transform: scale(0.577); /* ...e diminuímos para caber em 85.6mm (560*0.577 ≈ 323px ≈ 85.6mm a 96DPI) */
+    transform-origin: top left !important;
+    margin: 0 !important;
+    box-shadow: none !important; /* Sem sombras na impressão */
+    page-break-inside: avoid;
+  }
+
+  /* Ajuste de Margens da Página */
+  @page {
+    size: auto;
+    margin: 10mm;
+  }
+}
