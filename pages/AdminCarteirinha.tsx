@@ -386,7 +386,7 @@ const AdminCarteirinha: React.FC = () => {
                         cpf: '111.111.111-11',
                         numero_sus: '111 1111 1111 1111',
                         data_nascimento: '1983-05-05',
-                        foto_url: '',
+                        foto_url: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400&h=400&fit=crop',
                         tipo_sanguineo: 'O+',
                         alergias: 'Sem',
                         contato_emergencia: '(92) 98464-0563',

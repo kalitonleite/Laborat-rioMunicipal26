@@ -1,16 +1,5 @@
 import React from 'react';
 import QRCode from 'react-qr-code';
-import {
-  Droplet,
-  AlertTriangle,
-  Phone,
-  Calendar,
-  ShieldCheck,
-  MapPin,
-  User,
-  CreditCard,
-  CheckCircle,
-} from 'lucide-react';
 
 interface CarteirinhaCardProps {
   paciente: {
@@ -40,12 +29,11 @@ interface CarteirinhaCardProps {
 }
 
 const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw, config: configRaw }) => {
-  // Safe defaults so card never crashes on null/undefined props
+  // Safe defaults
   const paciente = pacienteRaw || {} as CarteirinhaCardProps['paciente'];
   const config = configRaw || {} as CarteirinhaCardProps['config'];
 
   const qrToken = paciente.qr_token || '';
-  const pacienteId = paciente.id || qrToken;
   const qrValue = 'https://laborat-rio-municipal26.vercel.app/';
 
   const formatDate = (dateString: string) => {
@@ -54,15 +42,12 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
       const d = new Date(dateString);
       if (isNaN(d.getTime())) return '--/--/----';
       return d.toLocaleDateString('pt-BR');
-    } catch {
-      return '--/--/----';
-    }
+    } catch { return '--/--/----'; }
   };
 
   const formatSUS = (sus: string) => {
     if (!sus) return '--- ---- ---- ----';
     const clean = sus.replace(/\D/g, '').substring(0, 15);
-    // Standard format for 15 digits: 000 4444 4444 4444 (with 15 total)
     return clean.replace(/(\d{3})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4').trim();
   };
 
@@ -80,7 +65,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         backgroundPosition: 'center',
         borderRadius: '24px',
         overflow: 'hidden',
-        fontFamily: "'Inter', 'Segoe UI', sans-serif",
+        fontFamily: "'Inter', sans-serif",
         color: 'white',
         boxShadow: '0 30px 80px rgba(0,0,0,0.7)',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -89,41 +74,19 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         flexDirection: 'column',
       }}
     >
-      {/* Background decoration (only show if NO custom background is set) */}
-      {!hasBackground && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          overflow: 'hidden',
-          zIndex: 0,
-        }}>
-          <div style={{
-            position: 'absolute',
-            bottom: '10%',
-            left: '-20%',
-            width: '140%',
-            height: '80%',
-            background: 'radial-gradient(ellipse at center, rgba(0,120,200,0.15) 0%, transparent 80%)',
-            borderRadius: '50%',
-            transform: 'rotate(-5deg)',
-          }} />
-        </div>
-      )}
-
-      {/* ═══════════ CONTENT GRID ═══════════ */}
+      {/* CONTENT GRID */}
       <div style={{ 
         position: 'relative', 
         zIndex: 1, 
         display: 'grid', 
-        gridTemplateColumns: 'minmax(130px, auto) 1fr minmax(130px, auto)',
+        gridTemplateColumns: '130px 1fr 130px',
         flex: 1, 
         padding: '28px 24px 0 24px', 
         gap: '20px' 
       }}>
         
         {/* LEFT COLUMN: Photo & Status */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px', alignSelf: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
           <div style={{
             width: '110px',
             height: '110px',
@@ -131,7 +94,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
             background: 'linear-gradient(135deg, #2a2a2a, #1a1a1a)',
             padding: '4px',
             boxShadow: '0 15px 35px rgba(0,0,0,0.6)',
-            border: '2px solid #bfc0c2', // Metallic border color
+            border: '2px solid #bfc0c2',
           }}>
             <div style={{
               width: '100%',
@@ -146,7 +109,7 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
               {paciente.foto_url ? (
                 <img src={paciente.foto_url} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <User size={55} color="rgba(255,255,255,0.1)" />
+                <i className="fas fa-user" style={{ fontSize: '40px', color: 'rgba(255,255,255,0.4)' }}></i>
               )}
             </div>
           </div>
@@ -154,50 +117,50 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           <div style={{
             background: '#00b87a',
             borderRadius: '30px',
-            padding: '6px 18px',
+            padding: '6px 16px',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             border: '1px solid #00ff95',
-            boxShadow: '0 0 15px rgba(0,184,122,0.6)', // Neon glow
+            boxShadow: '0 0 15px rgba(0,184,122,0.6)',
           }}>
-            <ShieldCheck size={14} color="white" fill="rgba(255,255,255,0.3)" />
+            <i className="fas fa-shield-alt" style={{ fontSize: '12px', color: 'white' }}></i>
             <span style={{ fontSize: '11px', fontWeight: 900, letterSpacing: '1px' }}>ATIVA</span>
           </div>
         </div>
 
-        {/* MIDDLE COLUMN: Patient Details with Glassmorphism for Readability */}
+        {/* MIDDLE COLUMN: Details with Glassmorphism */}
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column', 
           gap: '14px', 
           minWidth: 0, 
           padding: '20px',
-          background: 'rgba(0, 0, 0, 0.3)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          background: 'rgba(0, 0, 0, 0.35)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           borderRadius: '24px',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           flex: 1
         }}>
-          <div style={{ marginBottom: '2px' }}>
+          <div>
             <div style={{ fontSize: '8px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 900, letterSpacing: '0.2px', lineHeight: '1.3', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '15.5px', fontWeight: 900, letterSpacing: '0.2px', lineHeight: '1.3', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NÚMERO DO SUS
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CreditCard size={14} color={config.cor_destaque || "#00ff95"} />
-                <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: '1', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fas fa-id-card" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
+                <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
@@ -206,9 +169,9 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
               <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NASCIMENTO
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Calendar size={14} color={config.cor_destaque || "#00ff95"} />
-                <span style={{ fontSize: '14px', fontWeight: 800, lineHeight: '1', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <i className="fas fa-calendar-alt" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
+                <span style={{ fontSize: '13.5px', fontWeight: 800, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatDate(paciente.data_nascimento)}
                 </span>
               </div>
@@ -219,9 +182,9 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
             <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px' }}>
               UNIDADE DE REFERÊNCIA
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <MapPin size={14} color={config.cor_destaque || "#00ff95"} />
-              <span style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fas fa-map-marker-alt" style={{ fontSize: '13px', color: config.cor_destaque || "#00ff95" }}></i>
+              <span style={{ fontSize: '12.5px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
                 {paciente.unidade_saude || 'UBS Central de Uarini'}
               </span>
             </div>
@@ -229,16 +192,16 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         </div>
 
         {/* RIGHT COLUMN: Logo & QR Code */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
           <div style={{ textAlign: 'center', width: '100%' }}>
-            <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {config.logo_url ? (
                 <img src={config.logo_url} alt="Logo" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
               ) : (
                 <div style={{ fontSize: '16px', fontWeight: 900 }}>UARINI</div>
               )}
             </div>
-            <div style={{ fontSize: '9px', fontWeight: 900, color: '#00e896', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '8px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 900, color: '#00e896', letterSpacing: '1px', textTransform: 'uppercase', marginTop: '6px' }}>
               ANÁLISES CLÍNICAS
             </div>
           </div>
@@ -256,43 +219,43 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         </div>
       </div>
 
-      {/* ═══════════ FLOATING GLASS FOOTER ═══════════ */}
+      {/* FOOTER */}
       <div style={{ padding: '0 24px 20px 24px', zIndex: 2 }}>
         <div style={{ 
-          background: 'rgba(0,0,0,0.4)', 
-          backdropFilter: 'blur(12px)', 
+          background: 'rgba(0,0,0,0.45)', 
+          backdropFilter: 'blur(15px)', 
           borderRadius: '20px', 
-          padding: '16px 20px', 
+          padding: '14px 18px', 
           border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+          boxShadow: '0 10px 30px rgba(0,0,0,0.4)'
         }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Droplet size={20} color="#5ab0ff" fill="rgba(90,176,255,0.1)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <i className="fas fa-tint" style={{ fontSize: '18px', color: '#5ab0ff' }}></i>
               <div>
                 <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>SANGUE</div>
-                <div style={{ fontSize: '14px', fontWeight: 900 }}>{paciente.tipo_sanguineo || 'O+'}</div>
+                <div style={{ fontSize: '13px', fontWeight: 900 }}>{paciente.tipo_sanguineo || 'O+'}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
-              <AlertTriangle size={20} color="#f59e0b" fill="rgba(245,158,11,0.1)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
+              <i className="fas fa-exclamation-triangle" style={{ fontSize: '18px', color: '#f59e0b' }}></i>
               <div>
                 <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>ALERGIAS</div>
-                <div style={{ fontSize: '12px', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '85px' }}>{paciente.alergias || 'Sem'}</div>
+                <div style={{ fontSize: '11px', fontWeight: 900, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '75px' }}>{paciente.alergias || 'Sem'}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
-              <Phone size={20} color="#34d399" fill="rgba(52,211,153,0.1)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
+              <i className="fas fa-phone" style={{ fontSize: '18px', color: '#34d399' }}></i>
               <div>
                 <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>CONTATO</div>
-                <div style={{ fontSize: '11px', fontWeight: 900 }}>{paciente.contato_emergencia || 'N/A'}</div>
+                <div style={{ fontSize: '10px', fontWeight: 900 }}>{paciente.contato_emergencia || 'N/A'}</div>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '12px' }}>
-              <Calendar size={20} color="#818cf8" fill="rgba(129,140,248,0.1)" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderLeft: '1px solid rgba(255,255,255,0.1)', paddingLeft: '10px' }}>
+              <i className="fas fa-calendar-day" style={{ fontSize: '18px', color: '#818cf8' }}></i>
               <div>
                 <div style={{ fontSize: '7px', opacity: 0.4, fontWeight: 700 }}>EMISSÃO</div>
-                <div style={{ fontSize: '12px', fontWeight: 900 }}>{paciente.data_emissao ? formatDate(paciente.data_emissao) : '05/04/2026'}</div>
+                <div style={{ fontSize: '11px', fontWeight: 900 }}>{paciente.data_emissao ? formatDate(paciente.data_emissao) : '05/04/2026'}</div>
               </div>
             </div>
           </div>
