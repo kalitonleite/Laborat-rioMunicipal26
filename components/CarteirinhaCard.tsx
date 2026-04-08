@@ -170,22 +170,22 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
         <div style={{ 
           display: 'flex', 
           flexDirection: 'column', 
-          gap: '12px', 
+          gap: '14px', 
           minWidth: 0, 
-          padding: '16px',
-          background: 'rgba(0, 0, 0, 0.15)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          borderRadius: '20px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          padding: '20px',
+          background: 'rgba(0, 0, 0, 0.2)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          borderRadius: '24px',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
           flex: 1
         }}>
           <div style={{ marginBottom: '2px' }}>
             <div style={{ fontSize: '8px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '19px', fontWeight: 900, letterSpacing: '-0.2px', lineHeight: '1.2', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+            <div style={{ fontSize: '16px', fontWeight: 900, letterSpacing: '0.2px', lineHeight: '1.3', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.4)', textTransform: 'uppercase' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
