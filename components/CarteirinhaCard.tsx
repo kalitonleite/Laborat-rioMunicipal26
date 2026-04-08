@@ -166,36 +166,49 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
         </div>
 
-        {/* MIDDLE COLUMN: Patient Details */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0, paddingTop: '4px' }}>
+        {/* MIDDLE COLUMN: Patient Details with Glassmorphism for Readability */}
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: '12px', 
+          minWidth: 0, 
+          padding: '16px',
+          background: 'rgba(0, 0, 0, 0.15)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          borderRadius: '20px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          flex: 1
+        }}>
           <div style={{ marginBottom: '2px' }}>
-            <div style={{ fontSize: '8px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div style={{ fontSize: '8px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '1.2px', textTransform: 'uppercase', marginBottom: '4px' }}>
               NOME DO PACIENTE
             </div>
-            <div style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '-0.3px', lineHeight: '1.2', color: '#000', textShadow: '0 0 1px rgba(255,255,255,0.5)' }}>
+            <div style={{ fontSize: '19px', fontWeight: 900, letterSpacing: '-0.2px', lineHeight: '1.2', color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
               {paciente.nome || 'João da Silva'}
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: '12px' }}>
             <div>
-              <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NÚMERO DO SUS
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CreditCard size={15} color="#0d4d3b" />
-                <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: '1.4', color: '#000' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CreditCard size={14} color={config.cor_destaque || "#00ff95"} />
+                <span style={{ fontSize: '14px', fontWeight: 800, whiteSpace: 'nowrap', lineHeight: '1', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatSUS(paciente.numero_sus)}
                 </span>
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px' }}>
                 NASCIMENTO
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Calendar size={15} color="#0056b3" />
-                <span style={{ fontSize: '14px', fontWeight: 800, lineHeight: '1.4', color: '#000' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Calendar size={14} color={config.cor_destaque || "#00ff95"} />
+                <span style={{ fontSize: '14px', fontWeight: 800, lineHeight: '1', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
                   {formatDate(paciente.data_nascimento)}
                 </span>
               </div>
@@ -203,12 +216,12 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
           </div>
 
           <div>
-            <div style={{ fontSize: '7.5px', fontWeight: 600, opacity: 0.5, color: '#000', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '6px' }}>
+            <div style={{ fontSize: '7.5px', fontWeight: 800, opacity: 0.7, color: '#fff', letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px' }}>
               UNIDADE DE REFERÊNCIA
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={15} color="#0d4d3b" />
-              <span style={{ fontSize: '14px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1.4', color: '#000' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <MapPin size={14} color={config.cor_destaque || "#00ff95"} />
+              <span style={{ fontSize: '13px', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: '1', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}>
                 {paciente.unidade_saude || 'UBS Central de Uarini'}
               </span>
             </div>
