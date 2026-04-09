@@ -261,7 +261,7 @@ const AdminCarteirinha: React.FC = () => {
              </button>
           </div>
 
-          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-12 px-4 justify-items-center">
+          <div className="flex flex-wrap justify-center gap-12 px-4">
             {pacientes.map(p => (
               <div key={p.id} className="flex flex-col gap-3 w-full max-w-[560px]">
                 <div className="flex justify-end gap-2 px-2">
@@ -278,7 +278,11 @@ const AdminCarteirinha: React.FC = () => {
                     <i className="fas fa-trash mr-2"></i> Excluir
                   </button>
                 </div>
-                <CarteirinhaCard paciente={p} config={config} />
+                <div className="w-full overflow-x-auto rounded-3xl pb-2 shadow-[0_20px_40px_rgba(0,0,0,0.1)]">
+                   <div className="min-w-[560px] flex justify-center">
+                      <CarteirinhaCard paciente={p} config={config} />
+                   </div>
+                </div>
               </div>
             ))}
           </div>
