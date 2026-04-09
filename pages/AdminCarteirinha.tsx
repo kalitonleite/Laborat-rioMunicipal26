@@ -261,9 +261,9 @@ const AdminCarteirinha: React.FC = () => {
              </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
+          <div className="grid grid-cols-1 2xl:grid-cols-2 gap-12 px-4 justify-items-center">
             {pacientes.map(p => (
-              <div key={p.id} className="flex flex-col gap-3">
+              <div key={p.id} className="flex flex-col gap-3 w-full max-w-[560px]">
                 <div className="flex justify-end gap-2 px-2">
                   <button 
                     onClick={() => { setEditingPaciente(p); setIsModalOpen(true); }}

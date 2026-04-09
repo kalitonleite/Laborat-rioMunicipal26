@@ -47,9 +47,16 @@ const CarteirinhaCard: React.FC<CarteirinhaCardProps> = ({ paciente: pacienteRaw
   };
 
   const formatSUS = (sus: string) => {
-    if (!sus) return '--- ---- ---- ----';
-    const clean = sus.replace(/\D/g, '').substring(0, 15);
-    return clean.replace(/(\d{3})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4').trim();
+    if (!sus) return '--- ---- ----';
+    // Strict 11-digit parsing as requested by user
+    const clean = sus.replace(/\D/g, '').substring(0, 11);
+    
+    // For 11 digit numbers: 3 4 4
+    if (clean.length >= 11) {
+       return clean.replace(/(\d{3})(\d{4})(\d{4})/, '$1 $2 $3').trim();
+    }
+    // Fallback for smaller numbers
+    return clean.replace(/(\d{3})(\d{4})?(\d{4})?/, '$1 $2 $3').trim();
   };
 
   const hasBackground = !!config.background_url;
