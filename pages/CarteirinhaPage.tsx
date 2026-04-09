@@ -25,36 +25,78 @@ const CarteirinhaPage: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Resilient CPF matching (try clean and masked to overcome data format drift)
-      const rawCpf = user?.cpf || '';
-      const cleanCpf = rawCpf.replace(/\D/g, '');
-      const maskedCpf = cleanCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-      
-      let pacientes = await dbService.from('pacientes').select({ cpf: cleanCpf });
-      
-      // If not found with clean CPF, try with masked CPF
-      if (!pacientes || pacientes.length === 0) {
-        pacientes = await dbService.from('pacientes').select({ cpf: maskedCpf });
-        
-        // Also try original user.cpf as fallback
-        if (!pacientes || pacientes.length === 0) {
-          pacientes = await dbService.from('pacientes').select({ cpf: rawCpf });
-        }
-      }
-      
-      if (pacientes && pacientes.length > 0) {
-        setPaciente(pacientes[0]);
-      } else {
-        setError('Carteirinha não encontrada para este usuário. Entre em contato com a administração para vincular seu prontuário digital.');
+      if (!user) {
+        setError('Usuário não autenticado.');
+        return;
       }
 
-      // Fetch config
+      const rawCpf = user.cpf || '';
+      const cleanCpf = rawCpf.replace(/\D/g, '');
+      const maskedCpf = cleanCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+      const userName = user.name || '';
+      const susNumber = (user as any).sus_number || (user as any).numero_sus || '';
+      const cleanSus = susNumber.replace(/\D/g, '');
+
+      console.log('[Carteirinha] Iniciando busca resiliente para:', { userName, cleanCpf, cleanSus });
+
+      let pacientesEncontrados: any[] = [];
+
+      // 1. Tentar por CPF mascarado (padrão do Admin)
+      if (cleanCpf.length === 11) {
+        const res = await dbService.from('pacientes').select({ cpf: maskedCpf });
+        if (res && res.length > 0) pacientesEncontrados = res;
+      }
+
+      // 2. Tentar por CPF limpo
+      if (pacientesEncontrados.length === 0 && cleanCpf) {
+        const res = await dbService.from('pacientes').select({ cpf: cleanCpf });
+        if (res && res.length > 0) pacientesEncontrados = res;
+      }
+
+      // 3. Tentar por Nome Exato (como aparece no header)
+      if (pacientesEncontrados.length === 0 && userName) {
+        const res = await dbService.from('pacientes').select({ nome: userName });
+        if (res && res.length > 0) pacientesEncontrados = res;
+      }
+
+      // 4. Tentar por Nome em Maiúsculas
+      if (pacientesEncontrados.length === 0 && userName) {
+        const res = await dbService.from('pacientes').select({ nome: userName.toUpperCase() });
+        if (res && res.length > 0) pacientesEncontrados = res;
+      }
+
+      // 5. Tentar por Número do SUS (se disponível no perfil)
+      if (pacientesEncontrados.length === 0 && cleanSus) {
+        // Tentar encontrar qualquer paciente cujo numero_sus contenha esses dígitos
+        // Como o select da API é exato, precisamos do formato salvo.
+        // O Admin salva com espaços: "xxx xxxx xxxx xxxx"
+        const maskedSus = cleanSus.replace(/(\d{3})(\d{4})(\d{4})(\d{4})/, '$1 $2 $3 $4');
+        const res = await dbService.from('pacientes').select({ numero_sus: maskedSus });
+        if (res && res.length > 0) pacientesEncontrados = res;
+        
+        if (pacientesEncontrados.length === 0) {
+           const res2 = await dbService.from('pacientes').select({ numero_sus: cleanSus });
+           if (res2 && res2.length > 0) pacientesEncontrados = res2;
+        }
+      }
+
+      if (pacientesEncontrados.length > 0) {
+        console.log('[Carteirinha] Paciente localizado:', pacientesEncontrados[0].nome);
+        setPaciente(pacientesEncontrados[0]);
+      } else {
+        console.warn('[Carteirinha] Nenhum paciente encontrado após todas as tentativas.');
+        setError('Carteirinha não encontrada para este usuário. Verifique se o seu CPF no cadastro (' + (maskedCpf || 'não informado') + ') coincide com o cadastrado pela administração.');
+      }
+
+      // Carregar configurações de qualquer forma para o layout
       const configs = await dbService.from('configuracoes_carteirinha').select({}, { column: 'updated_at', ascending: false });
       if (configs && configs.length > 0) {
         setConfig(configs[0]);
       }
     } catch (err: any) {
+      console.error('[Carteirinha] Erro crítico na busca:', err);
       setError('Erro ao carregar sua carteirinha: ' + err.message);
     } finally {
       setLoading(false);
