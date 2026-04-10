@@ -7,6 +7,7 @@ import DashboardTabs from '../components/DashboardTabs';
 import { dbService } from '../services/apiService';
 import { jsPDF } from 'jspdf';
 import { maskCPF, maskSUS, maskAge } from '../services/masks';
+import Saude3DTab from '../components/Saude3DTab';
 
 interface PatientDashboardProps {
   user: User;
@@ -14,7 +15,7 @@ interface PatientDashboardProps {
 }
 
 const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'agendamento' | 'perfil'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'agendamento' | 'perfil' | 'saude3d'>('dashboard');
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [dailyLimit, setDailyLimit] = useState<number>(20);
@@ -334,8 +335,9 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
     <div className="space-y-6">
       <DashboardTabs
         tabs={[
-          { id: 'dashboard', label: 'INÍCIO / EXAMES', icon: 'fa-house-medical' },
-          { id: 'agendamento', label: 'NOVO AGENDAMENTO', icon: 'fa-calendar-plus' },
+          { id: 'dashboard', label: 'INÍCIO', icon: 'fa-house-medical' },
+          { id: 'saude3d', label: 'SAÚDE 3D', icon: 'fa-cube' },
+          { id: 'agendamento', label: 'AGENDAMENTO', icon: 'fa-calendar-plus' },
           { id: 'perfil', label: 'PERFIL', icon: 'fa-circle-user' },
         ]}
         activeTab={activeTab}
@@ -607,6 +609,10 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
         </div>
       )
       }
+
+      {activeTab === 'saude3d' && (
+        <Saude3DTab user={user} />
+      )}
 
       {
         activeTab === 'agendamento' && (
