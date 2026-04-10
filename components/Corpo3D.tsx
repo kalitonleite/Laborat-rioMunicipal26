@@ -1,7 +1,7 @@
 
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, ContactShadows, Text, Float, Html } from '@react-three/drei';
+import { OrbitControls, useGLTF, Environment, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface ExamMapping {
@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-8 text-center">
             <i className="fas fa-exclamation-triangle text-amber-500 text-4xl mb-4"></i>
             <h3 className="text-lg font-black uppercase tracking-widest mb-2">Modelo 3D Indisponível</h3>
-            <p className="text-sm text-slate-400 font-medium">Não foi possível carregar o mapa anatômico. Verifique se o arquivo "anatomiado corpo.glb" está na pasta public/ (ou se o formato está válido).</p>
+            <p className="text-sm text-slate-400 font-medium">Não foi possível carregar o mapa anatômico. Verifique se o arquivo está na pasta public/.</p>
         </div>
       );
     }
@@ -35,48 +35,118 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
+// Determina o pior status geral de uma lista de exames
+function getOverallStatus(exames: ExamMapping[]): 'normal' | 'alerta' | 'critico' {
+  if (exames.some(e => e.status === 'critico')) return 'critico';
+  if (exames.some(e => e.status === 'alerta')) return 'alerta';
+  return 'normal';
+}
+
+function statusToColor(status: 'normal' | 'alerta' | 'critico'): string {
+  if (status === 'critico') return '#ef4444';
+  if (status === 'alerta') return '#facc15';
+  return '#22c55e';
+}
+
 function Model({ exames }: { exames: ExamMapping[] }) {
-  // Ajustando para o caminho correto onde o usuário colocou o arquivo
   const { scene } = useGLTF('/anatomiado corpo.glb');
+  const overallStatus = getOverallStatus(exames);
+  const overallColor = statusToColor(overallStatus);
 
   useMemo(() => {
     if (!scene) return;
+
+    // Mapeamento de palavras-chave do nome do mesh para órgão
+    const keywordMap: Record<string, string> = {
+      brain: 'cerebro', cerebro: 'cerebro', cabeca: 'cerebro', head: 'cerebro',
+      liver: 'figado', figado: 'figado',
+      kidney: 'rins', rim: 'rins', rins: 'rins',
+      heart: 'coracao', coracao: 'coracao',
+      pancreas: 'pancreas',
+      lung: 'pulmao', pulmao: 'pulmao',
+      stomach: 'estomago', estomago: 'estomago',
+    };
+
+    // Monta um mapa de órgão -> status, incluindo 'corpo' como fallback
+    const orgaoStatus: Record<string, 'normal' | 'alerta' | 'critico'> = {};
+    exames.forEach(e => {
+      const existing = orgaoStatus[e.orgao];
+      if (!existing || (e.status === 'critico') || (e.status === 'alerta' && existing === 'normal')) {
+        orgaoStatus[e.orgao] = e.status;
+      }
+    });
+
     scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
-        const meshName = child.name.toLowerCase();
-        
-        let targetOrgao = '';
-        if (meshName.includes('brain') || meshName.includes('cerebro')) targetOrgao = 'cerebro';
-        else if (meshName.includes('liver') || meshName.includes('figado')) targetOrgao = 'figado';
-        else if (meshName.includes('kidney') || meshName.includes('rim')) targetOrgao = 'rins';
-        else if (meshName.includes('heart') || meshName.includes('coracao')) targetOrgao = 'coracao';
-        else if (meshName.includes('pancreas')) targetOrgao = 'pancreas';
+        const mesh = child as THREE.Mesh;
+        const meshName = (mesh.name || '').toLowerCase();
+        const parentName = (mesh.parent?.name || '').toLowerCase();
+        const combinedName = meshName + ' ' + parentName;
 
-        const exame = exames.find(e => e.orgao === targetOrgao);
-        
-        if (exame && (child as THREE.Mesh).material) {
-            const material = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
-            if (exame.status === 'critico') material.color.set('#ef4444');
-            else if (exame.status === 'alerta') material.color.set('#facc15');
-            else material.color.set('#22c55e');
-            
-            material.emissive = material.color.clone().multiplyScalar(0.2);
-            material.opacity = 1;
-            material.transparent = false;
+        // Detecta qual órgão este mesh representa
+        let matchedOrgao: string | null = null;
+        for (const [keyword, orgao] of Object.entries(keywordMap)) {
+          if (combinedName.includes(keyword)) {
+            matchedOrgao = orgao;
+            break;
+          }
+        }
+
+        // Material clone para não contaminar outros usos do mesh
+        if (Array.isArray(mesh.material)) {
+          mesh.material = mesh.material.map(m => m.clone());
+        } else if (mesh.material) {
+          mesh.material = (mesh.material as THREE.Material).clone();
+        }
+
+        const applyColor = (mat: THREE.MeshStandardMaterial, color: string, opacity: number, transparent: boolean) => {
+          mat.color.set(color);
+          mat.opacity = opacity;
+          mat.transparent = transparent;
+          mat.emissive = new THREE.Color(color).multiplyScalar(transparent ? 0 : 0.15);
+          mat.needsUpdate = true;
+        };
+
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+
+        if (matchedOrgao && orgaoStatus[matchedOrgao]) {
+          // Mesh de órgão específico com exame mapeado
+          const color = statusToColor(orgaoStatus[matchedOrgao]);
+          materials.forEach(mat => applyColor(mat as THREE.MeshStandardMaterial, color, 1, false));
+        } else if (exames.length > 0) {
+          // Nenhum mapeamento específico: colorir com cor geral mas semi-transparente
+          materials.forEach(mat => applyColor(mat as THREE.MeshStandardMaterial, overallColor, 0.55, true));
         } else {
-            if ((child as THREE.Mesh).material) {
-                const material = (child as THREE.Mesh).material as THREE.MeshStandardMaterial;
-                material.color.set('#e2e8f0');
-                material.opacity = 0.2;
-                material.transparent = true;
-                material.emissive.set('#000000');
-            }
+          // Sem exames: mostrar modelo cinza transparente
+          materials.forEach(mat => applyColor(mat as THREE.MeshStandardMaterial, '#94a3b8', 0.2, true));
         }
       }
     });
-  }, [scene, exames]);
+  }, [scene, exames, overallStatus, overallColor]);
 
   return <primitive object={scene} scale={2} position={[0, -2, 0]} />;
+}
+
+// Painel de diagnóstico flutuante sobre o modelo
+function DiagnosticoOverlay({ exames }: { exames: ExamMapping[] }) {
+  const hasAlert = exames.some(e => e.status !== 'normal');
+  const overall = getOverallStatus(exames);
+
+  if (exames.length === 0) return null;
+
+  return (
+    <div className="absolute top-1/2 left-6 -translate-y-1/2 z-10 space-y-2 max-w-[140px]">
+      {exames.slice(0, 4).map((e, i) => (
+        <div key={i} className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/10">
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+            e.status === 'critico' ? 'bg-red-500 animate-pulse' :
+            e.status === 'alerta' ? 'bg-yellow-400' : 'bg-emerald-500'
+          }`}></span>
+          <span className="text-[9px] font-black text-white/70 uppercase tracking-wide truncate">{e.exame_nome}</span>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function Corpo3D({ exames }: { exames: ExamMapping[] }) {
@@ -92,6 +162,7 @@ export default function Corpo3D({ exames }: { exames: ExamMapping[] }) {
         </h3>
       </div>
       
+      {/* Legenda de status */}
       <div className="absolute bottom-8 right-8 z-10 flex flex-col gap-3 bg-black/20 backdrop-blur-md p-6 rounded-3xl border border-white/5">
         <div className="flex items-center gap-3">
             <div className="w-2.5 h-2.5 rounded-full bg-[#22c55e] shadow-[0_0_8px_rgba(34,197,94,0.4)]"></div>
@@ -107,12 +178,16 @@ export default function Corpo3D({ exames }: { exames: ExamMapping[] }) {
         </div>
       </div>
 
+      {/* Overlay de diagnóstico lateral */}
+      <DiagnosticoOverlay exames={exames} />
+
       <ErrorBoundary>
         <Canvas camera={{ position: [0, 0, 6], fov: 40 }} gl={{ antialias: true, logarithmicDepthBuffer: true }}>
           <color attach="background" args={['#0f172a']} />
-          <ambientLight intensity={0.8} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} />
+          <ambientLight intensity={1.2} />
+          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={2} castShadow />
+          <pointLight position={[-10, -10, -10]} intensity={0.8} />
+          <pointLight position={[0, 5, 5]} intensity={0.6} color="#60a5fa" />
           <React.Suspense fallback={
             <Html center>
                 <div className="flex flex-col items-center gap-4">
