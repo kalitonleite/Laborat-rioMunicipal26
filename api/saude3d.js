@@ -76,25 +76,26 @@ module.exports = async function handler(req, res) {
         }
       }
 
-      if (orgao) {
-        let status = 'normal';
-        const resultText = (exam.result_data || '').toUpperCase();
-        
-        if (resultText.includes('CRITICO') || resultText.includes('MUITO ALTO') || resultText.includes('MUITO BAIXO')) {
-          status = 'critico';
-        } else if (resultText.includes('ALTERADO') || resultText.includes('ALERTA') || resultText.includes('ALTO') || resultText.includes('BAIXO')) {
-          status = 'alerta';
-        }
+      // Default para caso não mapeado
+      orgao = orgao || 'corpo';
 
-        mappedResults.push({
-          id: exam.id,
-          exame_nome: exam.exam_name,
-          orgao: orgao,
-          status: status,
-          data: exam.date,
-          valor: exam.result_data || 'Pendente'
-        });
+      let status = 'normal';
+      const resultText = (exam.result_data || '').toUpperCase();
+      
+      if (resultText.includes('CRITICO') || resultText.includes('MUITO ALTO') || resultText.includes('MUITO BAIXO')) {
+        status = 'critico';
+      } else if (resultText.includes('ALTERADO') || resultText.includes('ALERTA') || resultText.includes('ALTO') || resultText.includes('BAIXO')) {
+        status = 'alerta';
       }
+
+      mappedResults.push({
+        id: exam.id,
+        exame_nome: exam.exam_name,
+        orgao: orgao,
+        status: status,
+        data: exam.date,
+        valor: exam.result_data || 'Pendente'
+      });
     });
 
     return res.status(200).json(mappedResults);
