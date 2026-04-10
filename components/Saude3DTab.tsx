@@ -19,10 +19,17 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
       try {
         const res = await fetch(`/api/saude3d?usuario_id=${user.id}&cpf=${user.cpf}`);
         const data = await res.json();
-        setDados(data);
-        if (data.length > 0) setSelecionado(data[0]);
+        
+        if (Array.isArray(data)) {
+          setDados(data);
+          if (data.length > 0) setSelecionado(data[0]);
+        } else {
+          console.error('API retornou erro ou formato inválido:', data);
+          setDados([]);
+        }
       } catch (error) {
         console.error('Erro ao carregar dados 3D:', error);
+        setDados([]);
       } finally {
         setLoading(false);
       }
