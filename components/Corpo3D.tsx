@@ -36,17 +36,17 @@ function getRegionsForExam(examName: string): string[] {
 // Posições anatômicas 3D (world space; modelo com scale=2, position=[0,-2,0])
 // ─────────────────────────────────────────────────────────────────────────────
 const ORGAN_CONFIG: Record<string, { pos: [number, number, number]; r: number; label: string }> = {
-  cerebro:    { pos: [0, 3.55, 0.1],    r: 0.22, label: 'Cérebro' },
-  tireoide:   { pos: [0, 3.1,  0.3],    r: 0.12, label: 'Tireoide' },
-  coracao:    { pos: [-0.28, 2.25, 0.3], r: 0.18, label: 'Coração' },
-  pulmao:     { pos: [0.35,  2.3,  0.2], r: 0.15, label: 'Pulmão' },
-  figado:     { pos: [0.45,  1.6,  0.15],r: 0.2,  label: 'Fígado' },
-  estomago:   { pos: [0,     1.5,  0.25],r: 0.14, label: 'Estômago' },
-  pancreas:   { pos: [-0.2,  1.35, 0.1], r: 0.13, label: 'Pâncreas' },
-  rins:       { pos: [0,     1.1, -0.2], r: 0.18, label: 'Rins' },
-  intestinos: { pos: [0,     0.4,  0.2], r: 0.26, label: 'Intestinos' },
-  bexiga:     { pos: [0,    -0.1,  0.2], r: 0.13, label: 'Bexiga' },
-  prostata:   { pos: [0,    -0.2, -0.1], r: 0.11, label: 'Próstata' },
+  cerebro:    { pos: [0, 3.55, 0.1],    r: 0.10, label: 'Cérebro' },
+  tireoide:   { pos: [0, 3.1,  0.3],    r: 0.05, label: 'Tireoide' },
+  coracao:    { pos: [-0.28, 2.25, 0.3], r: 0.08, label: 'Coração' },
+  pulmao:     { pos: [0.35,  2.3,  0.2], r: 0.08, label: 'Pulmão' },
+  figado:     { pos: [0.45,  1.6,  0.15],r: 0.10, label: 'Fígado' },
+  estomago:   { pos: [0,     1.5,  0.25],r: 0.07, label: 'Estômago' },
+  pancreas:   { pos: [-0.2,  1.35, 0.1], r: 0.06, label: 'Pâncreas' },
+  rins:       { pos: [0,     1.1, -0.2], r: 0.08, label: 'Rins' },
+  intestinos: { pos: [0,     0.4,  0.2], r: 0.12, label: 'Intestinos' },
+  bexiga:     { pos: [0,    -0.1,  0.2], r: 0.06, label: 'Bexiga' },
+  prostata:   { pos: [0,    -0.2, -0.1], r: 0.05, label: 'Próstata' },
 };
 
 // Pontos distribuídos para hemograma (sangue)
@@ -107,21 +107,49 @@ function OrganSphere({ position, color, radius, pulse }: {
 function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: ExamMapping | null }) {
   const { scene } = useGLTF('/anatomiado corpo.glb');
 
-  // Deixar o modelo cinza semitransparente para funcionar como "casca"
+  // Mapeamento PT -> EN para busca em nomes de meshes do modelo
+  const ptToEn: Record<string, string> = {
+    'cerebro': 'brain', 'coracao': 'heart', 'pulmao': 'lung', 'figado': 'liver',
+    'rins': 'kidney', 'pancreas': 'pancreas', 'bexiga': 'bladder', 'estomago': 'stomach',
+    'intestinos': 'intestine', 'tireoide': 'thyroid', 'prostata': 'prostate'
+  };
+
+  const regions = selectedExam ? getRegionsForExam(selectedExam.exame_nome) : [];
+  const hexSel   = selectedExam ? statusColor(selectedExam.status) : '#22c55e';
+
+  // Deixar o modelo cinza semitransparente E colorir órgãos específicos
   useMemo(() => {
     if (!scene) return;
+    const regionsLower = regions.map(r => r.toLowerCase());
+
     scene.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
+        const name = mesh.name.toLowerCase();
+        
+        // Verifica se o nome da mesh contém o termo da região (PT ou EN)
+        const isTarget = regionsLower.some(r => 
+          name.includes(r.slice(0, 4)) || 
+          (ptToEn[r] && name.includes(ptToEn[r].slice(0, 4)))
+        );
+
         const applyMat = (m: THREE.Material) => {
           const mat = m as THREE.MeshStandardMaterial;
-          mat.color.set('#94a3b8');
-          mat.opacity = 0.22;
+          if (isTarget && selectedExam) {
+            mat.color.set(hexSel);
+            mat.opacity = 0.7;
+            mat.emissive.set(hexSel);
+            mat.emissiveIntensity = 0.4;
+          } else {
+            mat.color.set('#94a3b8');
+            mat.opacity = 0.18;
+            mat.emissive.set('#1e293b');
+            mat.emissiveIntensity = 0.05;
+          }
           mat.transparent = true;
-          mat.emissive.set('#1e293b');
-          mat.emissiveIntensity = 0.05;
           mat.needsUpdate = true;
         };
+
         if (Array.isArray(mesh.material)) {
           mesh.material = mesh.material.map(m => { const c = (m as THREE.Material).clone(); applyMat(c); return c; });
         } else {
@@ -130,13 +158,10 @@ function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: 
         }
       }
     });
-  }, [scene]);
+  }, [scene, regions, hexSel, selectedExam]);
 
-  // Calcular o que mostrar
-  const regions = selectedExam ? getRegionsForExam(selectedExam.exame_nome) : [];
   const isSangue = regions.includes('sangue');
   const isCorpo  = regions.includes('corpo');
-  const hexSel   = selectedExam ? statusColor(selectedExam.status) : '#22c55e';
 
   return (
     <>
@@ -147,16 +172,16 @@ function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: 
         {/* ── Exame selecionado ── */}
         {selectedExam && isSangue &&
           BLOOD_POINTS.map((p, i) => (
-            <OrganSphere key={i} position={p} color={hexSel} radius={0.13} pulse />
+            <OrganSphere key={i} position={p} color={hexSel} radius={0.06} pulse={false} />
           ))}
 
         {selectedExam && isCorpo && Object.values(ORGAN_CONFIG).map((o, i) => (
-          <OrganSphere key={i} position={o.pos} color={hexSel} radius={o.r * 0.7} pulse />
+          <OrganSphere key={i} position={o.pos} color={hexSel} radius={o.r * 0.7} pulse={false} />
         ))}
 
         {selectedExam && !isSangue && !isCorpo && regions.map(region => {
           const o = ORGAN_CONFIG[region];
-          return o ? <OrganSphere key={region} position={o.pos} color={hexSel} radius={o.r} pulse /> : null;
+          return o ? <OrganSphere key={region} position={o.pos} color={hexSel} radius={o.r} pulse={false} /> : null;
         })}
 
         {/* ── Sem exame selecionado: mostra todos com baixa opacidade ── */}
@@ -165,11 +190,11 @@ function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: 
           const col = statusColor(exam.status);
           const isSg = r.includes('sangue') || r.includes('corpo');
           if (isSg) return BLOOD_POINTS.map((p, j) => (
-            <OrganSphere key={`bg-${i}-${j}`} position={p} color={col} radius={0.09} pulse={false} />
+            <OrganSphere key={`bg-${i}-${j}`} position={p} color={col} radius={0.04} pulse={false} />
           ));
           return r.map(region => {
             const o = ORGAN_CONFIG[region];
-            return o ? <OrganSphere key={`bg-${i}-${region}`} position={o.pos} color={col} radius={o.r * 0.7} pulse={false} /> : null;
+            return o ? <OrganSphere key={`bg-${i}-${region}`} position={o.pos} color={col} radius={o.r * 0.5} pulse={false} /> : null;
           });
         })}
       </group>
