@@ -111,7 +111,7 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
         
         {/* LEFT COLUMN: 3D MODEL */}
         <div className="lg:col-span-8 space-y-6">
-          <Corpo3D exames={dados} />
+          <Corpo3D exames={dados} selectedExam={selecionado} />
           
           <div className="bg-blue-600 p-8 rounded-[40px] text-white relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
