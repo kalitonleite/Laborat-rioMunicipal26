@@ -36,8 +36,8 @@ module.exports = async function handler(req, res) {
     let rows = [];
     try {
         const result = await sql.query(
-            'SELECT * FROM exams WHERE patient_cpf = $1 OR patient_id = $2 ORDER BY date DESC',
-            [cleanCPF, usuario_id]
+            'SELECT * FROM exams WHERE patient_cpf = $1 ORDER BY date DESC',
+            [cleanCPF]
         );
         rows = Array.isArray(result) ? result : (result.rows || []);
     } catch (e1) {
