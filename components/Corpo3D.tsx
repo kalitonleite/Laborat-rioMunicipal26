@@ -27,7 +27,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-8 text-center">
             <i className="fas fa-exclamation-triangle text-amber-500 text-4xl mb-4"></i>
             <h3 className="text-lg font-black uppercase tracking-widest mb-2">Modelo 3D Indisponível</h3>
-            <p className="text-sm text-slate-400 font-medium">Não foi possível carregar o mapa anatômico. Verifique se o arquivo "anatomia do corpo.glb" está na pasta public/models/.</p>
+            <p className="text-sm text-slate-400 font-medium">Não foi possível carregar o mapa anatômico. Verifique se o arquivo "anatomia do corpo.glb" está na pasta public/ (ou se o formato está válido).</p>
         </div>
       );
     }
@@ -36,8 +36,8 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 function Model({ exames }: { exames: ExamMapping[] }) {
-  // Ajustando para um caminho mais comum e seguro
-  const { scene } = useGLTF('/models/anatomia do corpo.glb');
+  // Ajustando para o caminho correto onde o usuário colocou o arquivo
+  const { scene } = useGLTF('/anatomia do corpo.glb');
 
   useMemo(() => {
     if (!scene) return;
