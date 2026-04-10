@@ -94,7 +94,8 @@ module.exports = async function handler(req, res) {
         orgao: orgao,
         status: status,
         data: exam.date,
-        valor: exam.result_data || 'Pendente'
+        valor: exam.result_data || 'Pendente',
+        file_url: exam.file_url || null
       });
     });
 

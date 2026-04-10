@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import Corpo3D from './Corpo3D';
 import ResumoExames from './ResumoExames';
 import ChatExame from './ChatExame';
 import { User } from '../types';
+import { extractTextFromPDFUrl } from '../services/pdfOcr';
 
 interface Saude3DTabProps {
   user: User;
@@ -21,8 +21,33 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
         const data = await res.json();
         
         if (Array.isArray(data)) {
-          setDados(data);
-          if (data.length > 0) setSelecionado(data[0]);
+          // Extrair texto de PDFs caso o valor não exista, processar localmente
+          const dadosCompletos = await Promise.all(data.map(async (exam) => {
+             if (exam.file_url !== null && (exam.valor === 'Pendente' || !exam.valor || exam.valor.trim() === '')) {
+                 try {
+                     const text = await extractTextFromPDFUrl(exam.file_url);
+                     if (text && text.trim().length > 0) {
+                         const resultText = text.toUpperCase();
+                         let status = exam.status;
+                         // re-avaliar o status com base no texto
+                         if (resultText.includes('CRITICO') || resultText.includes('MUITO ALTO') || resultText.includes('MUITO BAIXO')) {
+                             status = 'critico';
+                         } else if (resultText.includes('ALTERADO') || resultText.includes('ALERTA') || resultText.includes('ALTO') || resultText.includes('BAIXO')) {
+                             status = 'alerta';
+                         } else {
+                             status = 'normal';
+                         }
+                         return { ...exam, valor: text, status };
+                     }
+                 } catch (e) {
+                     console.error("Erro OCR PDF no 3D Tab:", e);
+                 }
+             }
+             return exam;
+          }));
+
+          setDados(dadosCompletos);
+          if (dadosCompletos.length > 0) setSelecionado(dadosCompletos[0]);
         } else {
           console.error('API retornou erro ou formato inválido:', data);
           setDados([]);

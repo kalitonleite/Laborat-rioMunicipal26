@@ -16,7 +16,6 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
         for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
             const textContent = await page.getTextContent();
-            // Join strings to roughly match lines/words
             const pageText = textContent.items.map((item: any) => item.str).join(' ');
             fullText += pageText + '\n';
         }
@@ -24,6 +23,30 @@ export const extractTextFromPDF = async (file: File): Promise<string> => {
         return fullText;
     } catch (error) {
         console.error('OCR Extraction error:', error);
-        return ''; // Return empty string if extraction fails
+        return ''; 
+    }
+};
+
+/**
+ * Extracts all text from a PDF URL.
+ */
+export const extractTextFromPDFUrl = async (url: string): Promise<string> => {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            fullText += pageText + '\n';
+        }
+
+        return fullText;
+    } catch (error) {
+        console.error('OCR URL Extraction error:', error);
+        return ''; 
     }
 };
