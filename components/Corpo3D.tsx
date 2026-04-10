@@ -1,5 +1,5 @@
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, Component } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Environment, ContactShadows, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -67,6 +67,7 @@ function OrganSphere({ position, color, radius, pulse }: {
   color: string;
   radius: number;
   pulse: boolean;
+  key?: any; // Aceitar key explicitamente se o compilador for rigoroso
 }) {
   const coreRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
@@ -141,34 +142,37 @@ function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: 
     <>
       <primitive object={scene} scale={2} position={[0, -2, 0]} />
 
-      {/* ── Exame selecionado ── */}
-      {selectedExam && isSangue &&
-        BLOOD_POINTS.map((p, i) => (
-          <OrganSphere key={i} position={p} color={hexSel} radius={0.13} pulse />
+      {/* ── Pontos no mesmo sistema de coordenadas do modelo ── */}
+      <group position={[0, -2, 0]}>
+        {/* ── Exame selecionado ── */}
+        {selectedExam && isSangue &&
+          BLOOD_POINTS.map((p, i) => (
+            <OrganSphere key={i} position={p} color={hexSel} radius={0.13} pulse />
+          ))}
+
+        {selectedExam && isCorpo && Object.values(ORGAN_CONFIG).map((o, i) => (
+          <OrganSphere key={i} position={o.pos} color={hexSel} radius={o.r * 0.7} pulse />
         ))}
 
-      {selectedExam && isCorpo && Object.values(ORGAN_CONFIG).map((o, i) => (
-        <OrganSphere key={i} position={o.pos} color={hexSel} radius={o.r * 0.7} pulse />
-      ))}
-
-      {selectedExam && !isSangue && !isCorpo && regions.map(region => {
-        const o = ORGAN_CONFIG[region];
-        return o ? <OrganSphere key={region} position={o.pos} color={hexSel} radius={o.r} pulse /> : null;
-      })}
-
-      {/* ── Sem exame selecionado: mostra todos com baixa opacidade ── */}
-      {!selectedExam && exames.map((exam, i) => {
-        const r = getRegionsForExam(exam.exame_nome);
-        const col = statusColor(exam.status);
-        const isSg = r.includes('sangue') || r.includes('corpo');
-        if (isSg) return BLOOD_POINTS.map((p, j) => (
-          <OrganSphere key={`bg-${i}-${j}`} position={p} color={col} radius={0.09} pulse={false} />
-        ));
-        return r.map(region => {
+        {selectedExam && !isSangue && !isCorpo && regions.map(region => {
           const o = ORGAN_CONFIG[region];
-          return o ? <OrganSphere key={`bg-${i}-${region}`} position={o.pos} color={col} radius={o.r * 0.7} pulse={false} /> : null;
-        });
-      })}
+          return o ? <OrganSphere key={region} position={o.pos} color={hexSel} radius={o.r} pulse /> : null;
+        })}
+
+        {/* ── Sem exame selecionado: mostra todos com baixa opacidade ── */}
+        {!selectedExam && exames.map((exam, i) => {
+          const r = getRegionsForExam(exam.exame_nome);
+          const col = statusColor(exam.status);
+          const isSg = r.includes('sangue') || r.includes('corpo');
+          if (isSg) return BLOOD_POINTS.map((p, j) => (
+            <OrganSphere key={`bg-${i}-${j}`} position={p} color={col} radius={0.09} pulse={false} />
+          ));
+          return r.map(region => {
+            const o = ORGAN_CONFIG[region];
+            return o ? <OrganSphere key={`bg-${i}-${region}`} position={o.pos} color={col} radius={o.r * 0.7} pulse={false} /> : null;
+          });
+        })}
+      </group>
     </>
   );
 }
@@ -176,8 +180,12 @@ function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: 
 // ─────────────────────────────────────────────────────────────────────────────
 // Error Boundary
 // ─────────────────────────────────────────────────────────────────────────────
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err: boolean }> {
-  constructor(p: any) { super(p); this.state = { err: false }; }
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { err: boolean }> {
+  state: { err: boolean };
+  constructor(props: any) { 
+    super(props); 
+    this.state = { err: false }; 
+  }
   static getDerivedStateFromError() { return { err: true }; }
   render() {
     if (this.state.err) return (
