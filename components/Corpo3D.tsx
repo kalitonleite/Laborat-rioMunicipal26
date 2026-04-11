@@ -1,8 +1,5 @@
 
-import React, { useRef, useMemo, Component } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF, Environment, ContactShadows, Html } from '@react-three/drei';
-import * as THREE from 'three';
+import React, { useMemo } from 'react';
 
 interface ExamMapping {
   orgao: string;
@@ -11,7 +8,7 @@ interface ExamMapping {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Mapeamento exame → regiões anatômicas afetadas
+// Mapeamento exame → regiões anatômicas afetadas (Mantido do original)
 // ─────────────────────────────────────────────────────────────────────────────
 function getRegionsForExam(examName: string): string[] {
   const n = examName.toUpperCase();
@@ -28,300 +25,183 @@ function getRegionsForExam(examName: string): string[] {
   if (n.includes('PSA') || n.includes('PROSTAT')) return ['prostata'];
   if (n.includes('TESTOST') || n.includes('HORMÔ') || n.includes('LH') || n.includes('FSH')) return ['prostata'];
   if (n.includes('FERRO') || n.includes('FERRITIN') || n.includes('TRANSFERR')) return ['figado', 'sangue'];
-  if (n.includes('COLTUR') || n.includes('SWAB')) return ['sangue'];
-  return ['corpo']; // fallback: corpo inteiro
+  return ['corpo']; 
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Posições anatômicas 3D (world space; modelo com scale=2, position=[0,-2,0])
+// Configuração Visual e de Dados dos Órgãos
 // ─────────────────────────────────────────────────────────────────────────────
-const ORGAN_CONFIG: Record<string, { pos: [number, number, number]; r: number; label: string }> = {
-  cerebro:    { pos: [0, 3.55, 0.1],    r: 0.10, label: 'Cérebro' },
-  tireoide:   { pos: [0, 3.1,  0.3],    r: 0.05, label: 'Tireoide' },
-  coracao:    { pos: [-0.28, 2.25, 0.3], r: 0.08, label: 'Coração' },
-  pulmao:     { pos: [0.35,  2.3,  0.2], r: 0.08, label: 'Pulmão' },
-  figado:     { pos: [0.45,  1.6,  0.15],r: 0.10, label: 'Fígado' },
-  estomago:   { pos: [0,     1.5,  0.25],r: 0.07, label: 'Estômago' },
-  pancreas:   { pos: [-0.2,  1.35, 0.1], r: 0.06, label: 'Pâncreas' },
-  rins:       { pos: [0,     1.1, -0.2], r: 0.08, label: 'Rins' },
-  intestinos: { pos: [0,     0.4,  0.2], r: 0.12, label: 'Intestinos' },
-  bexiga:     { pos: [0,    -0.1,  0.2], r: 0.06, label: 'Bexiga' },
-  prostata:   { pos: [0,    -0.2, -0.1], r: 0.05, label: 'Próstata' },
+const ORGAN_INFO: Record<string, { label: string; image: string; care: string }> = {
+  cerebro: {
+    label: 'Cérebro',
+    image: '/assets/organs/brain.png',
+    care: 'Mantenha uma rotina de sono regular, evite estresse excessivo e mantenha-se hidratado para otimizar as funções cognitivas.'
+  },
+  coracao: {
+    label: 'Coração',
+    image: '/assets/organs/heart.png',
+    care: 'Reduza o consumo de sal e gorduras saturadas. A prática de exercícios aeróbicos leves é fundamental para o fortalecimento cardíaco.'
+  },
+  figado: {
+    label: 'Fígado',
+    image: '/assets/organs/liver.png',
+    care: 'Evite o consumo de bebidas alcoólicas e alimentos ultraprocessados. Priorize uma dieta rica em vegetais e fibras.'
+  },
+  rins: {
+    label: 'Rins',
+    image: '/assets/organs/kidneys.png',
+    care: 'Beba pelo menos 2 litros de água por dia e controle a ingestão de sódio para facilitar a filtragem sanguínea.'
+  },
+  sangue: {
+    label: 'Sistema Sanguíneo',
+    image: '/assets/organs/blood.png',
+    care: 'Consuma alimentos ricos em ferro e vitamina B12. Mantenha-se ativo para melhorar a circulação e oxigenação celular.'
+  },
+  pulmao: {
+    label: 'Pulmão',
+    image: '/assets/organs/lungs.png',
+    care: 'Evite exposição a fumaças e poluentes. Pratique exercícios de respiração profunda para aumentar a capacidade pulmonar.'
+  },
+  pancreas: {
+    label: 'Pâncreas',
+    image: '/assets/organs/liver.png', // Usando liver como fallback visual próximo
+    care: 'Controle rigorosamente a ingestão de açúcares e carboidratos simples para evitar sobrecarga na produção de insulina.'
+  },
+  tireoide: {
+    label: 'Tireoide',
+    image: '/assets/organs/brain.png', // Fallback visual
+    care: 'Mantenha o consumo adequado de iodo (sal iodado) e monitore níveis de energia e peso corporal regularmente.'
+  },
+  corpo: {
+    label: 'Saúde Geral',
+    image: '/assets/organs/blood.png', // Fallback
+    care: 'Mantenha um estilo de vida equilibrado com alimentação diversificada, hidratação e atividade física constante.'
+  }
 };
 
-// Pontos distribuídos para hemograma (sangue)
-const BLOOD_POINTS: [number, number, number][] = [
-  [0, 3.55, 0.1], [-0.28, 2.25, 0.3], [0.45, 1.6, 0.15],
-  [0, 1.1, -0.2], [0, 0.4, 0.2],
-];
-
-function statusColor(status: 'normal' | 'alerta' | 'critico') {
-  return status === 'critico' ? '#ef4444' : status === 'alerta' ? '#facc15' : '#22c55e';
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Esfera pulsante
-// ─────────────────────────────────────────────────────────────────────────────
-function OrganSphere({ position, color, radius, pulse }: {
-  position: [number, number, number];
-  color: string;
-  radius: number;
-  pulse: boolean;
-  key?: any; // Aceitar key explicitamente se o compilador for rigoroso
-}) {
-  const coreRef = useRef<THREE.Mesh>(null);
-  const glowRef = useRef<THREE.Mesh>(null);
-
-  useFrame(({ clock }) => {
-    if (!pulse) return;
-    const t = clock.getElapsedTime();
-    const s = 1 + Math.sin(t * 3.5) * 0.12;
-    coreRef.current?.scale.setScalar(s);
-    if (glowRef.current) {
-      glowRef.current.scale.setScalar(1.6 + Math.sin(t * 3.5) * 0.3);
-      ((glowRef.current.material as THREE.MeshBasicMaterial)).opacity =
-        0.18 + Math.sin(t * 3.5) * 0.08;
-    }
-  });
-
-  const c = new THREE.Color(color);
-
-  return (
-    <group position={position}>
-      <mesh ref={glowRef}>
-        <sphereGeometry args={[radius * 1.55, 16, 16]} />
-        <meshBasicMaterial color={c} transparent opacity={0.18} depthWrite={false} />
-      </mesh>
-      <mesh ref={coreRef}>
-        <sphereGeometry args={[radius, 22, 22]} />
-        <meshStandardMaterial color={c} emissive={c} emissiveIntensity={0.9}
-          roughness={0.15} metalness={0.4} />
-      </mesh>
-    </group>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Conteúdo 3D principal
-// ─────────────────────────────────────────────────────────────────────────────
-function Scene({ exames, selectedExam }: { exames: ExamMapping[]; selectedExam: ExamMapping | null }) {
-  const { scene } = useGLTF('/anatomiado corpo.glb');
-
-  // Mapeamento PT -> EN para busca em nomes de meshes do modelo
-  const ptToEn: Record<string, string> = {
-    'cerebro': 'brain', 'coracao': 'heart', 'pulmao': 'lung', 'figado': 'liver',
-    'rins': 'kidney', 'pancreas': 'pancreas', 'bexiga': 'bladder', 'estomago': 'stomach',
-    'intestinos': 'intestine', 'tireoide': 'thyroid', 'prostata': 'prostate'
-  };
-
-  const regions = selectedExam ? getRegionsForExam(selectedExam.exame_nome) : [];
-  const hexSel   = selectedExam ? statusColor(selectedExam.status) : '#22c55e';
-
-  // Deixar o modelo cinza semitransparente E colorir órgãos específicos
-  useMemo(() => {
-    if (!scene) return;
-    const regionsLower = regions.map(r => r.toLowerCase());
-
-    scene.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-        const mesh = child as THREE.Mesh;
-        const name = mesh.name.toLowerCase();
-        
-        // Verifica se o nome da mesh contém o termo da região (PT ou EN)
-        const isTarget = regionsLower.some(r => 
-          name.includes(r.slice(0, 4)) || 
-          (ptToEn[r] && name.includes(ptToEn[r].slice(0, 4)))
-        );
-
-        const applyMat = (m: THREE.Material) => {
-          const mat = m as THREE.MeshStandardMaterial;
-          if (isTarget && selectedExam) {
-            mat.color.set(hexSel);
-            mat.opacity = 0.7;
-            mat.emissive.set(hexSel);
-            mat.emissiveIntensity = 0.4;
-          } else {
-            mat.color.set('#94a3b8');
-            mat.opacity = 0.18;
-            mat.emissive.set('#1e293b');
-            mat.emissiveIntensity = 0.05;
-          }
-          mat.transparent = true;
-          mat.needsUpdate = true;
-        };
-
-        if (Array.isArray(mesh.material)) {
-          mesh.material = mesh.material.map(m => { const c = (m as THREE.Material).clone(); applyMat(c); return c; });
-        } else {
-          mesh.material = (mesh.material as THREE.Material).clone();
-          applyMat(mesh.material as THREE.Material);
-        }
-      }
-    });
-  }, [scene, regions, hexSel, selectedExam]);
-
-  const isSangue = regions.includes('sangue');
-  const isCorpo  = regions.includes('corpo');
-
-  return (
-    <>
-      <primitive object={scene} scale={2} position={[0, -2, 0]} />
-
-      {/* ── Pontos no mesmo sistema de coordenadas do modelo ── */}
-      <group position={[0, -2, 0]}>
-        {/* ── Exame selecionado ── */}
-        {selectedExam && isSangue &&
-          BLOOD_POINTS.map((p, i) => (
-            <OrganSphere key={i} position={p} color={hexSel} radius={0.06} pulse={false} />
-          ))}
-
-        {selectedExam && isCorpo && Object.values(ORGAN_CONFIG).map((o, i) => (
-          <OrganSphere key={i} position={o.pos} color={hexSel} radius={o.r * 0.7} pulse={false} />
-        ))}
-
-        {selectedExam && !isSangue && !isCorpo && regions.map(region => {
-          const o = ORGAN_CONFIG[region];
-          return o ? <OrganSphere key={region} position={o.pos} color={hexSel} radius={o.r} pulse={false} /> : null;
-        })}
-
-        {/* ── Sem exame selecionado: mostra todos com baixa opacidade ── */}
-        {!selectedExam && exames.map((exam, i) => {
-          const r = getRegionsForExam(exam.exame_nome);
-          const col = statusColor(exam.status);
-          const isSg = r.includes('sangue') || r.includes('corpo');
-          if (isSg) return BLOOD_POINTS.map((p, j) => (
-            <OrganSphere key={`bg-${i}-${j}`} position={p} color={col} radius={0.04} pulse={false} />
-          ));
-          return r.map(region => {
-            const o = ORGAN_CONFIG[region];
-            return o ? <OrganSphere key={`bg-${i}-${region}`} position={o.pos} color={col} radius={o.r * 0.5} pulse={false} /> : null;
-          });
-        })}
-      </group>
-    </>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Error Boundary
-// ─────────────────────────────────────────────────────────────────────────────
-class ErrorBoundary extends Component<{ children: React.ReactNode }, { err: boolean }> {
-  state: { err: boolean };
-  constructor(props: any) { 
-    super(props); 
-    this.state = { err: false }; 
+const getStatusDetails = (status: 'normal' | 'alerta' | 'critico') => {
+  switch (status) {
+    case 'critico':
+      return {
+        label: 'Estado Crítico',
+        color: 'text-red-500',
+        bg: 'bg-red-500/10',
+        border: 'border-red-500/20',
+        desc: 'Alterações expressivas detectadas. Recomendamos consulta urgente com um especialista para avaliação detalhada.'
+      };
+    case 'alerta':
+      return {
+        label: 'Atenção / Alerta',
+        color: 'text-amber-500',
+        bg: 'bg-amber-500/10',
+        border: 'border-amber-500/20',
+        desc: 'Foram detectadas alterações moderadas. É importante monitorar e ajustar o estilo de vida conforme as orientações abaixo.'
+      };
+    default:
+      return {
+        label: 'Normal / Saudável',
+        color: 'text-emerald-500',
+        bg: 'bg-emerald-500/10',
+        border: 'border-emerald-500/20',
+        desc: 'O órgão apresenta funcionamento dentro dos padrões de referência. Continue mantendo seus hábitos saudáveis.'
+      };
   }
-  static getDerivedStateFromError() { return { err: true }; }
-  render() {
-    if (this.state.err) return (
-      <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/90 text-white p-8 text-center">
-        <i className="fas fa-exclamation-triangle text-amber-500 text-4xl mb-4"></i>
-        <h3 className="text-lg font-black uppercase tracking-widest mb-2">Modelo 3D Indisponível</h3>
-        <p className="text-sm text-slate-400">Arquivo não encontrado na pasta public/.</p>
-      </div>
-    );
-    return this.props.children;
-  }
-}
+};
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Componente exportado
-// ─────────────────────────────────────────────────────────────────────────────
 export default function Corpo3D({ exames, selectedExam }: {
   exames: ExamMapping[];
   selectedExam?: ExamMapping | null;
 }) {
-  const sel = selectedExam ?? null;
-  const selRegions = sel ? getRegionsForExam(sel.exame_nome) : [];
-
-  // Rótulo amigável das regiões afetadas
-  const regionLabels = selRegions.includes('sangue') ? 'Sistema Sanguíneo' :
-    selRegions.includes('corpo') ? 'Corpo Geral' :
-    selRegions.map(r => ORGAN_CONFIG[r]?.label ?? r).join(', ');
+  const sel = selectedExam ?? (exames.length > 0 ? exames[0] : null);
+  
+  const regions = useMemo(() => sel ? getRegionsForExam(sel.exame_nome) : ['corpo'], [sel]);
+  const mainRegion = regions[0];
+  const info = ORGAN_INFO[mainRegion] || ORGAN_INFO['corpo'];
+  const status = getStatusDetails(sel?.status || 'normal');
 
   return (
-    <div className="w-full h-[550px] bg-slate-900 rounded-[40px] overflow-hidden relative border border-white/10 shadow-2xl">
+    <div className="w-full h-[550px] bg-slate-900 rounded-[40px] overflow-hidden relative border border-white/10 shadow-2xl flex flex-col items-center justify-center p-8">
+      
+      {/* Background Decor */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-20">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-blue-600 rounded-full blur-[120px]"></div>
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-indigo-600 rounded-full blur-[120px]"></div>
+      </div>
 
-      {/* Header */}
-      <div className="absolute top-8 left-8 z-10 space-y-2">
-        <div className="flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
-          <span className="text-white/40 text-[9px] font-black uppercase tracking-[0.3em]">Live System</span>
+      {!sel ? (
+        <div className="relative z-10 text-center space-y-4">
+             <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i className="fas fa-microscope text-3xl text-blue-400"></i>
+             </div>
+             <h3 className="text-white font-black uppercase tracking-widest text-xl">Análise Biométrica</h3>
+             <p className="text-slate-400 font-bold text-sm max-w-md">Selecione um exame na lista lateral para visualizar os detalhes do órgão afetado e recomendações de cuidados.</p>
         </div>
-        <h3 className="text-white font-black uppercase tracking-widest text-lg leading-tight">Mapa Biométrico 3D</h3>
-        {sel && (
-          <div className="bg-black/30 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 space-y-1">
-            <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Visualizando</p>
-            <div className="flex items-center gap-2">
-              <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                sel.status === 'critico' ? 'bg-red-500 animate-pulse' :
-                sel.status === 'alerta' ? 'bg-yellow-400' : 'bg-emerald-400'
-              }`}></span>
-              <span className="text-[11px] font-black text-white uppercase tracking-wide">{sel.exame_nome}</span>
+      ) : (
+        <div className="relative z-10 w-full h-full flex flex-col md:flex-row items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
+            
+            {/* Organ Image Section */}
+            <div className="w-full md:w-1/2 flex flex-col items-center justify-center relative">
+                <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-[60px] scale-75"></div>
+                <img 
+                    src={info.image} 
+                    alt={info.label}
+                    className="w-64 h-64 md:w-80 md:h-80 object-contain relative z-10 drop-shadow-[0_0_30px_rgba(59,130,246,0.5)]"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/2966/2966327.png'; // Fallback icon
+                    }}
+                />
+                <div className="mt-6 text-center">
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-1 block">Órgão Alvo</span>
+                    <h4 className="text-3xl font-black text-white uppercase tracking-tight">{info.label}</h4>
+                </div>
             </div>
-            <p className="text-[9px] text-white/50 font-bold">{regionLabels}</p>
-          </div>
-        )}
-        {!sel && (
-          <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Selecione um exame →</p>
-        )}
-      </div>
 
-      {/* Legenda */}
-      <div className="absolute bottom-8 right-8 z-10 flex flex-col gap-3 bg-black/20 backdrop-blur-md p-5 rounded-3xl border border-white/5">
-        {([['#22c55e','Normal'],['#facc15','Alerta'],['#ef4444','Crítico']] as [string,string][]).map(([c,l]) => (
-          <div key={l} className="flex items-center gap-3">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c, boxShadow: `0 0 8px ${c}88` }}></div>
-            <span className="text-[10px] font-black text-white/80 uppercase tracking-widest">{l}</span>
-          </div>
-        ))}
-      </div>
+            {/* Info Section */}
+            <div className="w-full md:w-1/2 space-y-6">
+                
+                {/* Status Box */}
+                <div className={`p-6 rounded-[32px] border ${status.border} ${status.bg} backdrop-blur-sm space-y-3`}>
+                    <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full animate-pulse shadow-sm shadow-current ${status.color}`}></div>
+                        <span className={`text-sm font-black uppercase tracking-widest ${status.color}`}>{status.label}</span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Situação Atual</p>
+                        <p className="text-white/80 font-medium text-sm leading-relaxed">{status.desc}</p>
+                    </div>
+                </div>
 
-      {/* Dica quando modelo sem exame selecionado */}
-      {!sel && exames.length > 0 && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-          <p className="text-[9px] font-black text-white/25 uppercase tracking-widest animate-pulse whitespace-nowrap">
-            ← Clique em um exame para visualizar
-          </p>
+                {/* Care Box */}
+                <div className="p-6 rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-sm space-y-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400">
+                            <i className="fas fa-hand-holding-heart text-sm"></i>
+                        </div>
+                        <span className="text-sm font-black text-white uppercase tracking-widest">Cuidados Recomendados</span>
+                    </div>
+                    <div>
+                        <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Dicas de Saúde</p>
+                        <p className="text-white/80 font-medium text-sm leading-relaxed">{info.care}</p>
+                    </div>
+                </div>
+
+                {/* Exam Context */}
+                <div className="flex items-center gap-4 px-2">
+                    <div className="flex-1 h-px bg-white/10"></div>
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] whitespace-nowrap">Contexto: {sel.exame_nome}</span>
+                    <div className="flex-1 h-px bg-white/10"></div>
+                </div>
+            </div>
+
         </div>
       )}
 
-      <ErrorBoundary>
-        <Canvas camera={{ position: [0, 0, 6], fov: 40 }} gl={{ antialias: true }}>
-          <color attach="background" args={['#0f172a']} />
-          <ambientLight intensity={0.7} />
-          <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1.5} />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} />
-          <pointLight position={[0, 5, 5]} intensity={0.5} color="#60a5fa" />
-          <React.Suspense fallback={
-            <Html center>
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Renderizando...</p>
-              </div>
-            </Html>
-          }>
-            <Scene exames={exames} selectedExam={sel} />
-            <Environment preset="night" />
-            <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={10} blur={2} far={4} />
-          </React.Suspense>
-          <OrbitControls
-            enablePan={false}
-            maxPolarAngle={Math.PI / 1.8}
-            minPolarAngle={Math.PI / 3}
-            autoRotate
-            autoRotateSpeed={0.4}
-            enableZoom
-          />
-        </Canvas>
-      </ErrorBoundary>
-
-      <div className="absolute inset-0 pointer-events-none border-[1px] border-white/5 rounded-[40px]"></div>
-      <div className="absolute top-8 right-8 flex gap-2">
-        <div className="w-8 h-1 bg-white/10 rounded-full"></div>
-        <div className="w-2 h-1 bg-blue-500 rounded-full"></div>
-        <div className="w-2 h-1 bg-white/10 rounded-full"></div>
+      {/* Footer Branding */}
+      <div className="absolute bottom-6 left-8 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
+          <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Biometria Inteligente v3.0</span>
       </div>
+
     </div>
   );
 }

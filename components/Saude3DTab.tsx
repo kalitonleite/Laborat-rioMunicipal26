@@ -88,8 +88,8 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
             </span>
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           </div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Saúde Inteligente 3D</h2>
-          <p className="text-slate-400 font-bold text-sm uppercase tracking-wide">Visualize sua saúde em uma perspectiva totalmente nova</p>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Análise de Saúde Inteligente</h2>
+          <p className="text-slate-400 font-bold text-sm uppercase tracking-wide">Relatórios detalhados dos seus órgãos e recomendações personalizadas</p>
         </div>
         
         <div className="relative z-10 bg-slate-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
@@ -97,7 +97,7 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
                 <i className="fas fa-shield-heart text-xl"></i>
             </div>
             <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Geral</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Estado Geral</p>
                 <p className="text-sm font-black text-slate-800 uppercase">
                     {dados.some(d => d.status === 'critico') ? 'Atenção Necessária' : 
                      dados.some(d => d.status === 'alerta') ? 'Observação' : 'Excelente'}
@@ -109,7 +109,7 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
       {/* MAIN CONTENT GRID */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* LEFT COLUMN: 3D MODEL */}
+        {/* LEFT COLUMN: ORGAN INFO */}
         <div className="lg:col-span-8 space-y-6">
           <Corpo3D exames={dados} selectedExam={selecionado} />
           
@@ -117,18 +117,17 @@ export default function Saude3DTab({ user }: Saude3DTabProps) {
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
             <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
                 <div className="flex-1">
-                    <h3 className="text-xl font-black mb-2 uppercase tracking-wide">Como funciona?</h3>
+                    <h3 className="text-xl font-black mb-2 uppercase tracking-wide">Como funciona a análise?</h3>
                     <p className="text-sm text-blue-100 font-medium leading-relaxed opacity-90">
-                        Nossa IA analisa os valores técnicos dos seus exames e os traduz em cores no seu mapa biométrico 3D. 
-                        Órgãos em <span className="text-emerald-300 font-bold">Verde</span> indicam resultados normais, 
-                        <span className="text-amber-300 font-bold"> Amarelo</span> sugere atenção e 
-                        <span className="text-rose-300 font-bold"> Vermelho</span> valores fora da referência técnica.
+                        Nossa IA interpreta os resultados dos seus exames laboratoriais e identifica os órgãos que requerem maior atenção. 
+                        Apresentamos orientações de <span className="text-emerald-300 font-bold">Cuidados</span> preventivos e informamos a 
+                        <span className="text-amber-300 font-bold"> Situação</span> atual de cada sistema do seu corpo com base nos valores técnicos coletados.
                     </p>
                 </div>
                 <div className="w-px h-16 bg-white/20 hidden md:block"></div>
                 <div className="text-center md:text-left">
                     <p className="text-[10px] font-black text-blue-200 uppercase tracking-widest mb-1">Tecnologia Utilizada</p>
-                    <p className="text-sm font-black text-white uppercase tracking-widest">Biometria Digital 3.0</p>
+                    <p className="text-sm font-black text-white uppercase tracking-widest">Saúde Preventiva AI</p>
                 </div>
             </div>
           </div>
