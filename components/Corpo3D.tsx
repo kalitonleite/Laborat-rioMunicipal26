@@ -119,6 +119,17 @@ export default function Corpo3D({ exames, selectedExam }: {
   const info = ORGAN_INFO[mainRegion] || ORGAN_INFO['corpo'];
   const status = getStatusDetails(sel?.status || 'normal');
 
+  // Identificar exames alterados que afetam as mesmas regiões
+  const examesAltered = useMemo(() => {
+    if (!sel) return [];
+    const currentRegions = getRegionsForExam(sel.exame_nome);
+    return exames.filter(e => {
+        const eRegions = getRegionsForExam(e.exame_nome);
+        const hasOverlap = eRegions.some(r => currentRegions.includes(r));
+        return hasOverlap && (e.status === 'alerta' || e.status === 'critico');
+    });
+  }, [exames, sel]);
+
   return (
     <div className="w-full h-[550px] bg-slate-900 rounded-[40px] overflow-hidden relative border border-white/10 shadow-2xl flex flex-col items-center justify-center p-8">
       
@@ -151,13 +162,13 @@ export default function Corpo3D({ exames, selectedExam }: {
                     }}
                 />
                 <div className="mt-6 text-center">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-1 block">Órgão Alvo</span>
+                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-1 block">Sistema / Órgão Alvo</span>
                     <h4 className="text-3xl font-black text-white uppercase tracking-tight">{info.label}</h4>
                 </div>
             </div>
 
             {/* Info Section */}
-            <div className="w-full md:w-1/2 space-y-6">
+            <div className="w-full md:w-1/2 space-y-5 h-full flex flex-col justify-center">
                 
                 {/* Status Box */}
                 <div className={`p-6 rounded-[32px] border ${status.border} ${status.bg} backdrop-blur-sm space-y-3`}>
@@ -169,6 +180,22 @@ export default function Corpo3D({ exames, selectedExam }: {
                         <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Situação Atual</p>
                         <p className="text-white/80 font-medium text-sm leading-relaxed">{status.desc}</p>
                     </div>
+
+                    {/* Altered Exams List */}
+                    {examesAltered.length > 0 && (
+                        <div className="pt-2 mt-2 border-t border-white/5 space-y-2">
+                             <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Exames Alterados:</p>
+                             <div className="flex flex-wrap gap-2">
+                                {examesAltered.map((e, idx) => (
+                                    <div key={idx} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border shadow-sm ${
+                                        e.status === 'critico' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                                    }`}>
+                                        {e.exame_nome}
+                                    </div>
+                                ))}
+                             </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Care Box */}
@@ -188,7 +215,7 @@ export default function Corpo3D({ exames, selectedExam }: {
                 {/* Exam Context */}
                 <div className="flex items-center gap-4 px-2">
                     <div className="flex-1 h-px bg-white/10"></div>
-                    <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] whitespace-nowrap">Contexto: {sel.exame_nome}</span>
+                    <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] whitespace-nowrap">Visualizando: {sel.exame_nome}</span>
                     <div className="flex-1 h-px bg-white/10"></div>
                 </div>
             </div>
