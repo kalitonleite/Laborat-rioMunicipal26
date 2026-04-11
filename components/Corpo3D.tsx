@@ -119,6 +119,34 @@ export default function Corpo3D({ exames, selectedExam }: {
   const info = ORGAN_INFO[mainRegion] || ORGAN_INFO['corpo'];
   const status = getStatusDetails(sel?.status || 'normal');
 
+  // Helper para interpretar achados específicos
+  const interpretacaoAchados = (exame: ExamMapping) => {
+    const n = exame.exame_nome.toUpperCase();
+    const v = (exame as any).valor?.toUpperCase() || '';
+    
+    let achados = [];
+    
+    if (n.includes('URINA') || n.includes('EAS')) {
+        if (v.includes('PIOCITO') || v.includes('HEMACIA') || v.includes('LEUCOCITO')) {
+            achados.push({
+                titulo: 'Achados na Urina',
+                texto: 'A presença de piócitos (leucócitos) e hemácias (sangue) sugere um processo inflamatório ou infeccioso nas vias urinárias. Isso pode indicar cistite ou pequenos cálculos.'
+            });
+        }
+    }
+    
+    if (n.includes('TGO') || n.includes('AST') || n.includes('BIOQUIMICA')) {
+        achados.push({
+            titulo: 'TGO (AST) Alterado',
+            texto: 'A TGO é uma enzima do fígado. Níveis elevados indicam sobrecarga ou lesão hepática. Recomenda-se evitar álcool, gorduras e consultar um especialista para avaliar a causa.'
+        });
+    }
+
+    return achados;
+  };
+
+  const achadosEspecificos = useMemo(() => sel ? interpretacaoAchados(sel) : [], [sel]);
+
   // Identificar exames alterados que afetam as mesmas regiões
   const examesAltered = useMemo(() => {
     if (!sel) return [];
@@ -168,18 +196,30 @@ export default function Corpo3D({ exames, selectedExam }: {
             </div>
 
             {/* Info Section */}
-            <div className="w-full md:w-1/2 space-y-5 h-full flex flex-col justify-center">
+            <div className="w-full md:w-1/2 space-y-4 h-full flex flex-col justify-center overflow-y-auto pr-2 custom-scrollbar">
                 
                 {/* Status Box */}
-                <div className={`p-6 rounded-[32px] border ${status.border} ${status.bg} backdrop-blur-sm space-y-3`}>
+                <div className={`p-5 rounded-[32px] border ${status.border} ${status.bg} backdrop-blur-sm space-y-3`}>
                     <div className="flex items-center gap-3">
                         <div className={`w-3 h-3 rounded-full animate-pulse shadow-sm shadow-current ${status.color}`}></div>
                         <span className={`text-sm font-black uppercase tracking-widest ${status.color}`}>{status.label}</span>
                     </div>
                     <div>
                         <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Situação Atual</p>
-                        <p className="text-white/80 font-medium text-sm leading-relaxed">{status.desc}</p>
+                        <p className="text-white/80 font-medium text-[13px] leading-relaxed">{status.desc}</p>
                     </div>
+
+                    {/* Interpretation Detail Section */}
+                    {achadosEspecificos.length > 0 && (
+                        <div className="mt-4 p-3 bg-white/5 rounded-2xl border border-white/5 space-y-2">
+                            {achadosEspecificos.map((achado, i) => (
+                                <div key={i} className="space-y-1">
+                                    <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">{achado.titulo}</p>
+                                    <p className="text-[11px] text-white/70 font-medium leading-relaxed italic">"{achado.texto}"</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Altered Exams List */}
                     {examesAltered.length > 0 && (
@@ -187,7 +227,7 @@ export default function Corpo3D({ exames, selectedExam }: {
                              <p className="text-[9px] text-white/40 font-black uppercase tracking-widest">Exames Alterados:</p>
                              <div className="flex flex-wrap gap-2">
                                 {examesAltered.map((e, idx) => (
-                                    <div key={idx} className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border shadow-sm ${
+                                    <div key={idx} className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border shadow-sm ${
                                         e.status === 'critico' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'
                                     }`}>
                                         {e.exame_nome}
@@ -199,7 +239,7 @@ export default function Corpo3D({ exames, selectedExam }: {
                 </div>
 
                 {/* Care Box */}
-                <div className="p-6 rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-sm space-y-3">
+                <div className="p-5 rounded-[32px] border border-white/10 bg-white/5 backdrop-blur-sm space-y-3">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400">
                             <i className="fas fa-hand-holding-heart text-sm"></i>
@@ -208,7 +248,7 @@ export default function Corpo3D({ exames, selectedExam }: {
                     </div>
                     <div>
                         <p className="text-[10px] text-white/30 font-black uppercase tracking-widest mb-1">Dicas de Saúde</p>
-                        <p className="text-white/80 font-medium text-sm leading-relaxed">{info.care}</p>
+                        <p className="text-white/80 font-medium text-[13px] leading-relaxed">{info.care}</p>
                     </div>
                 </div>
 
