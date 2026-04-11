@@ -1,5 +1,4 @@
-
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 
 interface ExamMapping {
   orgao: string;
@@ -139,8 +138,8 @@ const [activeRegionIndex, setActiveRegionIndex] = useState(0);
 
   // Helper para interpretar achados específicos
   const interpretacaoAchados = (exame: ExamMapping) => {
-    const n = exame.exame_nome.toUpperCase();
-    const v = (exame as any).valor?.toUpperCase() || '';
+    const n = (exame?.exame_nome || '').toUpperCase();
+    const v = (exame as any)?.valor?.toString().toUpperCase() || '';
     const fullText = `${n} ${v}`;
     
     let achados = [];

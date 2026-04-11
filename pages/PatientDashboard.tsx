@@ -8,6 +8,7 @@ import { dbService } from '../services/apiService';
 import { jsPDF } from 'jspdf';
 import { maskCPF, maskSUS, maskAge } from '../services/masks';
 import Saude3DTab from '../components/Saude3DTab';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 interface PatientDashboardProps {
   user: User;
@@ -611,7 +612,9 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
       }
 
       {activeTab === 'saude3d' && (
-        <Saude3DTab user={user} />
+        <ErrorBoundary>
+          <Saude3DTab user={user} />
+        </ErrorBoundary>
       )}
 
       {

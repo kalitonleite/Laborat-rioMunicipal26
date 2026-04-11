@@ -68,7 +68,7 @@ module.exports = async function handler(req, res) {
     const chatCompletion = await groq.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
-        ...history.map((m: any) => ({ role: m.role, content: m.content })),
+        ...history.map((m) => ({ role: m.role, content: m.content })),
         { role: 'user', content: pergunta }
       ],
       model: 'llama3-70b-8192',
