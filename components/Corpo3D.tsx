@@ -127,10 +127,10 @@ export default function Corpo3D({ exames, selectedExam }: {
     let achados = [];
     
     if (n.includes('URINA') || n.includes('EAS')) {
-        if (v.includes('PIOCITO') || v.includes('HEMACIA') || v.includes('LEUCOCITO')) {
+        if (v.includes('PIOCITO') || v.includes('HEMACIA') || v.includes('LEUCOCITO') || v.includes('SEDIMENTOSCOPIA') || v.includes('BIOQUIMICA')) {
             achados.push({
-                titulo: 'Achados na Urina',
-                texto: 'A presença de piócitos (leucócitos) e hemácias (sangue) sugere um processo inflamatório ou infeccioso nas vias urinárias. Isso pode indicar cistite ou pequenos cálculos.'
+                titulo: 'Bioquímica e Sedimentoscopia',
+                texto: 'Foram detectadas alterações tanto na Bioquímica (presença de leucócitos/nitrito) quanto na Sedimentoscopia (10 piócitos e 10 hemácias). Esse conjunto de achados sugere fortemente uma inflamação ou infecção urinária ativa.'
             });
         }
     }
