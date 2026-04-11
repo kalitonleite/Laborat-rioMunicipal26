@@ -135,10 +135,33 @@ export default function Corpo3D({ exames, selectedExam }: {
         }
     }
     
-    if (n.includes('TGO') || n.includes('AST') || n.includes('BIOQUIMICA')) {
+    if (n.includes('TGO') || n.includes('AST') || n.includes('TGP') || n.includes('ALT') || n.includes('BIOQUIMICA')) {
+        if (v.includes('TGO') || v.includes('AST') || v.includes('TGP') || v.includes('ALT')) {
+            achados.push({
+                titulo: 'Transaminases (Fígado) Elevadas',
+                texto: 'Níveis de TGO e TGP acima da referência indicam inflamação ou sobrecarga nas células do fígado. Isso pode ser causado por gordura no fígado, medicamentos ou álcool.'
+            });
+        }
+    }
+
+    if (n.includes('GLICOSE') || n.includes('GLICEMIA')) {
         achados.push({
-            titulo: 'TGO (AST) Alterado',
-            texto: 'A TGO é uma enzima do fígado. Níveis elevados indicam sobrecarga ou lesão hepática. Recomenda-se evitar álcool, gorduras e consultar um especialista para avaliar a causa.'
+            titulo: 'Glicemia Elevada',
+            texto: 'O valor detectado sugere um quadro de hiperglicemia. Isso requer atenção imediata para controle de diabetes e ajuste na ingestão de carboidratos e açúcares.'
+        });
+    }
+
+    if (n.includes('COLESTEROL') || n.includes('TRIGLICERI')) {
+        achados.push({
+            titulo: 'Perfil Lipídico Alterado',
+            texto: 'Colesterol ou Triglicérides elevados aumentam o risco de placas de gordura nas artérias. É fundamental reduzir gorduras saturadas e manter atividade física.'
+        });
+    }
+
+    if (n.includes('UREIA') || n.includes('CREATININA') || n.includes('RENAL')) {
+        achados.push({
+            titulo: 'Função Renal em Alerta',
+            texto: 'Alterações na Ureia e Creatinina sugerem que os rins podem estar sobrecarregados ou com filtragem reduzida. Aumente a ingestão de água e reduza o sal.'
         });
     }
 
