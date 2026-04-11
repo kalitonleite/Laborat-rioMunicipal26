@@ -12,18 +12,34 @@ interface Saude3DTabProps {
 export default function Saude3DTab({ user }: Saude3DTabProps) {
   const [dados, setDados] = useState<any[]>([]);
   const [selecionado, setSelecionado] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const carregarDados3D = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`/api/saude3d?usuario_id=${user.id}&cpf=${user.cpf}`);
+        if (!user || !user.id) {
+            setLoading(false);
+            return;
+        }
+        const token = localStorage.getItem('auth_token');
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(`/api/saude3d?usuario_id=${user.id}&cpf=${user.cpf}`, { headers });
+        if (!res.ok) {
+           console.error('API Saude3D falhou:', res.status);
+           setDados([]);
+           setLoading(false);
+           return;
+        }
+        
         const data = await res.json();
         
         if (Array.isArray(data)) {
           // Extrair texto de PDFs caso o valor não exista, processar localmente
           const dadosCompletos = await Promise.all(data.map(async (exam) => {
-             if (exam.file_url !== null && (exam.valor === 'Pendente' || !exam.valor || exam.valor.trim() === '')) {
+             if (exam && exam.file_url && (exam.valor === 'Pendente' || !exam.valor || (typeof exam.valor === 'string' && exam.valor.trim() === ''))) {
                  try {
                      const text = await extractTextFromPDFUrl(exam.file_url);
                      if (text && text.trim().length > 0) {

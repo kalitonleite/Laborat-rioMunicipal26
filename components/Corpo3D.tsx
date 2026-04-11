@@ -11,6 +11,7 @@ interface ExamMapping {
 // Mapeamento exame → regiões anatômicas afetadas (Mantido do original)
 // ─────────────────────────────────────────────────────────────────────────────
 function getRegionsForExam(examName: string): string[] {
+  if (!examName) return ['corpo'];
   const n = examName.toUpperCase();
 
   if (n.includes('HEMOGRAMA') || n.includes('HEMÁCIAS') || n.includes('LEUCÓCIT') || n.includes('PLAQUETA')) return ['sangue'];
@@ -71,6 +72,16 @@ const ORGAN_INFO: Record<string, { label: string; image: string; care: string }>
     label: 'Tireoide',
     image: '/assets/organs/brain.png', // Fallback visual
     care: 'Mantenha o consumo adequado de iodo (sal iodado) e monitore níveis de energia e peso corporal regularmente.'
+  },
+  prostata: {
+    label: 'Próstata / Reprodutor',
+    image: '/assets/organs/kidneys.png', // Fallback visual
+    care: 'Mantenha exames preventivos em dia. A hidratação e uma dieta balanceada auxiliam na saúde do sistema reprodutor e urinário.'
+  },
+  intestinos: {
+    label: 'Intestinos / Digestivo',
+    image: '/assets/organs/liver.png', // Fallback visual
+    care: 'Aumente a ingestão de fibras e água. A saúde intestinal é a base da imunidade e absorção de nutrientes do seu corpo.'
   },
   corpo: {
     label: 'Saúde Geral',
