@@ -114,8 +114,15 @@ export default function Corpo3D({ exames, selectedExam }: {
 }) {
   const sel = selectedExam ?? (exames.length > 0 ? exames[0] : null);
   
+const [activeRegionIndex, setActiveRegionIndex] = useState(0);
+
+  // Reset region index when exam selection changes
+  useEffect(() => {
+    setActiveRegionIndex(0);
+  }, [sel]);
+
   const regions = useMemo(() => sel ? getRegionsForExam(sel.exame_nome) : ['corpo'], [sel]);
-  const mainRegion = regions[0];
+  const mainRegion = regions[activeRegionIndex] || regions[0] || 'corpo';
   const info = ORGAN_INFO[mainRegion] || ORGAN_INFO['corpo'];
   const status = getStatusDetails(sel?.status || 'normal');
 
@@ -127,47 +134,78 @@ export default function Corpo3D({ exames, selectedExam }: {
     
     let achados = [];
     
+    // URINA (EAS / URINA I)
     if (fullText.includes('URINA') || fullText.includes('EAS') || fullText.includes('SEDIMENTOS')) {
-        if (fullText.includes('PIOCITO') || fullText.includes('HEMACIA') || fullText.includes('LEUCOCITO') || fullText.includes('NITRITO')) {
+        const temAlteracaoUrina = fullText.includes('PIOCITO') || fullText.includes('HEMACIA') || 
+                                 fullText.includes('LEUCOCITO') || fullText.includes('NITRITO') || 
+                                 fullText.includes('PROTEINA') || fullText.includes('SANGUE');
+        
+        if (temAlteracaoUrina) {
             achados.push({
                 titulo: 'Urina: Bioquímica e Sedimentoscopia',
-                texto: 'Alterações detectadas (leucócitos, piócitos ou hemácias) sugerem um processo inflamatório ou infeccioso ativo no sistema urinário.'
+                texto: 'Identificamos alterações (como piócitos ou hemácias) que indicam uma possível infecção ou inflamação no trato urinário. É importante notar se há sintomas como ardor ou dor.'
+            });
+        }
+
+        if (fullText.includes('GLICOSE') && (fullText.includes('POSITIV') || fullText.includes('+'))) {
+            achados.push({
+                titulo: 'Urina: Glicosúria',
+                texto: 'A presença de glicose na urina foi detectada. Isso ocorre quando os níveis de açúcar no sangue estão muito altos (Diabetes) ou por sobrecarga renal.'
             });
         }
     }
     
+    // FÍGADO (TGO/TGP)
     if (fullText.includes('TGO') || fullText.includes('AST') || fullText.includes('TGP') || fullText.includes('ALT') || fullText.includes('HEPAT')) {
         achados.push({
-            titulo: 'Fígado: Enzimas (Transaminases)',
-            texto: 'Níveis elevados de TGO/TGP indicam sobrecarga ou lesão hepática. Evite álcool, gorduras e consulte um especialista.'
+            titulo: 'Fígado: Enzimas Hepáticas',
+            texto: 'As transaminases elevadas sugerem que as células do fígado estão sob estresse ou inflamação. Evite substâncias tóxicas como álcool e automedicação.'
         });
     }
 
-    if (fullText.includes('GLICOSE') || fullText.includes('GLICEMIA') || fullText.includes('HBA1C')) {
+    // SANGUE: GLICEMIA
+    if ((fullText.includes('GLICOSE') || fullText.includes('GLICEMIA') || fullText.includes('HBA1C')) && !fullText.includes('URINA')) {
         achados.push({
-            titulo: 'Glicemia (Açúcar no Sangue)',
-            texto: 'Resultado sugere hiperglicemia. Importante para o diagnóstico de diabetes. Reduza carboidratos e açúcares.'
+            titulo: 'Sangue: Glicemia (Açúcar)',
+            texto: 'Níveis de açúcar no sangue elevados sugerem hiperglicemia. O controle dietético e acompanhamento médico são fundamentais para prevenir diabetes.'
         });
     }
 
+    // SANGUE: COLESTEROL/TRIGLICERIDES
     if (fullText.includes('COLESTEROL') || fullText.includes('TRIGLICERI') || fullText.includes('LIPID')) {
         achados.push({
-            titulo: 'Perfil Lipídico (Gorduras)',
-            texto: 'Gordura no sangue elevada aumenta o risco cardiovascular. Priorize alimentos naturais e atividade física regular.'
+            titulo: 'Sangue: Perfil de Gorduras',
+            texto: 'Valores elevados de lípides aumentam o risco cardiovascular. Recomenda-se a redução de açúcares refinados e gorduras trans/saturadas.'
         });
     }
 
-    if (fullText.includes('UREIA') || fullText.includes('CREATININA') || fullText.includes('RENAL')) {
+    // RINS: UREIA/CREATININA
+    if ((fullText.includes('UREIA') || fullText.includes('CREATININA') || fullText.includes('RENAL')) && !fullText.includes('URINA')) {
         achados.push({
-            titulo: 'Função Renal (Rins)',
-            texto: 'Ureia ou Creatinina alteradas indicam sobrecarga nos rins. Aumente o consumo de água e reduza o sal imediatamente.'
+            titulo: 'Rins: Filtragem Renal',
+            texto: 'Alterações nesses marcadores mostram como os rins estão filtrando o sangue. Beba pelo menos 2 litros de água por dia.'
         });
     }
 
+    // ÁCIDO ÚRICO
     if (fullText.includes('URICO')) {
         achados.push({
-            titulo: 'Ácido Úrico',
-            texto: 'Níveis elevados de ácido úrico podem causar dores articulares e cálculos. Evite carnes vermelhas e frutos do mar.'
+            titulo: 'Sangue: Ácido Úrico',
+            texto: 'O excesso de ácido úrico pode causar gota ou cálculos renais. Reduza o consumo de proteínas animais e bebidas alcoólicas.'
+        });
+    }
+
+    // FEZES (PARASITOLÓGICO)
+    if (fullText.includes('PARASIT') || fullText.includes('FEZES') || fullText.includes('COPRO')) {
+        const temParasita = fullText.includes('PRESENCA') || fullText.includes('POSITIV') || 
+                           fullText.includes('CISTO') || fullText.includes('OVO') || 
+                           fullText.includes('TROFOZOITO');
+        
+        achados.push({
+            titulo: 'Fezes: Parasitológico e Aspectos',
+            texto: temParasita 
+                ? 'Foram identificados parasitas ou cistos no exame de fezes. É necessário tratamento medicamentoso específico conforme orientação médica.'
+                : 'Exame de fezes realizado. Caso apresente dores abdominais ou diarreia persistente, mesmo com resultado negativo para parasitas, consulte um clínico.'
         });
     }
 
@@ -218,9 +256,30 @@ export default function Corpo3D({ exames, selectedExam }: {
                         (e.target as HTMLImageElement).src = 'https://cdn-icons-png.flaticon.com/512/2966/2966327.png'; // Fallback icon
                     }}
                 />
-                <div className="mt-6 text-center">
-                    <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-1 block">Sistema / Órgão Alvo</span>
-                    <h4 className="text-3xl font-black text-white uppercase tracking-tight">{info.label}</h4>
+                <div className="mt-6 text-center space-y-4">
+                    <div>
+                        <span className="text-[10px] font-black text-blue-400 uppercase tracking-[0.3em] mb-1 block">Sistema / Órgão Alvo</span>
+                        <h4 className="text-3xl font-black text-white uppercase tracking-tight">{info.label}</h4>
+                    </div>
+
+                    {/* Region Selector for Multi-system Exams */}
+                    {regions.length > 1 && (
+                        <div className="flex items-center justify-center gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/5">
+                            {regions.map((r, i) => (
+                                <button
+                                    key={r}
+                                    onClick={() => setActiveRegionIndex(i)}
+                                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                                        activeRegionIndex === i 
+                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
+                                        : 'text-white/40 hover:text-white/60 hover:bg-white/5'
+                                    }`}
+                                >
+                                    {ORGAN_INFO[r]?.label || r}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
