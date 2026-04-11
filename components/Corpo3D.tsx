@@ -123,45 +123,51 @@ export default function Corpo3D({ exames, selectedExam }: {
   const interpretacaoAchados = (exame: ExamMapping) => {
     const n = exame.exame_nome.toUpperCase();
     const v = (exame as any).valor?.toUpperCase() || '';
+    const fullText = `${n} ${v}`;
     
     let achados = [];
     
-    if (n.includes('URINA') || n.includes('EAS')) {
-        if (v.includes('PIOCITO') || v.includes('HEMACIA') || v.includes('LEUCOCITO') || v.includes('SEDIMENTOSCOPIA') || v.includes('BIOQUIMICA')) {
+    if (fullText.includes('URINA') || fullText.includes('EAS') || fullText.includes('SEDIMENTOS')) {
+        if (fullText.includes('PIOCITO') || fullText.includes('HEMACIA') || fullText.includes('LEUCOCITO') || fullText.includes('NITRITO')) {
             achados.push({
-                titulo: 'Bioquímica e Sedimentoscopia',
-                texto: 'Foram detectadas alterações tanto na Bioquímica (presença de leucócitos/nitrito) quanto na Sedimentoscopia (10 piócitos e 10 hemácias). Esse conjunto de achados sugere fortemente uma inflamação ou infecção urinária ativa.'
+                titulo: 'Urina: Bioquímica e Sedimentoscopia',
+                texto: 'Alterações detectadas (leucócitos, piócitos ou hemácias) sugerem um processo inflamatório ou infeccioso ativo no sistema urinário.'
             });
         }
     }
     
-    if (n.includes('TGO') || n.includes('AST') || n.includes('TGP') || n.includes('ALT') || n.includes('BIOQUIMICA')) {
-        if (v.includes('TGO') || v.includes('AST') || v.includes('TGP') || v.includes('ALT')) {
-            achados.push({
-                titulo: 'Transaminases (Fígado) Elevadas',
-                texto: 'Níveis de TGO e TGP acima da referência indicam inflamação ou sobrecarga nas células do fígado. Isso pode ser causado por gordura no fígado, medicamentos ou álcool.'
-            });
-        }
-    }
-
-    if (n.includes('GLICOSE') || n.includes('GLICEMIA')) {
+    if (fullText.includes('TGO') || fullText.includes('AST') || fullText.includes('TGP') || fullText.includes('ALT') || fullText.includes('HEPAT')) {
         achados.push({
-            titulo: 'Glicemia Elevada',
-            texto: 'O valor detectado sugere um quadro de hiperglicemia. Isso requer atenção imediata para controle de diabetes e ajuste na ingestão de carboidratos e açúcares.'
+            titulo: 'Fígado: Enzimas (Transaminases)',
+            texto: 'Níveis elevados de TGO/TGP indicam sobrecarga ou lesão hepática. Evite álcool, gorduras e consulte um especialista.'
         });
     }
 
-    if (n.includes('COLESTEROL') || n.includes('TRIGLICERI')) {
+    if (fullText.includes('GLICOSE') || fullText.includes('GLICEMIA') || fullText.includes('HBA1C')) {
         achados.push({
-            titulo: 'Perfil Lipídico Alterado',
-            texto: 'Colesterol ou Triglicérides elevados aumentam o risco de placas de gordura nas artérias. É fundamental reduzir gorduras saturadas e manter atividade física.'
+            titulo: 'Glicemia (Açúcar no Sangue)',
+            texto: 'Resultado sugere hiperglicemia. Importante para o diagnóstico de diabetes. Reduza carboidratos e açúcares.'
         });
     }
 
-    if (n.includes('UREIA') || n.includes('CREATININA') || n.includes('RENAL')) {
+    if (fullText.includes('COLESTEROL') || fullText.includes('TRIGLICERI') || fullText.includes('LIPID')) {
         achados.push({
-            titulo: 'Função Renal em Alerta',
-            texto: 'Alterações na Ureia e Creatinina sugerem que os rins podem estar sobrecarregados ou com filtragem reduzida. Aumente a ingestão de água e reduza o sal.'
+            titulo: 'Perfil Lipídico (Gorduras)',
+            texto: 'Gordura no sangue elevada aumenta o risco cardiovascular. Priorize alimentos naturais e atividade física regular.'
+        });
+    }
+
+    if (fullText.includes('UREIA') || fullText.includes('CREATININA') || fullText.includes('RENAL')) {
+        achados.push({
+            titulo: 'Função Renal (Rins)',
+            texto: 'Ureia ou Creatinina alteradas indicam sobrecarga nos rins. Aumente o consumo de água e reduza o sal imediatamente.'
+        });
+    }
+
+    if (fullText.includes('URICO')) {
+        achados.push({
+            titulo: 'Ácido Úrico',
+            texto: 'Níveis elevados de ácido úrico podem causar dores articulares e cálculos. Evite carnes vermelhas e frutos do mar.'
         });
     }
 
