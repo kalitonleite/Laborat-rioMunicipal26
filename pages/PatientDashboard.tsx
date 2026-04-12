@@ -346,7 +346,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           {/* BANNER CARTEIRINHA DIGITAL */}
           <div
-            className="w-full bg-gradient-to-r from-[#0f2a44] to-[#0a1f33] px-5 py-3 rounded-[24px] shadow-xl border border-white/5 relative overflow-hidden cursor-pointer group hover:scale-[1.01] transition-all"
+            className="w-full md:w-[calc(50%-8px)] bg-gradient-to-r from-[#0f2a44] to-[#0a1f33] px-5 py-3 rounded-[24px] shadow-xl border border-white/5 relative overflow-hidden cursor-pointer group hover:scale-[1.01] transition-all"
             onClick={() => window.location.hash = '#/carteirinha'}
           >
             <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-[#00ff95]/10 rounded-full blur-3xl group-hover:bg-[#00ff95]/20 transition-all"></div>
