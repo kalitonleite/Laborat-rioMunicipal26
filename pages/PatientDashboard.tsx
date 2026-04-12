@@ -344,33 +344,34 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
       {activeTab === 'dashboard' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          {/* BANNER CARTEIRINHA DIGITAL */}
-          <div 
-            className="w-full bg-gradient-to-r from-[#0f2a44] to-[#0a1f33] p-4 md:p-5 rounded-[24px] shadow-xl border border-white/5 relative overflow-hidden cursor-pointer group hover:scale-[1.01] transition-all"
-            onClick={() => window.location.hash = '#/carteirinha'}
-          >
-            <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-[#00ff95]/10 rounded-full blur-3xl group-hover:bg-[#00ff95]/20 transition-all"></div>
-            <div className="relative z-10 flex flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl text-[#00ff95] border border-white/10 backdrop-blur-md shadow-lg group-hover:rotate-12 transition-transform flex-shrink-0">
-                  <i className="fas fa-id-card"></i>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="px-2 py-0.5 bg-[#00ff95]/20 text-[#00ff95] text-[9px] font-black uppercase tracking-widest rounded-md border border-[#00ff95]/30">Documento Ativo</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00ff95] animate-pulse"></span>
+          {/* BANNER CARTEIRINHA DIGITAL + CAMPANHAS NO MESMO GRID */}
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Banner Carteirinha — ocupa uma coluna, igual aos cards */}
+            <div 
+              className="bg-gradient-to-br from-[#0f2a44] to-[#0a1f33] p-6 rounded-[32px] shadow-sm border border-white/5 relative overflow-hidden cursor-pointer group hover:shadow-md transition-all flex flex-col justify-between min-h-[120px]"
+              onClick={() => window.location.hash = '#/carteirinha'}
+            >
+              <div className="absolute top-[-20%] right-[-10%] w-40 h-40 bg-[#00ff95]/10 rounded-full blur-3xl group-hover:bg-[#00ff95]/20 transition-all"></div>
+              <div className="relative z-10 flex flex-row items-center justify-between gap-4 h-full">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl text-[#00ff95] border border-white/10 backdrop-blur-md shadow-lg group-hover:rotate-12 transition-transform flex-shrink-0">
+                    <i className="fas fa-id-card"></i>
                   </div>
-                  <h2 className="text-lg font-black text-white tracking-tight leading-tight">Minha Carteirinha Digital</h2>
-                  <p className="text-white/40 font-medium text-[10px] uppercase tracking-wider">Acesse seu QR Code para atendimento rápido</p>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2 py-0.5 bg-[#00ff95]/20 text-[#00ff95] text-[9px] font-black uppercase tracking-widest rounded-md border border-[#00ff95]/30">Documento Ativo</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00ff95] animate-pulse"></span>
+                    </div>
+                    <h2 className="text-lg font-black text-white tracking-tight leading-tight">Minha Carteirinha Digital</h2>
+                    <p className="text-white/40 font-medium text-[10px] uppercase tracking-wider mt-0.5">Acesse seu QR Code para atendimento rápido</p>
+                  </div>
                 </div>
-              </div>
-              <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white/40 border border-white/10 hover:bg-white hover:text-black transition-all flex-shrink-0">
-                <i className="fas fa-arrow-right text-sm"></i>
+                <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center text-white/40 border border-white/10 hover:bg-white hover:text-black transition-all flex-shrink-0">
+                  <i className="fas fa-arrow-right text-sm"></i>
+                </div>
               </div>
             </div>
-          </div>
 
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {campaigns.map((camp, idx) => {
               const [y, m, d] = (camp.date || '').split('-');
               const formattedDate = d ? `${d}/${m}/${y}` : camp.date;
