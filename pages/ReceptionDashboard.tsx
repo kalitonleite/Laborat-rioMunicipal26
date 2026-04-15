@@ -1298,6 +1298,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 <p style={{ marginBottom: '4px' }}><strong>FR:</strong> {urgenciaForm.vitalsFr} rpm</p>
                 <p style={{ marginBottom: '4px' }}><strong>SAT:</strong> {urgenciaForm.vitalsSat}</p>
                 <p style={{ marginBottom: '4px' }}><strong>Temp:</strong> {urgenciaForm.vitalsTemp} °C</p>
+                <p style={{ marginBottom: '4px' }}><strong>Peso:</strong> {urgenciaForm.vitalsPeso} Kg</p>
+                <p style={{ marginBottom: '4px' }}><strong>Altura:</strong> {urgenciaForm.vitalsAltura} m</p>
+                <p style={{ marginBottom: '4px' }}><strong>BCF:</strong> {urgenciaForm.vitalsBcf} bpm</p>
               </div>
               <div style={{ flex: '1', padding: '8px', borderRight: '1px solid #000' }}>
                 <p style={{ marginBottom: '4px' }}><strong>Hipotensão:</strong> {urgenciaForm.hasHypertension ? 'SIM' : 'NÃO'}</p>
