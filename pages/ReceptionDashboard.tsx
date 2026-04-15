@@ -13,7 +13,11 @@ interface ReceptionDashboardProps {
   onUpdateUser: (user: User) => void;
 }
 
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
+
 const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateUser }) => {
+  const urgencyRef = useRef<HTMLDivElement>(null);
   const { appLogo } = useSettings();
   const [activeTab, setActiveTab] = useState<'fila' | 'agenda' | 'perfil' | 'config' | 'urgencia'>('fila');
   const [dailyLimit, setDailyLimit] = useState<number>(20);
@@ -1138,8 +1142,25 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                </div>
             </div>
 
-            {/* SUBMIT BUTTON */}
-            <div className="pt-10">
+            {/* ACTION BUTTONS: PREVIEW, DOWNLOAD, FINISH */}
+            <div className="pt-10 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <button 
+                  type="button"
+                  onClick={() => handleUrgencyPDF('view')}
+                  className="flex-1 bg-blue-50 text-blue-600 font-black py-4 rounded-2xl hover:bg-blue-100 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-eye"></i> Visualizar Ficha
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => handleUrgencyPDF('download')}
+                  className="flex-1 bg-amber-50 text-amber-600 font-black py-4 rounded-2xl hover:bg-amber-100 transition-all uppercase tracking-widest text-[10px] flex items-center justify-center gap-2"
+                >
+                  <i className="fas fa-download"></i> Baixar PDF
+                </button>
+              </div>
+
               <button 
                 type="submit" 
                 disabled={isAdding}
@@ -1166,6 +1187,135 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           </form>
         </div>
       )}
+
+      {/* HIDDEN PDF TEMPLATE */}
+      <div style={{ position: 'absolute', left: '-9999px', top: '0' }}>
+        <div ref={urgencyRef} style={{ width: '210mm', padding: '15mm', backgroundColor: '#fff', color: '#000', fontFamily: 'Arial, sans-serif' }}>
+          {/* PDF HEADER */}
+          <div style={{ border: '2px solid #000', padding: '10px', marginBottom: '15px', position: 'relative' }}>
+            <div style={{ textAlign: 'center' }}>
+              <h1 style={{ fontSize: '18px', fontWeight: '900', margin: '0 0 5px 0' }}>REGISTRO DE ATENDIMENTO HOSPITALAR</h1>
+              <div style={{ display: 'flex', justifyContent: 'space-around', borderTop: '1px solid #000', paddingTop: '5px' }}>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ margin: '0', fontSize: '12px', fontWeight: 'bold' }}>RECEPÇÃO</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0', fontSize: '10px' }}>Data de Atendimento: {urgenciaForm.dataAtendimento.split('-').reverse().join('/')}</p>
+                  <p style={{ margin: '0', fontSize: '10px' }}>Hora: {urgenciaForm.horaAtendimento}</p>
+                </div>
+                <div style={{ borderLeft: '1px solid #000', paddingLeft: '10px' }}>
+                  <p style={{ margin: '0', fontSize: '9px' }}>UARINI / AM</p>
+                  <p style={{ margin: '0', fontSize: '9px' }}>Laboratório Municipal de Uarini</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* PATIENT INFO */}
+          <div style={{ border: '1px solid #000', marginBottom: '10px' }}>
+            <div style={{ borderBottom: '1px solid #000', padding: '4px 8px', backgroundColor: '#f0f0f0' }}>
+              <p style={{ margin: '0', fontSize: '10px', fontWeight: 'bold' }}>01. IDENTIFICAÇÃO DO PACIENTE</p>
+            </div>
+            <div style={{ padding: '8px', fontSize: '10px' }}>
+              <p style={{ marginBottom: '6px' }}><strong>Nome:</strong> {urgenciaForm.nomeCompleto}</p>
+              <div style={{ display: 'flex', gap: '30px', marginBottom: '6px' }}>
+                <p><strong>Mãe:</strong> {urgenciaForm.mae}</p>
+                <p><strong>Pai:</strong> {urgenciaForm.pai}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '30px', marginBottom: '6px' }}>
+                <p><strong>CPF:</strong> {urgenciaForm.cpf}</p>
+                <p><strong>SUS:</strong> {urgenciaForm.sus}</p>
+                <p><strong>Reside Urini:</strong> {urgenciaForm.resideUarini ? 'SIM' : 'NÃO'}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '30px', marginBottom: '6px' }}>
+                <p><strong>Nasc.:</strong> {urgenciaForm.dataNascimento?.split('-').reverse().join('/')}</p>
+                <p><strong>Idade:</strong> {urgenciaForm.idade}</p>
+                <p><strong>Sexo:</strong> {urgenciaForm.sexo}</p>
+                <p><strong>Estado Civil:</strong> {urgenciaForm.estadoCivil}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '30px' }}>
+                <p><strong>Naturalidade:</strong> {urgenciaForm.naturalidade}</p>
+                <p><strong>Raça/Cor:</strong> {urgenciaForm.raca}</p>
+                <p><strong>Tipo Sanguíneo:</strong> {urgenciaForm.tipoSanguineo}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ADDRESS & LOGISTICS */}
+          <div style={{ border: '1px solid #000', marginBottom: '10px' }}>
+            <div style={{ padding: '8px', fontSize: '10px' }}>
+              <p style={{ marginBottom: '6px' }}><strong>Endereço:</strong> {urgenciaForm.logradouro}, Nº {urgenciaForm.numero} - Bairro: {urgenciaForm.bairro}</p>
+              <div style={{ display: 'flex', gap: '30px', marginBottom: '6px' }}>
+                <p><strong>Telefone:</strong> {urgenciaForm.telefone}</p>
+                <p><strong>Como chegou:</strong> {urgenciaForm.arrivalMode}</p>
+              </div>
+              <p><strong>Responsável:</strong> {urgenciaForm.responsavel} ({urgenciaForm.parentesco})</p>
+            </div>
+          </div>
+
+          {/* ACOLHIMENTO / VITALS */}
+          <div style={{ border: '1px solid #000', marginBottom: '10px' }}>
+            <div style={{ borderBottom: '1px solid #000', padding: '4px 8px', backgroundColor: '#f0f0f0', textAlign: 'center' }}>
+              <p style={{ margin: '0', fontSize: '10px', fontWeight: 'bold' }}>ACOLHIMENTO / TRIAGEM</p>
+            </div>
+            <div style={{ display: 'flex', fontSize: '9px' }}>
+              <div style={{ flex: '1', padding: '8px', borderRight: '1px solid #000' }}>
+                <p style={{ marginBottom: '4px' }}><strong>PA:</strong> {urgenciaForm.vitalsPa} mmHg</p>
+                <p style={{ marginBottom: '4px' }}><strong>FC:</strong> {urgenciaForm.vitalsFc} bpm</p>
+                <p style={{ marginBottom: '4px' }}><strong>FR:</strong> {urgenciaForm.vitalsFr} rpm</p>
+                <p style={{ marginBottom: '4px' }}><strong>SAT:</strong> {urgenciaForm.vitalsSat}</p>
+                <p style={{ marginBottom: '4px' }}><strong>Temp:</strong> {urgenciaForm.vitalsTemp} °C</p>
+              </div>
+              <div style={{ flex: '1', padding: '8px', borderRight: '1px solid #000' }}>
+                <p style={{ marginBottom: '4px' }}><strong>Hipotensão:</strong> {urgenciaForm.hasHypertension ? 'SIM' : 'NÃO'}</p>
+                <p style={{ marginBottom: '4px' }}><strong>Diabetes:</strong> {urgenciaForm.hasDiabetes ? 'SIM' : 'NÃO'}</p>
+                <p style={{ marginBottom: '4px' }}><strong>Tabagismo:</strong> {urgenciaForm.hasSmoking ? 'SIM' : 'NÃO'}</p>
+                <p style={{ marginBottom: '4px' }}><strong>Glicemia:</strong> {urgenciaForm.vitalsGlicemia} mg/dL</p>
+                <p style={{ marginBottom: '4px' }}><strong>Alergias:</strong> {urgenciaForm.hasDrugAllergy ? `SIM (${urgenciaForm.drugAllergiesList})` : 'NÃO'}</p>
+              </div>
+              <div style={{ flex: '1', padding: '8px', backgroundColor: urgencyForm.riskClassification === 'VERMELHO' ? '#fee2e2' : '' }}>
+                <p style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px' }}>RISCO CLÍNICO</p>
+                <div style={{ 
+                  backgroundColor: urgencyForm.riskClassification === 'VERMELHO' ? '#ef4444' : 
+                                   urgencyForm.riskClassification === 'LARANJA' ? '#f97316' :
+                                   urgencyForm.riskClassification === 'AMARELO' ? '#facc15' :
+                                   urgencyForm.riskClassification === 'VERDE' ? '#10b981' :
+                                   urgencyForm.riskClassification === 'AZUL' ? '#3b82f6' : '#eee',
+                  color: urgencyForm.riskClassification === 'AMARELO' ? '#000' : '#fff',
+                  padding: '10px', textAlign: 'center', fontWeight: 'black', borderRadius: '8px'
+                }}>
+                  {urgenciaForm.riskClassification || 'NÃO DEFINIDO'}
+                </div>
+                <p style={{ textAlign: 'center', marginTop: '10px' }}><strong>Escala de Dor:</strong> {urgenciaForm.painScale}/10</p>
+              </div>
+            </div>
+          </div>
+
+          {/* CLINICAL EVALUATION */}
+          <div style={{ border: '1px solid #000', marginBottom: '10px' }}>
+            <div style={{ padding: '8px', fontSize: '10px' }}>
+              <p style={{ marginBottom: '10px' }}><strong>Sinais e Sintomas:</strong><br />{urgenciaForm.signsSymptoms}</p>
+              <p style={{ marginBottom: '10px' }}><strong>História Clínica:</strong><br />{urgenciaForm.clinicalHistoryExam}</p>
+              <p style={{ marginBottom: '10px' }}><strong>Procedimentos:</strong><br />{urgenciaForm.proceduresDone}</p>
+              <div style={{ display: 'flex', gap: '30px', borderTop: '1px solid #000', paddingTop: '8px' }}>
+                 <p style={{ flex: '1' }}><strong>Diag. Provável:</strong> {urgenciaForm.probableDiagnosis}</p>
+                 <p style={{ width: '120px' }}><strong>CID 10:</strong> {urgenciaForm.cid10}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* FOOTER / SIGNATURE */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '40px', fontSize: '10px' }}>
+            <div style={{ textAlign: 'center', width: '200px', borderTop: '1px solid #000', paddingTop: '5px' }}>
+              <p>Assinatura do Paciente ou Responsável</p>
+            </div>
+            <div style={{ textAlign: 'center', width: '200px', borderTop: '1px solid #000', paddingTop: '5px' }}>
+              <p>Carimbo e Assinatura Profissional</p>
+            </div>
+          </div>
+          <p style={{ fontSize: '8px', color: '#888', textAlign: 'right', marginTop: '20px' }}>Gerado digitalmente via Sistema do Laboratório Municipal de Uarini</p>
+        </div>
+      </div>
 
       {activeTab === 'fila' && (
 
