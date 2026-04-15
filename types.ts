@@ -19,6 +19,16 @@ export interface User {
   gender?: string;
   email?: string;
   phone?: string;
+  mother_name?: string;
+  father_name?: string;
+  birth_date?: string;
+  resides_in_uarini?: boolean;
+  civil_status?: string;
+  naturalness?: string;
+  race_color?: string;
+  address?: string;
+  address_number?: string;
+  neighborhood?: string;
 }
 
 export interface Campaign {
@@ -74,6 +84,16 @@ export interface Appointment {
   status?: string;
   setor?: string;
   codigo_atendimento?: string;
+  patientMotherName?: string;
+  patientFatherName?: string;
+  residesInUarini?: boolean;
+  patientCivilStatus?: string;
+  patientNaturalness?: string;
+  patientRaceColor?: string;
+  patientNeighborhood?: string;
+  patientResponsibleName?: string;
+  patientResponsibleRelationship?: string;
+  isUrgency?: boolean;
 }
 
 export interface QrCode {

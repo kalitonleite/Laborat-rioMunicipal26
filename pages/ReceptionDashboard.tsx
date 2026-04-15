@@ -15,21 +15,17 @@ interface ReceptionDashboardProps {
 
 const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateUser }) => {
   const { appLogo } = useSettings();
-  const [activeTab, setActiveTab] = useState<'fila' | 'agenda' | 'perfil' | 'config'>('fila');
+  const [activeTab, setActiveTab] = useState<'fila' | 'agenda' | 'perfil' | 'config' | 'urgencia'>('fila');
   const [dailyLimit, setDailyLimit] = useState<number>(20);
   const [specificLimits, setSpecificLimits] = useState<Record<string, number>>({});
   const [selectedDateForLimit, setSelectedDateForLimit] = useState<string | null>(null);
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    { id: 'a1', patientId: 'p10', patientName: 'Carlos Mendonça', patientCpf: '123.456.789-00', date: '20/10/2024', time: '07:30', examType: 'Hemograma' },
-    { id: 'a2', patientId: 'p11', patientName: 'Lucia Ferraz', patientCpf: '987.654.321-11', date: '20/10/2024', time: '08:00', examType: 'EAS + EPF' },
-    { id: 'a3', patientId: 'p12', patientName: 'Rafael Souza', patientCpf: '456.789.123-22', date: '20/10/2024', time: '08:30', examType: 'PSA' },
-    { id: 'a4', patientId: 'p13', patientName: 'Aline Oliveira', patientCpf: '321.654.987-33', date: '20/10/2024', time: '09:00', examType: 'Glicemia' },
-  ]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isListViewOpen, setIsListViewOpen] = useState(false);
+  
   const [newApp, setNewApp] = useState({ 
     patientName: '', 
     patientBirthDate: '', 
@@ -42,6 +38,32 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     date: '', 
     time: '' 
   });
+
+  const [urgenciaForm, setUrgenciaForm] = useState({
+    nomeCompleto: '',
+    cpf: '',
+    sus: '',
+    dataNascimento: '',
+    idade: '',
+    sexo: '',
+    mae: '',
+    pai: '',
+    resideUarini: true,
+    estadoCivil: '',
+    naturalidade: 'BRASILEIRO(A)',
+    raca: '',
+    logradouro: '',
+    numero: '',
+    bairro: '',
+    telefone: '',
+    responsavel: '',
+    parentesco: '',
+    tipoSanguineo: '',
+    alergias: '',
+    dataAtendimento: new Date().toISOString().split('T')[0],
+    horaAtendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  });
+
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -59,6 +81,17 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           patientPhone: a.patient_phone,
           patientAddress: a.patient_address,
           patientAddressNumber: a.patient_address_number,
+          patientMotherName: a.patient_mother_name,
+          patientFatherName: a.patient_father_name,
+          residesInUarini: a.resides_in_uarini,
+          patientCivilStatus: a.patient_civil_status,
+          patientNaturalness: a.patient_naturalness,
+          patientRaceColor: a.patient_race_color,
+          patientNeighborhood: a.patient_neighborhood,
+          patientResponsibleName: a.patient_responsible_name,
+          patientResponsibleRelationship: a.patient_responsible_relationship,
+          isUrgency: a.is_urgency,
+          status: a.status,
           date: a.date,
           time: a.time
         }));
@@ -409,6 +442,163 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
   const formatDateForDisplay = (date: Date) => date.toLocaleDateString('pt-BR');
 
+  const syncPatientWithCarteirinha = async (value: string, type: 'cpf' | 'sus') => {
+    if (!value) return;
+    const cleanValue = value.replace(/\D/g, '');
+    if (cleanValue.length < 5) return;
+
+    try {
+      const filter = type === 'cpf' ? { cpf: value } : { sus_number: value };
+      console.log('[ReceptionDashboard] Syncing patient with filter:', filter);
+      const data = await dbService.from('profiles').select(filter);
+      
+      if (data && data.length > 0) {
+        const p = data[0];
+        setUrgenciaForm(prev => ({
+          ...prev,
+          nomeCompleto: p.name || prev.nomeCompleto,
+          cpf: p.cpf || prev.cpf,
+          sus: p.sus_number || prev.sus,
+          dataNascimento: p.birth_date || prev.dataNascimento,
+          idade: p.age?.toString() || prev.idade,
+          sexo: p.gender || prev.sexo,
+          mae: p.mother_name || prev.mae,
+          pai: p.father_name || prev.pai,
+          resideUarini: p.resides_in_uarini !== undefined ? p.resides_in_uarini : prev.resideUarini,
+          estadoCivil: p.civil_status || prev.estadoCivil,
+          naturalidade: p.naturalness || prev.naturalidade,
+          raca: p.race_color || prev.raca,
+          tipoSanguineo: p.blood_type || prev.tipoSanguineo,
+          alergias: p.allergies || prev.alergias,
+          logradouro: p.address || prev.logradouro,
+          numero: p.address_number || prev.numero,
+          neighborhood: p.neighborhood || prev.bairro,
+          telefone: p.phone || prev.telefone
+        }));
+        // alert('Dados do paciente sincronizados com a Carteirinha!');
+      }
+    } catch (error) {
+      console.error('[ReceptionDashboard] Sync error:', error);
+    }
+  };
+
+  const handleUrgencySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isAdding) return;
+    setIsAdding(true);
+
+    try {
+      if (!urgenciaForm.nomeCompleto || (!urgenciaForm.cpf && !urgenciaForm.sus)) {
+        throw new Error('Nome Completo e CPF ou SUS são obrigatórios.');
+      }
+
+      const formattedDate = urgenciaForm.dataAtendimento.split('-').reverse().join('/');
+
+      // 1. Save Appointment (the Service Record)
+      const appData = await dbService.from('appointments').insert({
+        patient_id: 'U-' + Math.floor(Math.random() * 10000),
+        patient_name: urgenciaForm.nomeCompleto,
+        patient_cpf: urgenciaForm.cpf,
+        patient_sus_number: urgenciaForm.sus,
+        patient_birth_date: urgenciaForm.dataNascimento,
+        patient_age: parseInt(urgenciaForm.idade) || null,
+        patient_gender: urgenciaForm.sexo,
+        patient_phone: urgenciaForm.telefone,
+        patient_address: urgenciaForm.logradouro,
+        patient_address_number: urgenciaForm.numero,
+        patient_neighborhood: urgenciaForm.bairro,
+        patient_mother_name: urgenciaForm.mae,
+        patient_father_name: urgenciaForm.pai,
+        patient_civil_status: urgenciaForm.estadoCivil,
+        patient_naturalness: urgenciaForm.naturalidade,
+        patient_race_color: urgenciaForm.raca,
+        patient_responsible_name: urgenciaForm.responsavel,
+        patient_responsible_relationship: urgenciaForm.parentesco,
+        resides_in_uarini: urgenciaForm.resideUarini,
+        status: 'URGÊNCIA',
+        date: formattedDate,
+        time: urgenciaForm.horaAtendimento,
+        is_urgency: true
+      });
+
+      // 2. Sync back to Profile (Carteirinha)
+      await dbService.from('profiles').upsert({
+        name: urgenciaForm.nomeCompleto,
+        cpf: urgenciaForm.cpf,
+        sus_number: urgenciaForm.sus,
+        birth_date: urgenciaForm.dataNascimento,
+        age: parseInt(urgenciaForm.idade) || null,
+        gender: urgenciaForm.sexo,
+        mother_name: urgenciaForm.mae,
+        father_name: urgenciaForm.pai,
+        resides_in_uarini: urgenciaForm.resideUarini,
+        civil_status: urgenciaForm.estadoCivil,
+        naturalness: urgenciaForm.naturalidade,
+        race_color: urgenciaForm.raca,
+        blood_type: urgenciaForm.tipoSanguineo,
+        allergies: urgenciaForm.alergias,
+        address: urgenciaForm.logradouro,
+        address_number: urgenciaForm.numero,
+        neighborhood: urgenciaForm.bairro,
+        phone: urgenciaForm.telefone,
+        role: 'PATIENT'
+      }, ['cpf']); // Conflict key = CPF
+
+      alert('Cadastro de urgência realizado e Carteirinha atualizada!');
+      
+      // Update local appointments list for the queue
+      if (appData && appData[0]) {
+        const item = appData[0];
+        setAppointments(prev => [...prev, {
+            id: item.id,
+            patientId: item.patient_id,
+            patientName: item.patient_name,
+            patientCpf: item.patient_cpf,
+            patientAge: item.patient_age,
+            patientGender: item.patient_gender,
+            patientSusNumber: item.patient_sus_number,
+            patientBirthDate: item.patient_birth_date,
+            patientPhone: item.patient_phone,
+            patientAddress: item.patient_address,
+            patientAddressNumber: item.patient_address_number,
+            date: item.date,
+            time: item.time,
+            status: item.status
+        }]);
+      }
+
+      setActiveTab('fila');
+      setUrgenciaForm({
+        nomeCompleto: '',
+        cpf: '',
+        sus: '',
+        dataNascimento: '',
+        idade: '',
+        sexo: '',
+        mae: '',
+        pai: '',
+        resideUarini: true,
+        estadoCivil: '',
+        naturalidade: 'BRASILEIRO(A)',
+        raca: '',
+        logradouro: '',
+        numero: '',
+        bairro: '',
+        telefone: '',
+        responsavel: '',
+        parentesco: '',
+        dataAtendimento: new Date().toISOString().split('T')[0],
+        horaAtendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      });
+
+    } catch (error: any) {
+      console.error('[ReceptionDashboard] Error in urgency registration:', error);
+      alert('Erro ao realizar cadastro: ' + error.message);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -416,6 +606,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         <DashboardTabs
           tabs={[
             { id: 'fila', label: 'FILA DE ATENDIMENTO', icon: 'fa-users-viewfinder' },
+            { id: 'urgencia', label: 'CADASTRO DE URGÊNCIA', icon: 'fa-truck-medical' },
             { id: 'agenda', label: 'GESTÃO DE AGENDA', icon: 'fa-calendar-check' },
             { id: 'perfil', label: 'PERFIL', icon: 'fa-circle-user' },
             { id: 'config', label: 'LIMITE DE PACIENTE', icon: 'fa-gears' },
@@ -437,7 +628,290 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         </button>
       </div>
 
+      {activeTab === 'urgencia' && (
+        <div className="bg-white p-6 md:p-10 rounded-[40px] shadow-sm border border-gray-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-6 border-b border-gray-50">
+            <div>
+              <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                  <i className="fas fa-truck-medical"></i>
+                </div>
+                Ficha de Atendimento de Urgência
+              </h2>
+              <p className="text-sm text-gray-400 font-bold uppercase tracking-widest mt-1 ml-15">Cadastro completo sincronizado com a Carteirinha</p>
+            </div>
+            
+            <div className="flex items-center gap-4 bg-emerald-50 p-4 rounded-3xl border border-emerald-100">
+               <div className="text-right">
+                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Unidade</p>
+                  <p className="text-xs font-bold text-emerald-800">Uarini / AM</p>
+               </div>
+               <div className="w-px h-8 bg-emerald-200"></div>
+               <i className="fas fa-hospital-user text-2xl text-emerald-600"></i>
+            </div>
+          </div>
+
+          <form onSubmit={handleUrgencySubmit} className="space-y-10">
+            {/* SECTION: IDENTIFICAÇÃO */}
+            <div className="space-y-6">
+              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center text-[10px]">01</span>
+                Identificação do Paciente
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-8 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome Completo (sem abreviações)</label>
+                  <input 
+                    required type="text" 
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all uppercase" 
+                    value={urgenciaForm.nomeCompleto} 
+                    onChange={e => setUrgenciaForm({ ...urgenciaForm, nomeCompleto: e.target.value.toUpperCase() })} 
+                    placeholder="DIGITE O NOME COMPLETO"
+                  />
+                </div>
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF (Sincroniza Carteirinha)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 rounded-2xl bg-blue-50/30 border border-blue-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all" 
+                    value={urgenciaForm.cpf} 
+                    onChange={e => {
+                      const v = maskCPF(e.target.value);
+                      setUrgenciaForm({ ...urgenciaForm, cpf: v });
+                      if (v.length === 14) syncPatientWithCarteirinha(v, 'cpf');
+                    }}
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cartão SUS (CNS)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all" 
+                    value={urgenciaForm.sus} 
+                    onChange={e => {
+                      const v = maskSUS(e.target.value);
+                      setUrgenciaForm({ ...urgenciaForm, sus: v });
+                      if (v.length === 15) syncPatientWithCarteirinha(v, 'sus');
+                    }}
+                    placeholder="000 0000 0000 0000"
+                  />
+                </div>
+                <div className="md:col-span-3 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data de Nascimento</label>
+                  <input 
+                    required type="date" 
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all" 
+                    value={urgenciaForm.dataNascimento} 
+                    onChange={e => {
+                      const date = e.target.value;
+                      let age = '';
+                      if (date) {
+                        const birth = new Date(date);
+                        const today = new Date();
+                        age = (today.getFullYear() - birth.getFullYear()).toString();
+                      }
+                      setUrgenciaForm({ ...urgenciaForm, dataNascimento: date, idade: age });
+                    }} 
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Idade</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all" 
+                    value={urgenciaForm.idade} 
+                    onChange={e => setUrgenciaForm({ ...urgenciaForm, idade: maskAge(e.target.value) })}
+                    placeholder="EX: 25"
+                  />
+                </div>
+                <div className="md:col-span-3 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sexo</label>
+                  <select 
+                    required
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all" 
+                    value={urgenciaForm.sexo} 
+                    onChange={e => setUrgenciaForm({ ...urgenciaForm, sexo: e.target.value })}
+                  >
+                    <option value="">SELECIONE</option>
+                    <option value="MASCULINO">MASCULINO</option>
+                    <option value="FEMININO">FEMININO</option>
+                    <option value="NÃO INFORMADO">NÃO INFORMADO</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: FILIAÇÃO */}
+            <div className="space-y-6">
+              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center text-[10px]">02</span>
+                Filiação
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome da Mãe (completo)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all uppercase" 
+                    value={urgenciaForm.mae} 
+                    onChange={e => setUrgenciaForm({ ...urgenciaForm, mae: e.target.value.toUpperCase() })} 
+                    placeholder="NOME DA MÃE"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Pai (completo)</label>
+                  <input 
+                    type="text" 
+                    className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold focus:ring-2 focus:ring-blue-500 transition-all uppercase" 
+                    value={urgenciaForm.pai} 
+                    onChange={e => setUrgenciaForm({ ...urgenciaForm, pai: e.target.value.toUpperCase() })} 
+                    placeholder="NOME DO PAI"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: DADOS COMPLEMENTARES */}
+            <div className="space-y-6">
+              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center text-[10px]">03</span>
+                Dados Complementares
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Reside em Uarini?</label>
+                  <div className="flex gap-4 p-1 bg-gray-50 rounded-2xl border border-gray-100 h-[52px] items-center px-4">
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input type="radio" name="reside" checked={urgenciaForm.resideUarini} onChange={() => setUrgenciaForm({...urgenciaForm, resideUarini: true})} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                      <span className="text-xs font-bold text-slate-600">SIM</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer group">
+                      <input type="radio" name="reside" checked={!urgenciaForm.resideUarini} onChange={() => setUrgenciaForm({...urgenciaForm, resideUarini: false})} className="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                      <span className="text-xs font-bold text-slate-600">NÃO</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Estado Civil</label>
+                  <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold h-[52px]" value={urgenciaForm.estadoCivil} onChange={e => setUrgenciaForm({...urgenciaForm, estadoCivil: e.target.value})}>
+                    <option value="">SELECIONE</option>
+                    <option value="SOLTEIRO(A)">SOLTEIRO(A)</option>
+                    <option value="CASADO(A)">CASADO(A)</option>
+                    <option value="DIVORCIADO(A)">DIVORCIADO(A)</option>
+                    <option value="VIÚVO(A)">VIÚVO(A)</option>
+                    <option value="UNIÃO ESTÁVEL">UNIÃO ESTÁVEL</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Raça / Cor</label>
+                  <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold h-[52px]" value={urgenciaForm.raca} onChange={e => setUrgenciaForm({...urgenciaForm, raca: e.target.value})}>
+                    <option value="">SELECIONE</option>
+                    <option value="BRANCA">BRANCA</option>
+                    <option value="AMARELA">AMARELA</option>
+                    <option value="PARDA">PARDA</option>
+                    <option value="NEGRA">NEGRA</option>
+                    <option value="INDÍGENA">INDÍGENA</option>
+                    <option value="OUTROS">OUTROS</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Tipo Sanguíneo</label>
+                  <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold h-[52px]" value={urgenciaForm.tipoSanguineo} onChange={e => setUrgenciaForm({...urgenciaForm, tipoSanguineo: e.target.value})}>
+                    <option value="">SELECIONE</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alergias</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold h-[52px] uppercase" value={urgenciaForm.alergias} onChange={e => setUrgenciaForm({...urgenciaForm, alergias: e.target.value.toUpperCase()})} placeholder="EX: PENICILINA, NENHUMA" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Telefone de Contato</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold h-[52px]" value={urgenciaForm.telefone} onChange={e => setUrgenciaForm({...urgenciaForm, telefone: maskPhone(e.target.value)})} placeholder="(00) 00000-0000" />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: ENDEREÇO */}
+            <div className="space-y-6">
+              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-6 h-6 bg-blue-50 rounded-lg flex items-center justify-center text-[10px]">04</span>
+                Endereço de Residência
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-6 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Logradouro (Rua/Avenida)</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.logradouro} onChange={e => setUrgenciaForm({...urgenciaForm, logradouro: e.target.value.toUpperCase()})} placeholder="EX: RUA DAS FLORES" />
+                </div>
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Número</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={urgenciaForm.numero} onChange={e => setUrgenciaForm({...urgenciaForm, numero: e.target.value})} placeholder="S/N" />
+                </div>
+                <div className="md:col-span-4 space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Bairro</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.bairro} onChange={e => setUrgenciaForm({...urgenciaForm, bairro: e.target.value.toUpperCase()})} placeholder="EX: CENTRO" />
+                </div>
+              </div>
+            </div>
+
+            {/* SECTION: RESPONSÁVEL (QUANDO MENOR) */}
+            <div className="space-y-6">
+              <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] border-l-4 border-amber-400 pl-4 py-1">
+                Responsável (Se aplicável)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Responsável</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-amber-50/20 border border-amber-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.responsavel} onChange={e => setUrgenciaForm({...urgenciaForm, responsavel: e.target.value.toUpperCase()})} placeholder="NOME DO RESPONSÁVEL" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Grau de Parentesco</label>
+                  <input type="text" className="w-full p-4 rounded-2xl bg-amber-50/20 border border-amber-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.parentesco} onChange={e => setUrgenciaForm({...urgenciaForm, parentesco: e.target.value.toUpperCase()})} placeholder="EX: MÃE, PAI, TIO" />
+                </div>
+              </div>
+            </div>
+
+            {/* SUBMIT BUTTON */}
+            <div className="pt-10">
+              <button 
+                type="submit" 
+                disabled={isAdding}
+                className={`w-full text-white font-black py-6 rounded-[32px] shadow-2xl transition-all uppercase tracking-[0.3em] text-sm flex items-center justify-center gap-4 ${
+                  isAdding ? 'bg-emerald-400 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-1 active:translate-y-0'
+                }`}
+              >
+                {isAdding ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin text-xl"></i>
+                    EFETUANDO CADASTRO...
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-check-double text-xl"></i>
+                    Finalizar Cadastro de Urgência
+                  </>
+                )}
+              </button>
+              <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-6">
+                AO FINALIZAR, O PACIENTE SERÁ INCLUÍDO NA FILA DE ATENDIMENTO COM STATUS DE URGÊNCIA
+              </p>
+            </div>
+          </form>
+        </div>
+      )}
+
       {activeTab === 'fila' && (
+
         <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100 animate-in fade-in duration-500">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h2 className="text-xl font-black text-slate-800">Próximos Atendimentos</h2>
@@ -482,7 +956,14 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 </div>
                 <div className="flex items-center justify-between md:justify-end gap-4 mt-4 md:mt-0">
                   <div className="text-right">
-                    <p className="text-[9px] font-black text-blue-500 uppercase">COLETA LABORATORIAL</p>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${app.status === 'URGÊNCIA' ? 'text-red-500' : 'text-blue-500'}`}>
+                      {app.status === 'URGÊNCIA' ? (
+                        <span className="flex items-center gap-1 justify-end animate-pulse">
+                          <i className="fas fa-triangle-exclamation"></i>
+                          URGÊNCIA
+                        </span>
+                      ) : 'COLETA LABORATORIAL'}
+                    </p>
                     <p className="text-[10px] text-gray-400 font-bold">{app.date}</p>
                   </div>
                   <button 
