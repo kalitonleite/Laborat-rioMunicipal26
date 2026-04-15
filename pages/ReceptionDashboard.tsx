@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Appointment } from '../types';
 import { jsPDF } from 'jspdf';
 import ProfileTab from '../components/ProfileTab';
@@ -13,7 +13,6 @@ interface ReceptionDashboardProps {
   onUpdateUser: (user: User) => void;
 }
 
-import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
 const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateUser }) => {
@@ -531,6 +530,40 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       }
     } catch (error) {
       console.error('[ReceptionDashboard] Sync error:', error);
+    }
+  };
+
+  const handleUrgencyPDF = async (action: 'view' | 'download') => {
+    if (!urgencyRef.current) return;
+    
+    setIsAdding(true);
+    
+    try {
+      const canvas = await html2canvas(urgencyRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      
+      if (action === 'download') {
+        pdf.save(`ficha_urgencia_${urgenciaForm.nomeCompleto.replace(/\s+/g, '_')}.pdf`);
+      } else {
+        const blob = pdf.output('bloburl');
+        window.open(blob, '_blank');
+      }
+    } catch (err) {
+      console.error('Erro ao gerar PDF:', err);
+      alert('Falha ao gerar o PDF. Tente novamente.');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -1273,15 +1306,15 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 <p style={{ marginBottom: '4px' }}><strong>Glicemia:</strong> {urgenciaForm.vitalsGlicemia} mg/dL</p>
                 <p style={{ marginBottom: '4px' }}><strong>Alergias:</strong> {urgenciaForm.hasDrugAllergy ? `SIM (${urgenciaForm.drugAllergiesList})` : 'NÃO'}</p>
               </div>
-              <div style={{ flex: '1', padding: '8px', backgroundColor: urgencyForm.riskClassification === 'VERMELHO' ? '#fee2e2' : '' }}>
+              <div style={{ flex: '1', padding: '8px', backgroundColor: urgenciaForm.riskClassification === 'VERMELHO' ? '#fee2e2' : '' }}>
                 <p style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px' }}>RISCO CLÍNICO</p>
                 <div style={{ 
-                  backgroundColor: urgencyForm.riskClassification === 'VERMELHO' ? '#ef4444' : 
-                                   urgencyForm.riskClassification === 'LARANJA' ? '#f97316' :
-                                   urgencyForm.riskClassification === 'AMARELO' ? '#facc15' :
-                                   urgencyForm.riskClassification === 'VERDE' ? '#10b981' :
-                                   urgencyForm.riskClassification === 'AZUL' ? '#3b82f6' : '#eee',
-                  color: urgencyForm.riskClassification === 'AMARELO' ? '#000' : '#fff',
+                  backgroundColor: urgenciaForm.riskClassification === 'VERMELHO' ? '#ef4444' : 
+                                   urgenciaForm.riskClassification === 'LARANJA' ? '#f97316' :
+                                   urgenciaForm.riskClassification === 'AMARELO' ? '#facc15' :
+                                   urgenciaForm.riskClassification === 'VERDE' ? '#10b981' :
+                                   urgenciaForm.riskClassification === 'AZUL' ? '#3b82f6' : '#eee',
+                  color: urgenciaForm.riskClassification === 'AMARELO' ? '#000' : '#fff',
                   padding: '10px', textAlign: 'center', fontWeight: 'black', borderRadius: '8px'
                 }}>
                   {urgenciaForm.riskClassification || 'NÃO DEFINIDO'}
