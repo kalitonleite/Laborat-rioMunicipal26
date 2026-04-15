@@ -60,6 +60,30 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     parentesco: '',
     tipoSanguineo: '',
     alergias: '',
+    arrivalMode: '',
+    vitalsPa: '',
+    vitalsFc: '',
+    vitalsFr: '',
+    vitalsSat: '',
+    vitalsGlicemia: '',
+    vitalsTemp: '',
+    vitalsBcf: '',
+    vitalsPeso: '',
+    vitalsAltura: '',
+    hasHypertension: false,
+    hasSmoking: false,
+    hasDiabetes: false,
+    hasDrugAllergy: false,
+    drugAllergiesList: '',
+    previousHospitalization: false,
+    hospitalizationReasonLocal: '',
+    riskClassification: '',
+    painScale: 0,
+    signsSymptoms: '',
+    clinicalHistoryExam: '',
+    proceduresDone: '',
+    probableDiagnosis: '',
+    cid10: '',
     dataAtendimento: new Date().toISOString().split('T')[0],
     horaAtendimento: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
   });
@@ -91,6 +115,30 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
           patientResponsibleName: a.patient_responsible_name,
           patientResponsibleRelationship: a.patient_responsible_relationship,
           isUrgency: a.is_urgency,
+          arrivalMode: a.arrival_mode,
+          vitalsPa: a.vitals_pa,
+          vitalsFc: a.vitals_fc,
+          vitalsFr: a.vitals_fr,
+          vitalsSat: a.vitals_sat,
+          vitalsGlicemia: a.vitals_glicemia,
+          vitalsTemp: a.vitals_temp,
+          vitalsBcf: a.vitals_bcf,
+          vitalsPeso: a.vitals_peso,
+          vitalsAltura: a.vitals_altura,
+          hasHypertension: a.has_hypertension,
+          hasSmoking: a.has_smoking,
+          hasDiabetes: a.has_diabetes,
+          hasDrugAllergy: a.has_drug_allergy,
+          drugAllergiesList: a.drug_allergies_list,
+          previousHospitalization: a.previous_hospitalization,
+          hospitalizationReasonLocal: a.hospitalization_reason_local,
+          riskClassification: a.risk_classification,
+          painScale: a.pain_scale,
+          signsSymptoms: a.signs_symptoms,
+          clinicalHistoryExam: a.clinical_history_exam,
+          proceduresDone: a.procedures_done,
+          probableDiagnosis: a.probable_diagnosis,
+          cid10: a.cid_10,
           status: a.status,
           date: a.date,
           time: a.time
@@ -515,10 +563,35 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         patient_responsible_name: urgenciaForm.responsavel,
         patient_responsible_relationship: urgenciaForm.parentesco,
         resides_in_uarini: urgenciaForm.resideUarini,
+        is_urgency: true,
+        arrival_mode: urgenciaForm.arrivalMode,
+        vitals_pa: urgenciaForm.vitalsPa,
+        vitals_fc: urgenciaForm.vitalsFc,
+        vitals_fr: urgenciaForm.vitalsFr,
+        vitals_sat: urgenciaForm.vitalsSat,
+        vitals_glicemia: urgenciaForm.vitalsGlicemia,
+        vitals_temp: urgenciaForm.vitalsTemp,
+        vitals_bcf: urgenciaForm.vitalsBcf,
+        vitals_peso: urgenciaForm.vitalsPeso,
+        vitals_altura: urgenciaForm.vitalsAltura,
+        has_hypertension: urgenciaForm.hasHypertension,
+        has_smoking: urgenciaForm.hasSmoking,
+        has_diabetes: urgenciaForm.hasDiabetes,
+        has_drug_allergy: urgenciaForm.hasDrugAllergy,
+        drug_allergies_list: urgenciaForm.drugAllergiesList,
+        previous_hospitalization: urgenciaForm.previousHospitalization,
+        hospitalization_reason_local: urgenciaForm.hospitalizationReasonLocal,
+        risk_classification: urgenciaForm.riskClassification,
+        pain_scale: urgenciaForm.painScale,
+        signs_symptoms: urgenciaForm.signsSymptoms,
+        clinical_history_exam: urgenciaForm.clinicalHistoryExam,
+        procedures_done: urgenciaForm.proceduresDone,
+        probable_diagnosis: urgenciaForm.probableDiagnosis,
+        cid_10: urgenciaForm.cid10,
         status: 'URGÊNCIA',
+        setor: 'RECEPCAO',
         date: formattedDate,
-        time: urgenciaForm.horaAtendimento,
-        is_urgency: true
+        time: urgenciaForm.horaAtendimento
       });
 
       // 2. Sync back to Profile (Carteirinha)
@@ -864,21 +937,205 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
               </div>
             </div>
 
-            {/* SECTION: RESPONSÁVEL (QUANDO MENOR) */}
+            {/* SECTION: RESPONSÁVEL & LOGÍSTICA */}
             <div className="space-y-6">
               <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] border-l-4 border-amber-400 pl-4 py-1">
-                Responsável (Se aplicável)
+                Responsável & Logística
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <div className="md:col-span-4 space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Responsável</label>
                   <input type="text" className="w-full p-4 rounded-2xl bg-amber-50/20 border border-amber-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.responsavel} onChange={e => setUrgenciaForm({...urgenciaForm, responsavel: e.target.value.toUpperCase()})} placeholder="NOME DO RESPONSÁVEL" />
                 </div>
-                <div className="space-y-1.5">
+                <div className="md:col-span-3 space-y-1.5">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Grau de Parentesco</label>
                   <input type="text" className="w-full p-4 rounded-2xl bg-amber-50/20 border border-amber-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.parentesco} onChange={e => setUrgenciaForm({...urgenciaForm, parentesco: e.target.value.toUpperCase()})} placeholder="EX: MÃE, PAI, TIO" />
                 </div>
+                <div className="md:col-span-5 space-y-1.5">
+                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Como o Paciente chegou?</label>
+                   <div className="flex flex-wrap gap-2 p-1 bg-gray-50 rounded-2xl border border-gray-100">
+                      {['ANDANDO', 'AMBULÂNCIA', 'AUTOMÓVEL', 'MOTOCICLETA', 'OUTROS'].map(mode => (
+                        <button 
+                          key={mode} type="button" 
+                          onClick={() => setUrgenciaForm({...urgenciaForm, arrivalMode: mode})}
+                          className={`px-3 py-2 rounded-xl text-[9px] font-black transition-all ${urgenciaForm.arrivalMode === mode ? 'bg-blue-600 text-white shadow-md' : 'text-gray-400 hover:bg-gray-100'}`}
+                        >
+                          {mode}
+                        </button>
+                      ))}
+                   </div>
+                </div>
               </div>
+            </div>
+
+            {/* SECTION: ACOLHIMENTO (SINAIS VITAIS) */}
+            <div className="space-y-6 bg-slate-50/50 p-6 md:p-8 rounded-[40px] border border-slate-100">
+              <h3 className="text-xs font-black text-emerald-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                <div className="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center text-xs">
+                  <i className="fas fa-heart-pulse"></i>
+                </div>
+                Acolhimento - Sinais Vitais
+              </h3>
+              
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {[
+                  { label: 'PA (mmHg)', key: 'vitalsPa', placeholder: '120/80' },
+                  { label: 'FC (bpm)', key: 'vitalsFc', placeholder: '80' },
+                  { label: 'FR (rpm)', key: 'vitalsFr', placeholder: '16' },
+                  { label: 'SAT (SpO2)', key: 'vitalsSat', placeholder: '98%' },
+                  { label: 'Glicemia (mg/dL)', key: 'vitalsGlicemia', placeholder: '90' },
+                  { label: 'Temp (°C)', key: 'vitalsTemp', placeholder: '36.5' },
+                  { label: 'BCF (bpm)', key: 'vitalsBcf', placeholder: '---' },
+                  { label: 'Peso (Kg)', key: 'vitalsPeso', placeholder: '70' },
+                  { label: 'Altura (m)', key: 'vitalsAltura', placeholder: '1.70' },
+                ].map(field => (
+                  <div key={field.key} className="space-y-1">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{field.label}</label>
+                    <input 
+                      type="text" 
+                      className="w-full p-3 rounded-xl bg-white border border-gray-100 outline-none text-xs font-bold focus:ring-2 focus:ring-emerald-500 transition-all" 
+                      value={(urgenciaForm as any)[field.key]} 
+                      onChange={e => setUrgenciaForm({ ...urgenciaForm, [field.key]: e.target.value })} 
+                      placeholder={field.placeholder}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* SECTION: HISTÓRICO E RISCO */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+               {/* HISTORICO */}
+               <div className="space-y-6">
+                 <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em]">Histórico Clínico</h3>
+                 <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { label: 'Hipertensão', key: 'hasHypertension' },
+                      { label: 'Tabagismo', key: 'hasSmoking' },
+                      { label: 'Diabetes', key: 'hasDiabetes' },
+                      { label: 'Alergia Med.', key: 'hasDrugAllergy' },
+                    ].map(item => (
+                      <div key={item.key} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100">
+                        <span className="text-[10px] font-bold text-slate-600 uppercase">{item.label}</span>
+                        <button 
+                          type="button"
+                          onClick={() => setUrgenciaForm({...urgenciaForm, [item.key]: !(urgenciaForm as any)[item.key]})}
+                          className={`w-10 h-6 rounded-full transition-all relative ${ (urgenciaForm as any)[item.key] ? 'bg-emerald-500' : 'bg-gray-300' }`}
+                        >
+                          <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${ (urgenciaForm as any)[item.key] ? 'left-5' : 'left-1' }`}></div>
+                        </button>
+                      </div>
+                    ))}
+                 </div>
+                 <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Quais Alergias?</label>
+                    <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.drugAllergiesList} onChange={e => setUrgenciaForm({...urgenciaForm, drugAllergiesList: e.target.value.toUpperCase()})} placeholder="EX: DIPIRONA, PENICILINA" />
+                 </div>
+                 <div className="space-y-1.5">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Internação Anterior?</label>
+                      <button 
+                        type="button"
+                        onClick={() => setUrgenciaForm({...urgenciaForm, previousHospitalization: !urgenciaForm.previousHospitalization})}
+                        className={`px-3 py-1 rounded-lg text-[9px] font-black transition-all ${ urgenciaForm.previousHospitalization ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500' }`}
+                      >
+                        {urgenciaForm.previousHospitalization ? 'SIM' : 'NÃO'}
+                      </button>
+                    </div>
+                    {urgenciaForm.previousHospitalization && (
+                      <input type="text" className="w-full p-4 rounded-2xl bg-blue-50 border border-blue-100 outline-none text-sm font-bold uppercase animate-in slide-in-from-top-2" value={urgenciaForm.hospitalizationReasonLocal} onChange={e => setUrgenciaForm({...urgenciaForm, hospitalizationReasonLocal: e.target.value.toUpperCase()})} placeholder="MOTIVO E LOCAL" />
+                    )}
+                 </div>
+               </div>
+
+               {/* CLASSIFICAÇÃO E DOR */}
+               <div className="space-y-8">
+                 <div className="space-y-4">
+                    <h3 className="text-xs font-black text-rose-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                       Classificação de Risco
+                       <i className="fas fa-triangle-exclamation"></i>
+                    </h3>
+                    <div className="grid grid-cols-5 gap-2">
+                      {[
+                        { id: 'VERMELHO', color: 'bg-red-500', label: 'EMERGÊNCIA' },
+                        { id: 'LARANJA', color: 'bg-orange-500', label: 'MUITO URGENTE' },
+                        { id: 'AMARELO', color: 'bg-yellow-400', label: 'URGENTE' },
+                        { id: 'VERDE', color: 'bg-emerald-500', label: 'POUCO URGENTE' },
+                        { id: 'AZUL', color: 'bg-blue-500', label: 'NÃO URGENTE' },
+                      ].map(risk => (
+                        <button 
+                          key={risk.id} type="button"
+                          onClick={() => setUrgenciaForm({...urgenciaForm, riskClassification: risk.id})}
+                          className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all border-2 ${urgenciaForm.riskClassification === risk.id ? 'border-slate-800 scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                        >
+                          <div className={`w-8 h-8 rounded-full ${risk.color}`}></div>
+                          <span className="text-[7px] font-black text-center leading-tight uppercase">{risk.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-4">
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-[0.2em] flex items-center justify-between">
+                       Escala de Dor 
+                       <span className="text-lg font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-xl">{urgenciaForm.painScale}</span>
+                    </h3>
+                    <div className="relative px-2">
+                       <input 
+                         type="range" min="0" max="10" 
+                         className="w-full h-2 bg-gradient-to-r from-emerald-400 via-yellow-400 to-red-500 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                         value={urgenciaForm.painScale} 
+                         onChange={e => setUrgenciaForm({...urgenciaForm, painScale: parseInt(e.target.value)})}
+                       />
+                       <div className="flex justify-between mt-2">
+                          {[0, 2, 4, 6, 8, 10].map(n => (
+                            <span key={n} className="text-[10px] font-black text-gray-300">{n}</span>
+                          ))}
+                       </div>
+                    </div>
+                 </div>
+               </div>
+            </div>
+
+            {/* SECTION: AVALIAÇÃO CLÍNICA */}
+            <div className="space-y-6 pt-6 border-t border-gray-100">
+               <h3 className="text-xs font-black text-blue-600 uppercase tracking-[0.2em]">Avaliação Clínica e Procedimentos</h3>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sinais e Sintomas</label>
+                    <textarea 
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase min-h-[100px]" 
+                      value={urgenciaForm.signsSymptoms} onChange={e => setUrgenciaForm({...urgenciaForm, signsSymptoms: e.target.value.toUpperCase()})}
+                      placeholder="DESCREVA OS SINTOMAS APRESENTADOS"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">História Clínica / Exame Físico</label>
+                    <textarea 
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase min-h-[100px]" 
+                      value={urgenciaForm.clinicalHistoryExam} onChange={e => setUrgenciaForm({...urgenciaForm, clinicalHistoryExam: e.target.value.toUpperCase()})}
+                      placeholder="BREVE HISTÓRICO E RESULTADO DO EXAME FÍSICO"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Procedimentos Realizados</label>
+                    <textarea 
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase min-h-[100px]" 
+                      value={urgenciaForm.proceduresDone} onChange={e => setUrgenciaForm({...urgenciaForm, proceduresDone: e.target.value.toUpperCase()})}
+                      placeholder="PROCEDIMENTOS E CONDUTAS"
+                    />
+                  </div>
+                  <div className="space-y-6">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Diagnóstico Provável</label>
+                      <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.probableDiagnosis} onChange={e => setUrgenciaForm({...urgenciaForm, probableDiagnosis: e.target.value.toUpperCase()})} placeholder="DIAGNÓSTICO HIPOTÉTICO" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CID 10</label>
+                      <input type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold uppercase" value={urgenciaForm.cid10} onChange={e => setUrgenciaForm({...urgenciaForm, cid10: e.target.value.toUpperCase()})} placeholder="CÓDIGO CID 10" />
+                    </div>
+                  </div>
+               </div>
             </div>
 
             {/* SUBMIT BUTTON */}

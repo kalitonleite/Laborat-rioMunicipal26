@@ -65,7 +65,31 @@ async function runMigration() {
             "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS patient_neighborhood TEXT",
             "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS patient_responsible_name TEXT",
             "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS patient_responsible_relationship TEXT",
-            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS is_urgency BOOLEAN DEFAULT FALSE"
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS is_urgency BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS arrival_mode TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_pa TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_fc TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_fr TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_sat TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_glicemia TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_temp TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_bcf TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_peso TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS vitals_altura TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS has_hypertension BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS has_smoking BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS has_diabetes BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS has_drug_allergy BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS drug_allergies_list TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS previous_hospitalization BOOLEAN DEFAULT FALSE",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS hospitalization_reason_local TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS risk_classification TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS pain_scale INTEGER",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS signs_symptoms TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS clinical_history_exam TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS procedures_done TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS probable_diagnosis TEXT",
+            "ALTER TABLE public.appointments ADD COLUMN IF NOT EXISTS cid_10 TEXT"
         ];
 
         for (const migration of migrations) {

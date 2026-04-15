@@ -94,6 +94,30 @@ export interface Appointment {
   patientResponsibleName?: string;
   patientResponsibleRelationship?: string;
   isUrgency?: boolean;
+  arrivalMode?: string;
+  vitalsPa?: string;
+  vitalsFc?: string;
+  vitalsFr?: string;
+  vitalsSat?: string;
+  vitalsGlicemia?: string;
+  vitalsTemp?: string;
+  vitalsBcf?: string;
+  vitalsPeso?: string;
+  vitalsAltura?: string;
+  hasHypertension?: boolean;
+  hasSmoking?: boolean;
+  hasDiabetes?: boolean;
+  hasDrugAllergy?: boolean;
+  drugAllergiesList?: string;
+  previousHospitalization?: boolean;
+  hospitalizationReasonLocal?: string;
+  riskClassification?: string;
+  painScale?: number;
+  signsSymptoms?: string;
+  clinicalHistoryExam?: string;
+  proceduresDone?: string;
+  probableDiagnosis?: string;
+  cid10?: string;
 }
 
 export interface QrCode {
