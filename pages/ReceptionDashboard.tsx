@@ -260,6 +260,30 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     return days;
   }, [currentDate]);
 
+  const [modalCalDate, setModalCalDate] = useState(new Date());
+
+  const handleModalPrevMonth = () => {
+    setModalCalDate(new Date(modalCalDate.getFullYear(), modalCalDate.getMonth() - 1, 1));
+  };
+
+  const handleModalNextMonth = () => {
+    setModalCalDate(new Date(modalCalDate.getFullYear(), modalCalDate.getMonth() + 1, 1));
+  };
+
+  const modalMonthYearLabel = modalCalDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+
+  const modalDaysInMonth = useMemo(() => {
+    const year = modalCalDate.getFullYear();
+    const month = modalCalDate.getMonth();
+    const date = new Date(year, month, 1);
+    const days = [];
+    while (date.getMonth() === month) {
+      days.push(new Date(date));
+      date.setDate(date.getDate() + 1);
+    }
+    return days;
+  }, [modalCalDate]);
+
   const occupiedDates = useMemo(() => appointments.map(a => a.date), [appointments]);
   const filtered = appointments.filter(a => {
     const searchClean = search.replace(/\D/g, '');
@@ -1692,7 +1716,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
               <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Inserir paciente na agenda</p>
             </div>
 
-            <div className="p-8 space-y-4 relative">
+            <div className="p-8 space-y-4 relative max-h-[90vh] overflow-y-auto">
               <button type="button" onClick={() => setIsModalOpen(false)} className="absolute top-4 right-6 text-gray-400 hover:text-red-500 transition-all z-10">
                 <i className="fas fa-times text-xl"></i>
               </button>
@@ -1739,8 +1763,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-1 space-y-1">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sexo</label>
                     <select className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.patientGender} onChange={e => setNewApp({ ...newApp, patientGender: e.target.value })}>
                       <option value="">Selecione</option>
@@ -1748,13 +1772,73 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                       <option value="FEMININO">FEM</option>
                     </select>
                   </div>
-                  <div className="col-span-2 space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data</label>
-                    <input required type="date" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold" value={newApp.date} onChange={e => setNewApp({ ...newApp, date: e.target.value })} />
-                  </div>
-                  <div className="col-span-1 space-y-1">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Hora</label>
                     <input required type="time" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-xs font-bold px-2" value={newApp.time} onChange={e => setNewApp({ ...newApp, time: e.target.value })} />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Data</label>
+                  <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                    <div className="flex justify-between items-center mb-3">
+                      <button
+                        type="button"
+                        onClick={handleModalPrevMonth}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-blue-600 transition-all"
+                      >
+                        <i className="fas fa-chevron-left"></i>
+                      </button>
+                      <span className="text-[11px] font-black text-blue-600 uppercase tracking-widest">{modalMonthYearLabel}</span>
+                      <button
+                        type="button"
+                        onClick={handleModalNextMonth}
+                        className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-blue-600 transition-all"
+                      >
+                        <i className="fas fa-chevron-right"></i>
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-7 gap-1 mb-2">
+                      {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'].map(day => (
+                        <div key={day} className="text-center text-[8px] font-black text-slate-400">{day}</div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                      {Array.from({ length: new Date(modalCalDate.getFullYear(), modalCalDate.getMonth(), 1).getDay() }).map((_, i) => (
+                        <div key={`empty-${i}`} className="aspect-square"></div>
+                      ))}
+                      {modalDaysInMonth.map((date, idx) => {
+                        const ds = date.toLocaleDateString('pt-BR');
+                        const isBlocked = blockedDates.includes(ds);
+                        const isSelected = newApp.date === ds;
+                        return (
+                          <button
+                            type="button"
+                            key={idx}
+                            disabled={isBlocked}
+                            onClick={() => setNewApp({ ...newApp, date: ds })}
+                            className={`aspect-square rounded-lg text-[10px] font-black border transition-all flex flex-col items-center justify-center relative ${isBlocked
+                              ? 'bg-red-100 text-red-600 border-red-200 cursor-not-allowed opacity-70'
+                              : isSelected
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                                : 'bg-white text-blue-600 border-transparent hover:border-blue-200 hover:bg-blue-50'
+                              }`}
+                          >
+                            <span>{date.getDate()}</span>
+                            {isBlocked && <i className="fas fa-lock text-[5px] absolute top-0.5 right-0.5 text-red-500"></i>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-center gap-4 mt-3">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span className="text-[8px] font-black text-gray-400">DISPONÍVEL</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                        <span className="text-[8px] font-black text-gray-400">BLOQUEADO</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-4">
