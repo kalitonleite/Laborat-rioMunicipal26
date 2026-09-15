@@ -43,7 +43,14 @@ export default function ChatExame({ exameSelecionado, usuarioId }: ChatExameProp
         })
       });
 
-      const data = await response.json();
+      const rawText = await response.text();
+      let data: any = {};
+      if (rawText) {
+        try { data = JSON.parse(rawText); } catch (e) { data = {}; }
+      }
+      if (!response.ok) {
+        throw new Error(data.error || `Erro do servidor (HTTP ${response.status}).`);
+      }
       if (data.reply) {
         setMessages(prev => [...prev, { role: 'assistant', content: data.reply }]);
       } else {

@@ -9,18 +9,34 @@ export const apiRequest = async (endpoint: string, method: string = 'GET', body:
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(endpoint, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : null,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error || 'Falha na requisição da API');
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : null,
+    });
+  } catch (error) {
+    console.error('Network error on', endpoint, error);
+    throw new Error('Falha de conexão com o servidor. Verifique sua internet e tente novamente.');
   }
 
-  return response.json();
+  const rawText = await response.text().catch(() => '');
+  let data: any = null;
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch (e) {
+      data = null;
+    }
+  }
+
+  if (!response.ok) {
+    console.error('API error', response.status, endpoint, rawText.slice(0, 500));
+    throw new Error(data?.error || `Falha na requisição (HTTP ${response.status}).`);
+  }
+
+  return data;
 };
 
 export const dbService = {
