@@ -41,6 +41,20 @@ input {
   outline: none;
 }
 
+/* Garante bordas visíveis em todos os campos de formulário (input/select/textarea),
+   já que as classes do app usam border-gray-100, praticamente invisível no fundo branco. */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  border: 1px solid #cbd5e1;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #3b82f6;
+}
+
 .glass-card {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
