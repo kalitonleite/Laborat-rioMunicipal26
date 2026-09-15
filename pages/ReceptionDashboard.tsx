@@ -31,6 +31,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   
   const [newApp, setNewApp] = useState({ 
     patientName: '', 
+    patientCpf: '',
     patientBirthDate: '', 
     patientGender: '', 
     patientSusNumber: '', 
@@ -460,6 +461,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       const data = await dbService.from('appointments').insert({
         patient_id: 'P-' + Math.floor(Math.random() * 1000),
         patient_name: newApp.patientName,
+        patient_cpf: newApp.patientCpf,
         patient_birth_date: newApp.patientBirthDate,
         patient_age: !isNaN(age) ? age : null,
         patient_gender: newApp.patientGender,
@@ -481,6 +483,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         id: data[0].id,
         patientId: data[0].patient_id,
         patientName: data[0].patient_name,
+        patientCpf: data[0].patient_cpf,
         patientBirthDate: data[0].patient_birth_date,
         patientAge: data[0].patient_age,
         patientGender: data[0].patient_gender,
@@ -501,6 +504,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       setIsModalOpen(false);
       setNewApp({ 
         patientName: '', 
+        patientCpf: '',
         patientBirthDate: '', 
         patientAge: '', 
         patientGender: '', 
@@ -1726,9 +1730,22 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 <i className="fas fa-times text-xl"></i>
               </button>
               <form onSubmit={handleAddAppointment} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Paciente</label>
-                  <input required type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientName} onChange={e => setNewApp({ ...newApp, patientName: e.target.value })} />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nome do Paciente</label>
+                    <input required type="text" className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" value={newApp.patientName} onChange={e => setNewApp({ ...newApp, patientName: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">CPF</label>
+                    <input 
+                      required 
+                      type="text" 
+                      placeholder="000.000.000-00"
+                      className="w-full p-4 rounded-2xl bg-gray-50 border border-gray-100 outline-none text-sm font-bold" 
+                      value={newApp.patientCpf} 
+                      onChange={e => setNewApp({ ...newApp, patientCpf: maskCPF(e.target.value) })} 
+                    />
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
