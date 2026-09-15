@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
 
     if (action === 'insert') {
         const keys = Object.keys(data);
-        const values = Object.values(data).map(toDbValue);
+        const values = Object.values(data);
         const query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`;
         const result = await sql.query(query, values);
         const rows = Array.isArray(result) ? result : (result.rows || []);
@@ -92,7 +92,7 @@ module.exports = async function handler(req, res) {
     if (action === 'update') {
         if (!id && !filter) return res.status(400).json({ error: 'ID ou filtro é necessário para atualização.' });
         const keys = Object.keys(data);
-        const values = Object.values(data).map(toDbValue);
+        const values = Object.values(data);
         let query = `UPDATE public.${table} SET ` + keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
         
         const filterKeys = filter ? Object.keys(filter) : ['id'];

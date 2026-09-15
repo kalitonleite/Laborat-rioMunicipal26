@@ -157,9 +157,9 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
       try {
         const data = await dbService.from('lab_settings').select();
         data?.forEach((setting: any) => {
-          if (setting.key === 'blocked_dates') setBlockedDates(setting.value);
-          if (setting.key === 'daily_limit') setDailyLimit(Number(setting.value));
-          if (setting.key === 'specific_limits') setSpecificLimits(setting.value);
+          if (setting.key === 'blocked_dates') setBlockedDates(Array.isArray(setting.value) ? setting.value : []);
+          if (setting.key === 'daily_limit') setDailyLimit(Number(setting.value) || 20);
+          if (setting.key === 'specific_limits') setSpecificLimits(setting.value && typeof setting.value === 'object' ? setting.value : {});
           localStorage.setItem(`lab_${setting.key}`, JSON.stringify(setting.value));
         });
       } catch (error) {
