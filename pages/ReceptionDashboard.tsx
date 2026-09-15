@@ -1950,9 +1950,10 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
               ) : (
                 <>
                   <div className="hidden md:block overflow-x-auto">
-                    <div className="grid grid-cols-8 gap-4 min-w-[760px] mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    <div className="grid grid-cols-9 gap-4 min-w-[880px] mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       <span>Horário</span>
                       <span>Paciente</span>
+                      <span>CPF</span>
                       <span>Contato</span>
                       <span>Nascimento</span>
                       <span>Idade</span>
@@ -1963,9 +1964,10 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
 
                     <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-2">
                       {filtered.map(app => (
-                        <div key={app.id} className="grid grid-cols-8 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
+                        <div key={app.id} className="grid grid-cols-9 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
                           <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
                           <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
+                          <span className="text-xs font-medium text-slate-500">{app.patientCpf || '-'}</span>
                           <span className="text-[10px] font-medium text-blue-600">{app.patientPhone || '-'}</span>
                           <span className="text-xs font-medium text-slate-500">{app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
                           <span className="text-xs font-medium text-slate-500">{app.patientAge || '-'}</span>
@@ -1989,6 +1991,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                           <span className="text-right">{app.date}</span>
                           <span>Nasc: {app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
                           <span className="text-right">Idade: {app.patientAge || '-'}</span>
+                          <span className="col-span-2 truncate">CPF: {app.patientCpf || '-'}</span>
                           <span className="col-span-2 truncate">SUS: {app.patientSusNumber || '-'}</span>
                           <span className="col-span-2 truncate">{app.patientAddress}{app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}</span>
                         </div>
