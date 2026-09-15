@@ -441,6 +441,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     const formattedDate = newApp.date.split('-').reverse().join('/');
     const countForDate = appointments.filter(a => a.date === formattedDate).length;
 
+    if (blockedDates.includes(formattedDate)) {
+      alert('Esta data está bloqueada para novos agendamentos. Escolha outra data.');
+      return;
+    }
+
     // Prioritize specific limit over global limit
     const currentLimit = specificLimits[formattedDate] ?? dailyLimit;
 
@@ -1810,32 +1815,56 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                         const ds = date.toLocaleDateString('pt-BR');
                         const isBlocked = blockedDates.includes(ds);
                         const isSelected = newApp.date === ds;
+
+                        const countForDay = appointments.filter(a => a.date === ds).length;
+                        const currentLimit = specificLimits[ds] ?? dailyLimit;
+                        const remaining = Math.max(0, currentLimit - countForDay);
+                        const isFull = remaining === 0;
+                        const finishing = !isFull && remaining <= 3;
+
                         return (
                           <button
                             type="button"
                             key={idx}
-                            disabled={isBlocked}
+                            disabled={isBlocked || isFull}
                             onClick={() => setNewApp({ ...newApp, date: ds })}
-                            className={`aspect-square rounded-lg text-[10px] font-black border transition-all flex flex-col items-center justify-center relative ${isBlocked
+                            className={`aspect-square rounded-lg text-[10px] font-bold border transition-all flex flex-col items-center justify-center relative ${isBlocked
                               ? 'bg-red-100 text-red-600 border-red-200 cursor-not-allowed opacity-70'
-                              : isSelected
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                                : 'bg-white text-blue-600 border-transparent hover:border-blue-200 hover:bg-blue-50'
+                              : isFull
+                                ? 'bg-orange-50 text-orange-600 border-orange-100 cursor-not-allowed opacity-70'
+                                : isSelected
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
+                                  : finishing
+                                    ? 'bg-red-50 text-red-500 border-red-200'
+                                    : 'bg-white text-blue-600 border-transparent hover:border-blue-200 hover:bg-blue-50'
                               }`}
                           >
+                            <span className="text-[6px] font-black opacity-80 mb-0.5 leading-none">
+                              {isBlocked ? '' : isFull ? 'LOTADO' : `${remaining} Vagas`}
+                            </span>
                             <span>{date.getDate()}</span>
-                            {isBlocked && <i className="fas fa-lock text-[5px] absolute top-0.5 right-0.5 text-red-500"></i>}
+                            <span className="text-[8px] leading-none mt-0.5">
+                              {isBlocked ? <i className="fas fa-lock text-[6px] text-red-500"></i> : isFull ? '🚫' : finishing ? '😡' : '😊'}
+                            </span>
                           </button>
                         );
                       })}
                     </div>
-                    <div className="flex justify-center gap-4 mt-3">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                        <span className="text-[8px] font-black text-gray-400">DISPONÍVEL</span>
+                    <div className="flex flex-wrap justify-center gap-3 mt-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px]">😊</span>
+                        <span className="text-[8px] font-black text-gray-400">MUITAS VAGAS</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px]">😡</span>
+                        <span className="text-[8px] font-black text-gray-400">POUCAS VAGAS</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[9px]">🚫</span>
+                        <span className="text-[8px] font-black text-gray-400">LOTADO</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 rounded-full bg-red-500"></span>
                         <span className="text-[8px] font-black text-gray-400">BLOQUEADO</span>
                       </div>
                     </div>
