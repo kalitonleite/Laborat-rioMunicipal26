@@ -172,7 +172,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
   const handleSaveLimit = async (limit: number) => {
     setDailyLimit(limit);
     try {
-      await dbService.from('lab_settings').update({ value: limit }, { key: 'daily_limit' });
+      await dbService.from('lab_settings').upsert({ key: 'daily_limit', value: limit, updated_at: new Date().toISOString() }, ['key']);
     } catch (error) {
       console.error('Error updating limit:', error);
     }
@@ -187,7 +187,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     setSpecificLimits(updated);
 
     try {
-      await dbService.from('lab_settings').update({ value: updated }, { key: 'specific_limits' });
+      await dbService.from('lab_settings').upsert({ key: 'specific_limits', value: updated, updated_at: new Date().toISOString() }, ['key']);
     } catch (error) {
       console.error('Error updating specific limit:', error);
     }
@@ -204,7 +204,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     setSpecificLimits(updated);
 
     try {
-      await dbService.from('lab_settings').update({ value: updated }, { key: 'specific_limits' });
+      await dbService.from('lab_settings').upsert({ key: 'specific_limits', value: updated, updated_at: new Date().toISOString() }, ['key']);
     } catch (error) {
       console.error('Error removing specific limit:', error);
     }
@@ -219,7 +219,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
     setBlockedDates(dates);
 
     try {
-      await dbService.from('lab_settings').update({ value: dates }, { key: 'blocked_dates' });
+      await dbService.from('lab_settings').upsert({ key: 'blocked_dates', value: dates, updated_at: new Date().toISOString() }, ['key']);
     } catch (error) {
       console.error('Error updating blocked dates:', error);
     }
@@ -1585,6 +1585,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                 const count = appointments.filter(a => a.date === ds).length;
                 const currentLimit = specificLimits[ds] ?? dailyLimit;
                 const isFull = count >= currentLimit;
+                const isBlocked = blockedDates.includes(ds);
                 const hasOverride = specificLimits[ds] !== undefined;
                 const percent = Math.min((count / currentLimit) * 100, 100);
 
@@ -1592,18 +1593,22 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   <button
                     key={idx}
                     onClick={() => setSelectedDateForLimit(ds)}
-                    className={`aspect-square rounded-xl text-[11px] font-black border-2 transition-all flex flex-col items-center justify-center relative overflow-hidden group ${isFull
+                    className={`aspect-square rounded-xl text-[11px] font-black border-2 transition-all flex flex-col items-center justify-center relative overflow-hidden group ${isBlocked
                       ? 'bg-red-50 border-red-200 text-red-500'
-                      : count > 0
-                        ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm'
-                        : 'bg-white border-transparent text-slate-400 hover:border-blue-200'
+                      : isFull
+                        ? 'bg-red-100 border-red-300 text-red-400'
+                        : count > 0
+                          ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-sm'
+                          : 'bg-white border-transparent text-slate-400 hover:border-blue-200'
                       }`}
                   >
                     <span className="relative z-10 text-[8px] font-black opacity-80 mb-0.5 leading-none">{currentLimit - count} vagas</span>
                     <span className="relative z-10 text-xs">{date.getDate()}</span>
-                    {hasOverride && (
+                    {isBlocked ? (
+                      <i className="fas fa-lock text-[6px] absolute top-1 right-1 text-red-500"></i>
+                    ) : hasOverride ? (
                       <i className="fas fa-star text-[6px] absolute top-1 right-1 text-blue-500"></i>
-                    )}
+                    ) : null}
                     <div
                       className="absolute bottom-0 left-0 h-1 bg-current opacity-20 transition-all"
                       style={{ width: `${percent}%` }}

@@ -14,10 +14,19 @@ async function getBody(req) {
     });
 }
 
+// Converte arrays/objetos em JSON válido antes de gravar em colunas JSONB.
+// O driver do Neon serializa arrays como literais {} do Postgres, o que invalida
+// o cast para JSONB. Aqui garantimos que parâmetros complexos cheguem como JSON.
+function toDbValue(value) {
+    if (value === null || value === undefined) return value;
+    if (Array.isArray(value) || typeof value === 'object') return JSON.stringify(value);
+    return value;
+}
+
 module.exports = async function handler(req, res) {
   try {
     const body = await getBody(req);
-    const { table, action, id, filter, order, data } = body;
+    const { table, action, id, filter, order, data, conflictKeys } = body;
 
     const isPublicCheck = (table === 'authorization_codes' && action === 'select') ||
                           (table === 'lab_settings' && action === 'select') ||
@@ -73,7 +82,7 @@ module.exports = async function handler(req, res) {
 
     if (action === 'insert') {
         const keys = Object.keys(data);
-        const values = Object.values(data);
+        const values = Object.values(data).map(toDbValue);
         const query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`;
         const result = await sql.query(query, values);
         const rows = Array.isArray(result) ? result : (result.rows || []);
@@ -83,7 +92,7 @@ module.exports = async function handler(req, res) {
     if (action === 'update') {
         if (!id && !filter) return res.status(400).json({ error: 'ID ou filtro é necessário para atualização.' });
         const keys = Object.keys(data);
-        const values = Object.values(data);
+        const values = Object.values(data).map(toDbValue);
         let query = `UPDATE public.${table} SET ` + keys.map((key, i) => `${key} = $${i + 1}`).join(', ');
         
         const filterKeys = filter ? Object.keys(filter) : ['id'];
@@ -95,6 +104,19 @@ module.exports = async function handler(req, res) {
         }).join(' AND ');
 
         query += ' RETURNING *';
+        const result = await sql.query(query, values);
+        const rows = Array.isArray(result) ? result : (result.rows || []);
+        return res.status(200).json(rows);
+    }
+
+    if (action === 'upsert') {
+        if (!data) return res.status(400).json({ error: 'Dados são obrigatórios.' });
+        const keys = Object.keys(data);
+        const values = Object.values(data).map(toDbValue);
+        const conflictColumns = (conflictKeys && conflictKeys.length > 0) ? conflictKeys : ['id'];
+        const conflictClause = conflictColumns.join(', ');
+        const updateClause = keys.map((key) => `${key} = EXCLUDED.${key}`).join(', ');
+        const query = `INSERT INTO public.${table} (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')}) ON CONFLICT (${conflictClause}) DO UPDATE SET ${updateClause} RETURNING *`;
         const result = await sql.query(query, values);
         const rows = Array.isArray(result) ? result : (result.rows || []);
         return res.status(200).json(rows);
