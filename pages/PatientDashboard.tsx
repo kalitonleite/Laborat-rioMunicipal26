@@ -910,7 +910,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
                       </div>
                     ) : (
                       <div className="space-y-6">
-                        <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+                        <div className="flex flex-wrap justify-between items-center gap-x-6 gap-y-1 border-b border-gray-50 pb-4">
                           <span className="text-[11px] font-black text-slate-400 uppercase">Parâmetro Analisado</span>
                           <span className="text-[11px] font-black text-slate-400 uppercase">Resultado Encontrado</span>
                           <span className="text-[11px] font-black text-slate-400 uppercase">Valor de Referência</span>
@@ -918,7 +918,7 @@ const PatientDashboard: React.FC<PatientDashboardProps> = ({ user, onUpdateUser 
 
                         {/* Simulação genérica de linhas de laudo */}
                         {[1, 2, 3].map(i => (
-                          <div key={i} className="flex justify-between items-center py-2">
+                          <div key={i} className="flex flex-wrap justify-between items-center gap-x-4 gap-y-1 py-2">
                             <span className="text-sm font-bold text-slate-700 uppercase">Indicador {i}</span>
                             <span className="text-sm font-black text-blue-600">---</span>
                             <span className="text-xs font-medium text-slate-400">---</span>

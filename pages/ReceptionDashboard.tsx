@@ -1125,7 +1125,7 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                        Classificação de Risco
                        <i className="fas fa-triangle-exclamation"></i>
                     </h3>
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                       {[
                         { id: 'VERMELHO', color: 'bg-red-500', label: 'EMERGÊNCIA' },
                         { id: 'LARANJA', color: 'bg-orange-500', label: 'MUITO URGENTE' },
@@ -1391,8 +1391,8 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
         <div className="bg-white p-6 md:p-8 rounded-[32px] shadow-sm border border-gray-100 animate-in fade-in duration-500">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <h2 className="text-xl font-black text-slate-800">Próximos Atendimentos</h2>
-            <div className="flex gap-2 w-full md:w-auto">
-              <div className="relative flex-grow">
+            <div className="flex flex-wrap gap-2 w-full md:w-auto">
+              <div className="relative flex-1 min-w-[160px] md:min-w-[240px]">
                 <i className="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
                 <input
                   type="text" placeholder="Buscar por nome ou CPF..."
@@ -1404,11 +1404,11 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
                   }}
                 />
               </div>
-              <button onClick={() => setIsListViewOpen(true)} className="bg-emerald-50 text-emerald-600 px-4 py-3 rounded-xl hover:bg-emerald-100 transition-all flex items-center gap-2">
+              <button onClick={() => setIsListViewOpen(true)} className="bg-emerald-50 text-emerald-600 px-4 py-3 rounded-xl hover:bg-emerald-100 transition-all flex items-center justify-center gap-2 flex-1 md:flex-none">
                 <i className="fas fa-eye"></i>
                 <span className="text-xs font-bold">Visualizar Lista</span>
               </button>
-              <button onClick={handleDownloadList} className="bg-blue-50 text-blue-600 px-4 py-3 rounded-xl hover:bg-blue-100 transition-all flex items-center gap-2">
+              <button onClick={handleDownloadList} className="bg-blue-50 text-blue-600 px-4 py-3 rounded-xl hover:bg-blue-100 transition-all flex items-center justify-center gap-2 flex-1 md:flex-none">
                 <i className="fas fa-download"></i>
                 <span className="text-xs font-bold">Baixar Lista</span>
               </button>
@@ -1942,36 +1942,61 @@ const ReceptionDashboard: React.FC<ReceptionDashboardProps> = ({ user, onUpdateU
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-8">
-              <div className="grid grid-cols-8 gap-4 mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                <span>Horário</span>
-                <span>Paciente</span>
-                <span>Contato</span>
-                <span>Nascimento</span>
-                <span>Idade</span>
-                <span>SUS</span>
-                <span>Endereço</span>
-                <span>Data</span>
-              </div>
+            <div className="flex-1 overflow-y-auto p-6 md:p-8">
+              {filtered.length === 0 ? (
+                <div className="py-12 text-center text-gray-400 italic">
+                  Nenhum agendamento para exibir com os filtros atuais.
+                </div>
+              ) : (
+                <>
+                  <div className="hidden md:block overflow-x-auto">
+                    <div className="grid grid-cols-8 gap-4 min-w-[760px] mb-4 pb-4 border-b border-gray-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <span>Horário</span>
+                      <span>Paciente</span>
+                      <span>Contato</span>
+                      <span>Nascimento</span>
+                      <span>Idade</span>
+                      <span>SUS</span>
+                      <span>Endereço</span>
+                      <span>Data</span>
+                    </div>
 
-              <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-2">
-                {filtered.length > 0 ? filtered.map(app => (
-                  <div key={app.id} className="grid grid-cols-8 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
-                    <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
-                    <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
-                    <span className="text-[10px] font-medium text-blue-600">{app.patientPhone || '-'}</span>
-                    <span className="text-xs font-medium text-slate-500">{app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
-                    <span className="text-xs font-medium text-slate-500">{app.patientAge || '-'}</span>
-                    <span className="text-xs font-medium text-slate-500 truncate">{app.patientSusNumber || '-'}</span>
-                    <span className="text-[10px] font-medium text-slate-400 truncate max-w-[150px]" title={`${app.patientAddress}, ${app.patientAddressNumber}`}>{app.patientAddress}{app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}</span>
-                    <span className="text-xs font-bold text-slate-800">{app.date}</span>
+                    <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-2">
+                      {filtered.map(app => (
+                        <div key={app.id} className="grid grid-cols-8 gap-4 py-3 items-center border-b border-gray-50 last:border-0">
+                          <span className="text-sm font-black text-blue-600 bg-blue-50 w-fit px-3 py-1 rounded-lg">{app.time}</span>
+                          <span className="text-sm font-bold text-slate-700">{app.patientName}</span>
+                          <span className="text-[10px] font-medium text-blue-600">{app.patientPhone || '-'}</span>
+                          <span className="text-xs font-medium text-slate-500">{app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
+                          <span className="text-xs font-medium text-slate-500">{app.patientAge || '-'}</span>
+                          <span className="text-xs font-medium text-slate-500 truncate">{app.patientSusNumber || '-'}</span>
+                          <span className="text-[10px] font-medium text-slate-400 truncate max-w-[150px]" title={`${app.patientAddress}, ${app.patientAddressNumber}`}>{app.patientAddress}{app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}</span>
+                          <span className="text-xs font-bold text-slate-800">{app.date}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                )) : (
-                  <div className="py-12 text-center text-gray-400 italic">
-                    Nenhum agendamento para exibir com os filtros atuais.
+
+                  <div className="md:hidden space-y-3">
+                    {filtered.map(app => (
+                      <div key={app.id} className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-black text-slate-800">{app.patientName}</span>
+                          <span className="text-xs font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-lg whitespace-nowrap">{app.time}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-y-1 text-[10px] font-bold text-slate-500">
+                          <span className="text-blue-600">{app.patientPhone || '-'}</span>
+                          <span className="text-right">{app.date}</span>
+                          <span>Nasc: {app.patientBirthDate?.split('-').reverse().join('/') || '-'}</span>
+                          <span className="text-right">Idade: {app.patientAge || '-'}</span>
+                          <span className="col-span-2 truncate">SUS: {app.patientSusNumber || '-'}</span>
+                          <span className="col-span-2 truncate">{app.patientAddress}{app.patientAddressNumber ? `, ${app.patientAddressNumber}` : ''}</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
 
             <div className="p-8 border-t border-gray-50 flex justify-between items-center bg-gray-50/30">

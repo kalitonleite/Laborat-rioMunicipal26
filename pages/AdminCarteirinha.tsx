@@ -233,16 +233,16 @@ const AdminCarteirinha: React.FC = () => {
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Gestão de Carteirinhas</h1>
           <p className="text-slate-400 font-medium mt-1">Administre pacientes e personalize o layout digital.</p>
         </div>
-        <div className="flex bg-slate-100 p-1.5 rounded-2xl">
+        <div className="flex flex-wrap gap-1.5 bg-slate-100 p-1.5 rounded-2xl w-full md:w-auto">
           <button 
             onClick={() => setActiveTab('pacientes')}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'pacientes' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'pacientes' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
           >
             <i className="fas fa-users mr-2"></i> Pacientes
           </button>
           <button 
             onClick={() => setActiveTab('layout')}
-            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'layout' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
+            className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'layout' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-500 hover:text-slate-800'}`}
           >
             <i className="fas fa-paint-brush mr-2"></i> Customização
           </button>
