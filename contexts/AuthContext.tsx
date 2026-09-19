@@ -79,6 +79,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 localStorage.setItem('auth_token', result.token);
                 localStorage.setItem('user_data', JSON.stringify(result.user));
                 setUser(result.user);
+                if (result.user?.id) {
+                    fetchProfile(result.user.id);
+                }
             }
         } catch (error) {
             throw error;
