@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { User, UserRole } from '../types';
 import { authService, dbService } from '../services/apiService';
 
@@ -22,22 +22,10 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
+    const userRef = useRef(user);
+    userRef.current = user;
 
-    useEffect(() => {
-        const storedToken = localStorage.getItem('auth_token');
-        const storedUser = localStorage.getItem('user_data');
-        
-        if (storedToken && storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (e) {
-                console.error("Error parsing stored user", e);
-            }
-        }
-        setLoading(false);
-    }, []);
-
-    const fetchProfile = async (userId: string) => {
+    const fetchProfile = useCallback(async (userId: string) => {
         try {
             const data = await dbService.from('profiles').select({ id: userId });
             
@@ -54,12 +42,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     phone: profile.phone,
                 };
                 setUser(mappedUser);
-                localStorage.setItem('user_data', JSON.stringify(mappedUser));
+                try {
+                    localStorage.setItem('user_data', JSON.stringify(mappedUser));
+                } catch (e) {
+                    console.warn('localStorage full, avatar not persisted locally');
+                }
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('user_data');
+        
+        if (storedToken && storedUser) {
+            try {
+                const parsed = JSON.parse(storedUser);
+                setUser(parsed);
+                if (parsed.id) {
+                    fetchProfile(parsed.id).finally(() => setLoading(false));
+                    return;
+                }
+            } catch (e) {
+                console.error("Error parsing stored user", e);
+            }
+        }
+        setLoading(false);
+    }, [fetchProfile]);
 
     const login = async (cpf: string, password?: string, role?: string) => {
         try {
@@ -88,4 +99,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useAuth = () => useContext(AuthContext);
-
