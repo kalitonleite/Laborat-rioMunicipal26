@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
-import { PARAMETER_REFERENCES, ParameterReference, OrganId } from '../services/healthMetrics';
+import { PARAMETER_REFERENCES, ParameterReference, OrganId, extractParameterValue } from '../services/healthMetrics';
 import { ExamResult } from '../types';
 
 interface HealthHistoryChartProps {
@@ -28,24 +28,17 @@ export const HealthHistoryChart: React.FC<HealthHistoryChartProps> = ({
 
   const currentRef: ParameterReference = PARAMETER_REFERENCES[selectedParamKey] || PARAMETER_REFERENCES['GLICOSE'];
 
-  // Extrair série temporal para o parâmetro selecionado
+  // Extrair série temporal para o parâmetro selecionado com o parser inteligente de aliases
   const chartData = useMemo(() => {
     const points: Array<{ date: string; timestamp: number; value: number; status: string }> = [];
 
     exams.forEach(exam => {
-      const text = (exam.resultData || '').toUpperCase();
-      const regex = new RegExp(`${selectedParamKey}[^\\d]*?([\\d]+(?:[.,]\\d+)?)`, 'i');
-      const match = text.match(regex);
-
-      let val: number | null = null;
-      if (match) {
-        val = parseFloat(match[1].replace(',', '.'));
-      }
+      const val = extractParameterValue(exam.resultData || '', selectedParamKey);
 
       if (val !== null && !isNaN(val)) {
         // Parse date DD/MM/YYYY or YYYY-MM-DD
         let ts = 0;
-        if (exam.date.includes('/')) {
+        if (exam.date && exam.date.includes('/')) {
           const parts = exam.date.split('/');
           ts = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0])).getTime();
         } else {

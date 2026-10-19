@@ -58,6 +58,16 @@ export const PARAMETER_REFERENCES: Record<string, ParameterReference> = {
     alertMax: 125,
     description: 'Nível de glicose em jejum no sangue'
   },
+  'TRIGLICERIDEOS': {
+    id: 'TRIGLICERIDEOS',
+    name: 'Triglicerídeos (Triglicérides)',
+    unit: 'mg/dL',
+    organId: 'coracao',
+    normalMin: 0,
+    normalMax: 150,
+    alertMax: 199,
+    description: 'Gordura de reserva energética circulante no sangue'
+  },
   'COLESTEROL TOTAL': {
     id: 'COLESTEROL TOTAL',
     name: 'Colesterol Total',
@@ -78,15 +88,15 @@ export const PARAMETER_REFERENCES: Record<string, ParameterReference> = {
     alertMax: 159,
     description: 'Fração de colesterol de baixa densidade (aterogênico)'
   },
-  'TRIGLICERIDEOS': {
-    id: 'TRIGLICERIDEOS',
-    name: 'Triglicerídeos',
+  'COLESTEROL HDL': {
+    id: 'COLESTEROL HDL',
+    name: 'Colesterol HDL',
     unit: 'mg/dL',
     organId: 'coracao',
-    normalMin: 0,
-    normalMax: 150,
-    alertMax: 199,
-    description: 'Gordura de reserva energética no sangue'
+    normalMin: 40,
+    normalMax: 999,
+    alertMax: 35,
+    description: 'Fração protetora cardiovascular de alta densidade'
   },
   'HEMOGLOBINA': {
     id: 'HEMOGLOBINA',
@@ -97,6 +107,36 @@ export const PARAMETER_REFERENCES: Record<string, ParameterReference> = {
     normalMax: 16.5,
     alertMax: 18.0,
     description: 'Transportador de oxigênio no sangue (relação com anemia e cansaço)'
+  },
+  'HEMATOCRITO': {
+    id: 'HEMATOCRITO',
+    name: 'Hematócrito',
+    unit: '%',
+    organId: 'cerebro',
+    normalMin: 36.0,
+    normalMax: 50.0,
+    alertMax: 55.0,
+    description: 'Porcentagem do volume sanguíneo ocupado por hemácias'
+  },
+  'LEUCOCITOS': {
+    id: 'LEUCOCITOS',
+    name: 'Leucócitos Totais',
+    unit: '/mm³',
+    organId: 'cerebro',
+    normalMin: 4000,
+    normalMax: 10000,
+    alertMax: 14000,
+    description: 'Células de defesa do sistema imunológico'
+  },
+  'PLAQUETAS': {
+    id: 'PLAQUETAS',
+    name: 'Plaquetas',
+    unit: '/mm³',
+    organId: 'cerebro',
+    normalMin: 150000,
+    normalMax: 450000,
+    alertMax: 550000,
+    description: 'Elementos celulares fundamentais para coagulação sanguínea'
   },
   'CREATININA': {
     id: 'CREATININA',
@@ -118,6 +158,16 @@ export const PARAMETER_REFERENCES: Record<string, ParameterReference> = {
     alertMax: 70,
     description: 'Composto nitrogenado eliminado pelos rins'
   },
+  'ACIDO URICO': {
+    id: 'ACIDO URICO',
+    name: 'Ácido Úrico',
+    unit: 'mg/dL',
+    organId: 'articulacoes',
+    normalMin: 2.5,
+    normalMax: 7.0,
+    alertMax: 8.5,
+    description: 'Metabólito de purinas associado a crises de gota e dor articular'
+  },
   'TGO': {
     id: 'TGO',
     name: 'TGO / AST',
@@ -138,6 +188,16 @@ export const PARAMETER_REFERENCES: Record<string, ParameterReference> = {
     alertMax: 80,
     description: 'Enzima hepática de alta especificidade'
   },
+  'GAMA GT': {
+    id: 'GAMA GT',
+    name: 'Gama-GT',
+    unit: 'U/L',
+    organId: 'figado',
+    normalMin: 0,
+    normalMax: 50,
+    alertMax: 90,
+    description: 'Marcador de colestase e sobrecarga enzimática hepática'
+  },
   'PCR': {
     id: 'PCR',
     name: 'Proteína C-Reativa (PCR)',
@@ -147,7 +207,75 @@ export const PARAMETER_REFERENCES: Record<string, ParameterReference> = {
     normalMax: 5.0,
     alertMax: 10.0,
     description: 'Marcador agudo de inflamação e dor corporal'
+  },
+  'HBA1C': {
+    id: 'HBA1C',
+    name: 'Hemoglobina Glicada (HbA1c)',
+    unit: '%',
+    organId: 'pancreas',
+    normalMin: 4.0,
+    normalMax: 5.6,
+    alertMax: 6.4,
+    description: 'Média da glicemia dos últimos 90 dias'
   }
+};
+
+// Aliases clínicos abrangentes para cada parâmetro (com e sem acentos, abreviações)
+export const PARAM_ALIASES: Record<string, string[]> = {
+  'TRIGLICERIDEOS': [
+    'triglicerides', 'triglicerideos', 'trigliceride', 'triglicerideo',
+    'trigliceridemia', 'triglicerid', 'triglic'
+  ],
+  'GLICOSE': [
+    'glicose', 'glicemia de jejum', 'glicose de jejum', 'glicemia', 'dextrose'
+  ],
+  'COLESTEROL TOTAL': [
+    'colesterol total', 'colesterol-total', 'colesterolemia total', 'colesterol soro', 'colesterol'
+  ],
+  'COLESTEROL LDL': [
+    'colesterol ldl', 'ldl colesterol', 'ldl-colesterol', 'ldl - colesterol',
+    'colesterol da ldl', 'ldl-c', 'ldl c', 'ldl calculado', 'ldl'
+  ],
+  'COLESTEROL HDL': [
+    'colesterol hdl', 'hdl colesterol', 'hdl-colesterol', 'hdl - colesterol',
+    'colesterol da hdl', 'hdl-c', 'hdl c', 'hdl'
+  ],
+  'HEMOGLOBINA': [
+    'hemoglobina', 'hg', 'hb', 'hemoglobina total'
+  ],
+  'HEMATOCRITO': [
+    'hematocrito', 'ht', 'hto'
+  ],
+  'LEUCOCITOS': [
+    'leucocitos', 'leucocitos totais', 'globulos brancos', 'wbc'
+  ],
+  'PLAQUETAS': [
+    'plaquetas', 'contagem de plaquetas', 'plaquetometria', 'plt'
+  ],
+  'CREATININA': [
+    'creatinina', 'creatinina serica', 'creatinina no soro', 'cr'
+  ],
+  'UREIA': [
+    'ureia', 'ureia serica', 'bun'
+  ],
+  'ACIDO URICO': [
+    'acido urico', 'acido-urico', 'urato serico', 'uricemia'
+  ],
+  'TGO': [
+    'tgo', 'ast', 'tgo/ast', 'tgo (ast)', 'transaminase oxalacetica', 'transaminase glutamico-oxalacetica', 'aspartato aminotransferase'
+  ],
+  'TGP': [
+    'tgp', 'alt', 'tgp/alt', 'tgp (alt)', 'transaminase piruvica', 'transaminase glutamico-piruvica', 'alanina aminotransferase'
+  ],
+  'GAMA GT': [
+    'gama gt', 'gama-gt', 'ggt', 'gama glutamil transferase', 'gama glutamiltransferase'
+  ],
+  'PCR': [
+    'pcr', 'proteina c reativa', 'proteina c-reativa', 'proteina c reativa (pcr)', 'pcr ultra-sensivel', 'pcr ultrassensivel'
+  ],
+  'HBA1C': [
+    'hba1c', 'hemoglobina glicada', 'hemoglobina a1c', 'a1c', 'glicohemoglobina', 'glico-hemoglobina'
+  ]
 };
 
 // Mapeamento de termos de exames para órgãos
@@ -160,10 +288,14 @@ export const EXAM_NAME_TO_ORGAN: Record<string, OrganId> = {
   'LIPID': 'coracao',
   'CORACAO': 'coracao',
   'HEMO': 'cerebro',
+  'HEMATO': 'cerebro',
+  'LEUCO': 'cerebro',
+  'PLAQUET': 'cerebro',
   'SANGUE': 'cerebro',
   'ANEMIA': 'cerebro',
   'B12': 'cerebro',
   'FERRIT': 'cerebro',
+  'VITAMINA': 'cerebro',
   'CREAT': 'rins',
   'UREIA': 'rins',
   'URINA': 'rins',
@@ -178,46 +310,125 @@ export const EXAM_NAME_TO_ORGAN: Record<string, OrganId> = {
   'PCR': 'articulacoes',
   'REUMA': 'articulacoes',
   'ACIDO URICO': 'articulacoes',
+  'URIC': 'articulacoes',
   'PULMAO': 'pulmoes',
   'GASOM': 'pulmoes',
   'OXIM': 'pulmoes'
 };
 
-// Parser para extrair valores chave do texto do exame
+// Remove acentos e converte para minúsculas
+export function normalizeText(str: string): string {
+  return (str || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function cleanNumber(str: string, paramId: string): number | null {
+  if (!str) return null;
+  // Trata separador de milhar (ex: 6.800 ou 245.000 para Leucócitos e Plaquetas)
+  if ((paramId === 'LEUCOCITOS' || paramId === 'PLAQUETAS') && /^\d{1,3}\.\d{3}$/.test(str)) {
+    return parseFloat(str.replace('.', ''));
+  }
+
+  const clean = str.replace(',', '.');
+  const val = parseFloat(clean);
+  return isNaN(val) ? null : val;
+}
+
+// Extrai o valor numérico de um parâmetro específico no laudo de forma inteligente e segura
+export function extractParameterValue(rawText: string, paramId: string): number | null {
+  if (!rawText) return null;
+
+  const normalized = normalizeText(rawText);
+  const aliases = PARAM_ALIASES[paramId] || [normalizeText(paramId)];
+
+  const allHeaderKeywords = [
+    'glicose', 'glicemia', 'colesterol', 'triglicerides', 'triglicerideos',
+    'ureia', 'creatinina', 'hemoglobina', 'hematocrito', 'leucocitos',
+    'plaquetas', 'acido urico', 'ast', 'alt', 'tgo', 'tgp', 'bilirrubina',
+    'gama gt', 'ggt', 'proteina c', 'pcr', 'hba1c', 'ferritina', 'vitamina',
+    'tsh', 't4', 'urina', 'eas', 'fezes', 'parasitologico'
+  ];
+
+  for (const alias of aliases) {
+    const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?:^|[^a-z0-9])${escapedAlias}(?:[^a-z0-9]|$)`, 'i');
+    const match = normalized.match(regex);
+    if (!match || match.index === undefined) continue;
+
+    const aliasIndex = match.index + (match[0].startsWith(' ') || /[^a-z0-9]/i.test(match[0][0]) ? 1 : 0);
+
+    // Evitar falsos positivos de colesterol / glicose
+    if (paramId === 'COLESTEROL TOTAL' && alias === 'colesterol') {
+      const peek = normalized.slice(aliasIndex, aliasIndex + 25);
+      if (peek.includes('ldl') || peek.includes('hdl') || peek.includes('vldl') || peek.includes('fracionado')) {
+        continue;
+      }
+    }
+    if (paramId === 'GLICOSE' && (alias === 'glicose' || alias === 'glicemia')) {
+      const peekBehind = normalized.slice(Math.max(0, aliasIndex - 15), aliasIndex);
+      if (peekBehind.includes('hemoglobina') || peekBehind.includes('hb')) {
+        continue;
+      }
+    }
+
+    // Delimitar a seção até o próximo cabeçalho ou ~350 caracteres
+    let sectionEnd = Math.min(normalized.length, aliasIndex + 350);
+    for (const h of allHeaderKeywords) {
+      if (alias.includes(h)) continue;
+      const nextIdx = normalized.indexOf(h, aliasIndex + alias.length + 3);
+      if (nextIdx !== -1 && nextIdx < sectionEnd) {
+        sectionEnd = nextIdx;
+      }
+    }
+
+    const section = normalized.slice(aliasIndex, sectionEnd);
+
+    // Estratégia A: Se houver a palavra "resultado" ou "valor", extrair número após ela e antes de valores de referência
+    const resIdx = section.search(/\b(?:resultado|valor|obtido|dosagem)\b/);
+    if (resIdx !== -1) {
+      const afterRes = section.slice(resIdx);
+      const refIdx = afterRes.search(/\b(?:referencia|val\.?\s*ref|desejavel|limite|normal|inferior|superior)\b/);
+      const targetSub = refIdx !== -1 ? afterRes.slice(0, refIdx) : afterRes;
+
+      const numMatch = targetSub.match(/[:=\s–-]*([\d]+(?:[.,]\d+)?)/);
+      if (numMatch && numMatch[1]) {
+        const val = cleanNumber(numMatch[1], paramId);
+        if (val !== null) return val;
+      }
+    }
+
+    // Estratégia B: Formato direto na linha "PARAMETRO: VALOR" ou "PARAMETRO ... VALOR"
+    const refIdx2 = section.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores\s+de|inferior\s+a|ate\s+\d)\b/);
+    const textBeforeRef = refIdx2 !== -1 ? section.slice(0, refIdx2) : section;
+
+    const directMatch = textBeforeRef.match(/(?:[:=–-]|(?:\.{2,}))\s*([\d]+(?:[.,]\d+)?)/);
+    if (directMatch && directMatch[1]) {
+      const val = cleanNumber(directMatch[1], paramId);
+      if (val !== null) return val;
+    }
+
+    // Estratégia C: Primeiro número na seção antes de referência
+    const firstNumMatch = textBeforeRef.match(/\b([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|ug\/dl|ng\/ml|ui\/l|mm3|mil\/mm3|%|\b)/);
+    if (firstNumMatch && firstNumMatch[1]) {
+      const val = cleanNumber(firstNumMatch[1], paramId);
+      if (val !== null) return val;
+    }
+  }
+
+  return null;
+}
+
+// Parser universal que extrai todos os parâmetros laboratoriais mapeados do laudo
 export function parseExamMetrics(text: string): Record<string, number> {
   const result: Record<string, number> = {};
   if (!text) return result;
 
-  const lines = text.split(/\r?\n/);
-  for (const line of lines) {
-    // Procura por formatos: "GLICOSE: 95 mg/dL", "Glicemia de jejum - 105", "Creatinina: 1,2"
-    const match = line.match(/([a-zA-ZÀ-ÿ0-9\s\-_/]+)[:=–-]\s*([\d]+(?:[.,]\d+)?)/);
-    if (match) {
-      const rawKey = match[1].trim().toUpperCase();
-      const numStr = match[2].replace(',', '.');
-      const val = parseFloat(numStr);
-      if (!isNaN(val)) {
-        // Encontrar chave canônica
-        for (const refKey of Object.keys(PARAMETER_REFERENCES)) {
-          if (rawKey.includes(refKey)) {
-            result[refKey] = val;
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  // Tenta também busca direta no texto todo caso o formato não seja linha a linha
-  const upper = text.toUpperCase();
-  for (const [key] of Object.entries(PARAMETER_REFERENCES)) {
-    if (!result[key]) {
-      const regex = new RegExp(`${key}[^\\d]*?([\\d]+(?:[.,]\\d+)?)`, 'i');
-      const directMatch = upper.match(regex);
-      if (directMatch) {
-        const val = parseFloat(directMatch[1].replace(',', '.'));
-        if (!isNaN(val)) result[key] = val;
-      }
+  for (const paramKey of Object.keys(PARAMETER_REFERENCES)) {
+    const val = extractParameterValue(text, paramKey);
+    if (val !== null && !isNaN(val)) {
+      result[paramKey] = val;
     }
   }
 
@@ -225,9 +436,10 @@ export function parseExamMetrics(text: string): Record<string, number> {
 }
 
 export function detectOrganForExam(examName: string): OrganId {
-  const upper = (examName || '').toUpperCase();
+  const norm = normalizeText(examName || '');
   for (const [key, organ] of Object.entries(EXAM_NAME_TO_ORGAN)) {
-    if (upper.includes(key)) return organ;
+    const normKey = normalizeText(key);
+    if (norm.includes(normKey)) return organ;
   }
   return 'cerebro'; // default
 }
@@ -237,10 +449,22 @@ export function determineStatus(paramId: string, value: number): HealthStatus {
   if (!ref) return 'normal';
 
   if (paramId === 'HEMOGLOBINA') {
-    // Para hemoglobina, valores baixos indicam anemia (cansaço)
     if (value < 10.0) return 'critico';
     if (value < 12.0) return 'alerta';
     if (value > 18.0) return 'alerta';
+    return 'normal';
+  }
+
+  if (paramId === 'COLESTEROL HDL') {
+    if (value < 35.0) return 'critico';
+    if (value < 40.0) return 'alerta';
+    return 'normal';
+  }
+
+  if (paramId === 'PLAQUETAS') {
+    if (value < 100000) return 'critico';
+    if (value < 150000) return 'alerta';
+    if (value > 500000) return 'alerta';
     return 'normal';
   }
 
@@ -457,6 +681,65 @@ export function analyzePatientHealth(exams: ExamResult[]): HealthAnalysisSummary
             message: `Creatinina sérica elevada em ${val} mg/dL.`,
             recommendation: 'Aumente imediatamente a ingestão de água e reduza o consumo de sal.',
             clinicalNote: 'Possível redução da taxa de filtração glomerular. Checar clearance.',
+            date: exam.date
+          });
+        } else if (paramId === 'TRIGLICERIDEOS' && val > 150) {
+          foundCardio = true;
+          organMap[metricOrgan].symptoms.push('Triglicerídeos elevados', 'Sobrecarga lipídica');
+          alerts.push({
+            id: `alert-${exam.id}-${paramId}`,
+            organId: metricOrgan,
+            organName: organMap[metricOrgan].name,
+            examName: exam.examName,
+            severity: metricStatus,
+            title: val > 199 ? 'Triglicerídeos em Nível Crítico' : 'Triglicerídeos em Alerta',
+            message: `Triglicerídeos em ${val} mg/dL (valor desejável é inferior a 150 mg/dL). Níveis elevados demandam controle alimentar e aumentam o risco cardiovascular.`,
+            recommendation: 'Reduza o consumo de açúcares simples, massas, frituras e bebidas alcoólicas. Aumente a ingestão de fibras e pratique caminhadas.',
+            clinicalNote: val > 400 ? 'Hipertrigliceridemia grave. Risco de pancreatite aguda e aterosclerose acelerada.' : 'Hipertrigliceridemia em acompanhamento.',
+            date: exam.date
+          });
+        } else if (paramId === 'ACIDO URICO' && val > 7.0) {
+          foundPain = true;
+          organMap[metricOrgan].symptoms.push('Ácido Úrico elevado', 'Risco de dor articular / crise de gota');
+          alerts.push({
+            id: `alert-${exam.id}-${paramId}`,
+            organId: metricOrgan,
+            organName: organMap[metricOrgan].name,
+            examName: exam.examName,
+            severity: metricStatus,
+            title: 'Ácido Úrico Elevado (Hiperuricemia)',
+            message: `Ácido Úrico sérico registrado em ${val} mg/dL. O acúmulo de cristais pode provocar crises de dor e inflamação articular.`,
+            recommendation: 'Beba mais de 2 litros de água ao dia, evite embutidos, carnes vermelhas e cerveja.',
+            clinicalNote: 'Hiperuricemia com risco de nefrolitíase e artrite gotosa.',
+            date: exam.date
+          });
+        } else if ((paramId === 'TGO' || paramId === 'TGP' || paramId === 'GAMA GT') && val > 40) {
+          organMap[metricOrgan].symptoms.push('Enzimas hepáticas alteradas', 'Metabolismo hepático sobrecarregado');
+          alerts.push({
+            id: `alert-${exam.id}-${paramId}`,
+            organId: metricOrgan,
+            organName: organMap[metricOrgan].name,
+            examName: exam.examName,
+            severity: metricStatus,
+            title: 'Enzimas Hepáticas em Atenção',
+            message: `${ref ? ref.name : paramId} elevado em ${val} U/L. O fígado pode estar sob sobrecarga metabólica ou medicamentosa.`,
+            recommendation: 'Evite bebidas alcoólicas, alimentos ultraprocessados e consulte seu médico.',
+            clinicalNote: 'Transaminases / enzimas canaliculares alteradas. Investigar esteatose hepática ou fármacos.',
+            date: exam.date
+          });
+        } else if (paramId === 'LEUCOCITOS' && (val > 11000 || val < 4000)) {
+          if (val > 11000) foundPain = true;
+          else foundFatigue = true;
+          alerts.push({
+            id: `alert-${exam.id}-${paramId}`,
+            organId: metricOrgan,
+            organName: organMap[metricOrgan].name,
+            examName: exam.examName,
+            severity: metricStatus,
+            title: val > 11000 ? 'Leucocitose (Defesa Ativa / Infecção)' : 'Leucopenia (Imunidade Reduzida)',
+            message: `Leucócitos totais em ${val} /mm³. ${val > 11000 ? 'Indica reação inflamatória ou infecciosa em curso.' : 'Contagem baixa de células de defesa.'}`,
+            recommendation: 'Monitore eventuais febres, dores ou sinais de infecção e consulte seu médico.',
+            clinicalNote: val > 11000 ? 'Leucocitose com desvio a investigar.' : 'Leucopenia transitória ou crônica.',
             date: exam.date
           });
         }

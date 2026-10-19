@@ -5,6 +5,7 @@ import { suggestMedicalDiagnosis } from '../services/geminiService';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
 import HealthHistoryTab from '../components/HealthHistoryTab';
+import { parseExamMetrics } from '../services/healthMetrics';
 import { maskCPF } from '../services/masks';
 import { dbService } from '../services/apiService';
 import { extractTextFromPDF } from '../services/pdfOcr';
@@ -205,15 +206,20 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
   const parseExamValues = (text: string) => {
     const values: Record<string, number> = {};
     if (!text) return values;
+
+    // 1. Extração inteligente através do motor clínico de biometria (suporte a triglicérides, glicemia, etc.)
+    const smartMetrics = parseExamMetrics(text);
+    Object.assign(values, smartMetrics);
+
+    // 2. Extração linha a linha para campos legados
     const lines = text.split('\n');
     lines.forEach(line => {
-      // Procura por "Nome: Valor" ou "Nome: Valor Unidade"
       const match = line.match(/^([^:]+):\s*([\d.,]+)/);
       if (match) {
         const param = match[1].trim().toUpperCase();
         const valStr = match[2].replace(',', '.');
         const val = parseFloat(valStr);
-        if (!isNaN(val)) {
+        if (!isNaN(val) && values[param] === undefined) {
           values[param] = val;
         }
       }
