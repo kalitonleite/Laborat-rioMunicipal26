@@ -355,6 +355,25 @@ export function isParamMatchingExamName(paramId: string, examName?: string): boo
   return false;
 }
 
+// Verifica se uma linha contém texto de referência (não é um valor do paciente)
+function isReferenceLine(normLine: string): boolean {
+  return /\b(?:referencia|val\.?\s*ref|desejavel|valores?\s+de\s+refer|inferior\s+a|vp\s*[:=]|vr\s*[:=])\b/.test(normLine);
+}
+
+// Encontra o índice real do alias em normLine respeitando limites de palavra
+function findAliasWordStart(normLine: string, alias: string): number {
+  let from = 0;
+  while (from < normLine.length) {
+    const idx = normLine.indexOf(alias, from);
+    if (idx === -1) return -1;
+    const before = idx > 0 ? normLine[idx - 1] : ' ';
+    const afterChar = (idx + alias.length < normLine.length) ? normLine[idx + alias.length] : ' ';
+    if (!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(afterChar)) return idx;
+    from = idx + 1;
+  }
+  return -1;
+}
+
 // Extrai o valor numérico de um parâmetro específico no laudo de forma inteligente, segura e contextual
 export function extractParameterValue(
   rawText: string,
@@ -390,45 +409,51 @@ export function extractParameterValue(
     }
   }
 
-  // ESTRATÉGIA 2: Extração linha a linha onde o alias aparece junto do resultado
-  // (Exemplo: "Glicose: 95 mg/dL", "Glicemia de jejum - 98", "Triglicérides ............: 160")
+  // ESTRATÉGIA 2: Extração linha a linha – alias e valor na MESMA linha
+  // Ex: "Glicose: 95 mg/dL", "Triglicérides .........: 160", "Glicemia - 98"
   const lines = text.split(/\r?\n/);
   for (const line of lines) {
     const normLine = normalizeText(line);
+    if (isReferenceLine(normLine)) continue;
 
     for (const alias of aliases) {
-      const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`, 'i');
-      const m = normLine.match(regex);
-      if (!m || m.index === undefined) continue;
+      const aliasIdx = findAliasWordStart(normLine, alias);
+      if (aliasIdx === -1) continue;
 
       // Proteção contra colisões de sub-palavras
       if (paramId === 'COLESTEROL TOTAL' && alias === 'colesterol') {
         if (normLine.includes('ldl') || normLine.includes('hdl') || normLine.includes('vldl') || normLine.includes('fracionado')) continue;
       }
       if (paramId === 'GLICOSE' && (alias === 'glicose' || alias === 'glicemia')) {
-        if (normLine.includes('hemoglobina') || normLine.includes('hb')) continue;
+        if (normLine.includes('hemoglobina') || normLine.includes('hb a1c') || normLine.includes('hba1c')) continue;
       }
 
-      // Analisar o trecho da linha posterior ao alias
-      const afterAlias = normLine.slice(m.index + alias.length);
+      // Trecho da linha APÓS o alias (índice correto sem deslocamento)
+      const afterAlias = normLine.slice(aliasIdx + alias.length);
 
-      // Descartar trechos de referência (ex: não capturar "70 a 99" ou "inferior a 150")
-      const refIdx = afterAlias.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores\s+de|inferior\s+a|ate\s+\d)\b/);
+      // Cortar antes de texto de referência
+      const refIdx = afterAlias.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores?\s+de|inferior\s+a|ate\s+\d)\b/);
       const targetText = refIdx !== -1 ? afterAlias.slice(0, refIdx) : afterAlias;
 
-      // Buscar separador e valor (dois pontos, traço, pontos contínuos, igualdade)
-      const numMatch = targetText.match(/(?:[:=–-]|(?:\.{2,}))\s*([\d]+(?:[.,]\d+)?)/);
-      if (numMatch && numMatch[1]) {
-        const val = parseNum(numMatch[1]);
-        if (val !== null) return val;
+      // 2a) Separador explícito seguido de número
+      const sepMatch = targetText.match(/(?:[:=\u2013\-]|(?:\.{2,}))\s*([\d]+(?:[.,]\d+)?)/);
+      if (sepMatch && sepMatch[1]) {
+        const val = parseNum(sepMatch[1]);
+        if (val !== null && val < 100000) return val;
       }
 
-      // Buscar valor com unidade na mesma linha
-      const numMatch2 = targetText.match(/\b([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|ug\/dl|ng\/ml|ui\/l|mm3|mil\/mm3|%|\b)/);
-      if (numMatch2 && numMatch2[1]) {
-        const val = parseNum(numMatch2[1]);
-        if (val !== null) return val;
+      // 2b) Número seguido de unidade laboratorial reconhecida (sem \b como alternativa)
+      const unitMatch = targetText.match(/([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|iu\/l|ui\/l|ug\/dl|ng\/ml|pg\/ml|mil\/mm3|\/mm3|%)\b/i);
+      if (unitMatch && unitMatch[1]) {
+        const val = parseNum(unitMatch[1]);
+        if (val !== null && val < 100000) return val;
+      }
+
+      // 2c) Número isolado no final da linha (sem texto alfa após o número)
+      const endNum = targetText.match(/\s+([\d]+(?:[.,]\d+)?)\s*$/);
+      if (endNum && endNum[1]) {
+        const val = parseNum(endNum[1]);
+        if (val !== null && val < 100000) return val;
       }
     }
   }
@@ -454,40 +479,67 @@ export function extractParameterValue(
     }
 
     if (hasAlias) {
-      // Olhar as próximas 3 linhas
-      for (let j = i + 1; j < Math.min(lines.length, i + 4); j++) {
+      // Olhar as próximas 4 linhas
+      for (let j = i + 1; j < Math.min(lines.length, i + 5); j++) {
         const nextNorm = normalizeText(lines[j]);
         if (isNextHeaderLine(nextNorm)) break;
+        if (isReferenceLine(nextNorm)) continue;
 
-        const resMatch = nextNorm.match(/(?:resultado|valor\s*(?:encontrado|obtido)?|dosagem)?[:\s=–-]*([\d]+(?:[.,]\d+)?)/i);
-        if (resMatch && resMatch[1]) {
-          if (!nextNorm.includes('referencia') && !nextNorm.includes('desejavel') && !nextNorm.includes('limite') && !nextNorm.includes('inferior')) {
-            const val = parseNum(resMatch[1]);
-            if (val !== null) return val;
-          }
+        // Preferir linhas com label "resultado:" ou "valor:"
+        const labeled = nextNorm.match(/(?:resultado|valor\s*(?:encontrado|obtido)?|dosagem)\s*[:\s=\u2013\-]+\s*([\d]+(?:[.,]\d+)?)/i);
+        if (labeled && labeled[1]) {
+          const val = parseNum(labeled[1]);
+          if (val !== null && val < 100000) return val;
+        }
+
+        // Número com unidade na próxima linha
+        const withUnit = nextNorm.match(/([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|iu\/l|ui\/l|ug\/dl|ng\/ml|%)\b/i);
+        if (withUnit && withUnit[1]) {
+          const val = parseNum(withUnit[1]);
+          if (val !== null && val < 100000) return val;
+        }
+
+        // Número isolado na próxima linha
+        const onlyNum = nextNorm.trim().match(/^([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|ui\/l|%)?$/i);
+        if (onlyNum && onlyNum[1]) {
+          const val = parseNum(onlyNum[1]);
+          if (val !== null && val < 100000) return val;
         }
       }
     }
   }
 
-  // ESTRATÉGIA 4: Varredura de texto contínuo / OCR de PDF
+  // ESTRATÉGIA 4: Varredura de texto contínuo / OCR de PDF (sem quebras de linha)
   for (const alias of aliases) {
-    const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(?:^|[^a-z0-9])${escapedAlias}(?:[^a-z0-9]|$)`, 'gi');
-    let match: RegExpExecArray | null;
+    let from = 0;
+    while (from < normalized.length) {
+      const idx = normalized.indexOf(alias, from);
+      if (idx === -1) break;
+      from = idx + 1;
 
-    while ((match = regex.exec(normalized)) !== null) {
-      const aliasIndex = match.index + (match[0].startsWith(' ') || /[^a-z0-9]/i.test(match[0][0]) ? 1 : 0);
-      const section = normalized.slice(aliasIndex, Math.min(normalized.length, aliasIndex + 250));
+      const before = idx > 0 ? normalized[idx - 1] : ' ';
+      const after = (idx + alias.length < normalized.length) ? normalized[idx + alias.length] : ' ';
+      if (/[a-z0-9]/.test(before) || /[a-z0-9]/.test(after)) continue;
 
-      // Extrai número antes da seção de referência
-      const refIdx = section.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores\s+de)\b/);
+      // Trecho após o alias (até 200 chars)
+      const section = normalized.slice(idx + alias.length, Math.min(normalized.length, idx + alias.length + 200));
+
+      // Cortar antes de referência
+      const refIdx = section.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores?\s+de)\b/);
       const targetSub = refIdx !== -1 ? section.slice(0, refIdx) : section;
 
-      const directNum = targetSub.match(/(?:resultado|valor|dosagem|[:=–-])[:\s=–-]*([\d]+(?:[.,]\d+)?)/i);
-      if (directNum && directNum[1]) {
-        const val = parseNum(directNum[1]);
-        if (val !== null) return val;
+      // Separador explícito
+      const sepMatch = targetSub.match(/(?:resultado|valor|dosagem|[:=\u2013\-])[:\s=\u2013\-]*([\d]+(?:[.,]\d+)?)/i);
+      if (sepMatch && sepMatch[1]) {
+        const val = parseNum(sepMatch[1]);
+        if (val !== null && val < 100000) return val;
+      }
+
+      // Número com unidade
+      const unitMatch = targetSub.match(/([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|iu\/l|ui\/l|ug\/dl|ng\/ml|%)\b/i);
+      if (unitMatch && unitMatch[1]) {
+        const val = parseNum(unitMatch[1]);
+        if (val !== null && val < 100000) return val;
       }
     }
   }

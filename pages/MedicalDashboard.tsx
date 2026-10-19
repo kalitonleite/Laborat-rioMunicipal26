@@ -928,8 +928,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
                   const ex = allExams.find(e => e.patientCpf === cpf);
                   if (!ex) return null;
                   return (
-                    <option key={cpf} value={cpf}>
-                      {ex.patientName} ({cpf ? maskCPF(cpf) : 'Sem CPF'})
+                    <option key={cpf ?? ''} value={cpf ?? ''}>
+                      {ex.patientName} ({cpf ? maskCPF(cpf as string) : 'Sem CPF'})
                     </option>
                   );
                 })}
