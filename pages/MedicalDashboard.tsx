@@ -4,6 +4,7 @@ import { User, ExamResult } from '../types';
 import { suggestMedicalDiagnosis } from '../services/geminiService';
 import ProfileTab from '../components/ProfileTab';
 import DashboardTabs from '../components/DashboardTabs';
+import HealthHistoryTab from '../components/HealthHistoryTab';
 import { maskCPF } from '../services/masks';
 import { dbService } from '../services/apiService';
 import { extractTextFromPDF } from '../services/pdfOcr';
@@ -18,7 +19,7 @@ interface MedicalDashboardProps {
 }
 
 const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'trabalho' | 'perfil'>('trabalho');
+  const [activeTab, setActiveTab] = useState<'trabalho' | 'biometria' | 'perfil'>('trabalho');
   const [searchTerm, setSearchTerm] = useState('');
   const [searchMode, setSearchMode] = useState<'text' | 'calendar'>('text');
   const [selectedDay, setSelectedDay] = useState<number>(0); // 0 = Todos
@@ -588,6 +589,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         <DashboardTabs
           tabs={[
             { id: 'trabalho', label: 'Área de Trabalho', icon: 'fa-stethoscope' },
+            { id: 'biometria', label: 'Monitor Biométrico & Órgãos', icon: 'fa-heart-pulse' },
             { id: 'perfil', label: 'Perfil Médico', icon: 'fa-circle-user' },
           ]}
           activeTab={activeTab}
@@ -758,13 +760,28 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
           <div className="lg:col-span-2">
             {selectedExam ? (
               <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 min-h-[600px] space-y-8 animate-in fade-in zoom-in-95 duration-300">
-                <div className="flex justify-between items-center border-b border-gray-50 pb-6">
-                  <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
-                    <i className="fas fa-user text-blue-600"></i> {selectedExam.patientName}
-                  </h2>
-                  <button onClick={() => setSelectedExam(null)} className="p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all">
-                    <i className="fas fa-times"></i>
-                  </button>
+                <div className="flex flex-wrap justify-between items-center gap-4 border-b border-gray-50 pb-6">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-800 flex items-center gap-3">
+                      <i className="fas fa-user text-blue-600"></i> {selectedExam.patientName}
+                    </h2>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                      CPF: {selectedExam.patientCpf ? maskCPF(selectedExam.patientCpf) : '---'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setGraphModalOpen(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2 shadow-md hover:scale-105 transition-all shadow-blue-500/20"
+                    >
+                      <i className="fas fa-heart-pulse animate-pulse"></i>
+                      <span>Mapa Corporal & Evolução</span>
+                    </button>
+                    <button onClick={() => setSelectedExam(null)} className="p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all">
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </div>
                 </div>
 
 
@@ -868,6 +885,61 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ABA BIOMETRIA & MAPA CORPORAL CLÍNICO */}
+      {activeTab === 'biometria' && (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          {/* Seletor de Paciente para análise de saúde */}
+          <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                Prontuário Biométrico
+              </span>
+              <h3 className="text-xl font-black text-slate-800 mt-1">
+                Visualização do Paciente em Atendimento
+              </h3>
+              <p className="text-xs text-slate-400 font-medium">
+                Selecione um paciente para inspecionar os alertas clínicos e as regiões corporais afetadas.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-400 whitespace-nowrap">
+                Paciente:
+              </label>
+              <select
+                className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer min-w-[240px]"
+                value={selectedExam?.patientCpf || ''}
+                onChange={(e) => {
+                  const cpf = e.target.value;
+                  const match = allExams.find(ex => ex.patientCpf === cpf);
+                  if (match) setSelectedExam(match);
+                }}
+              >
+                {Array.from(new Set(allExams.map(e => e.patientCpf))).map(cpf => {
+                  const ex = allExams.find(e => e.patientCpf === cpf);
+                  if (!ex) return null;
+                  return (
+                    <option key={cpf} value={cpf}>
+                      {ex.patientName} ({cpf ? maskCPF(cpf) : 'Sem CPF'})
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
+          <HealthHistoryTab
+            exams={patientHistory.length > 0 ? patientHistory : (selectedExam ? [selectedExam] : allExams.slice(0, 5))}
+            user={patientProfile || (selectedExam ? { id: selectedExam.patientId, name: selectedExam.patientName, cpf: selectedExam.patientCpf } as any : undefined)}
+            mode="doctor"
+            onOpenExam={(exam) => {
+              setSelectedExam(exam);
+              if (exam.fileUrl) setViewingExam(exam);
+            }}
+          />
         </div>
       )}
 
@@ -986,121 +1058,50 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
         </div>
       )}
 
+      {/* MODAL AVANÇADO DE BIOMETRIA & EVOLUÇÃO CORPORAL */}
       {graphModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-indigo-600 p-8 text-white flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-black">Evolução de Exames</h2>
-                <p className="text-indigo-200 text-[10px] font-black uppercase tracking-[0.2em] mt-1">{selectedExam?.patientName}</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-slate-50 w-full max-w-6xl max-h-[92vh] rounded-[40px] shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-300 border border-slate-700/40">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 p-6 md:p-8 text-white flex justify-between items-center border-b border-slate-800">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-xl text-white shadow-lg shadow-indigo-500/30">
+                  <i className="fas fa-heart-pulse animate-pulse"></i>
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300 bg-white/10 px-2.5 py-0.5 rounded-full">
+                      Prontuário Biométrico 360°
+                    </span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  </div>
+                  <h2 className="text-xl md:text-2xl font-black text-white mt-0.5">
+                    {selectedExam?.patientName || 'Paciente'}
+                  </h2>
+                </div>
               </div>
-            </div>
 
-            <div className="p-8 relative">
               <button
+                type="button"
                 onClick={() => setGraphModalOpen(false)}
-                className="absolute top-4 right-4 p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all z-10"
+                className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer"
+                title="Fechar"
               >
-                <i className="fas fa-times"></i>
+                <i className="fas fa-times text-base"></i>
               </button>
-              <div className="flex flex-wrap items-center justify-between gap-6 mb-8 pr-16">
-                <div className="flex items-center gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Parâmetro Analisado</label>
-                    <select
-                      className="block w-full md:w-64 min-w-0 p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold text-slate-800 outline-none focus:ring-2 focus:ring-indigo-500"
-                      value={selectedParam}
-                      onChange={(e) => setSelectedParam(e.target.value)}
-                    >
-                      {availableParams.length > 0 ? availableParams.map(p => (
-                        <option key={p} value={p}>{p}</option>
-                      )) : <option value="">Nenhum dado numérico encontrado</option>}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
-                  {[30, 90, 180].map(days => (
-                    <button
-                      key={days}
-                      onClick={() => setGraphTimeRange(days as any)}
-                      className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${graphTimeRange === days ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400 hover:text-gray-600'}`}
-                    >
-                      {days} Dias
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="h-[400px] w-full bg-slate-50 rounded-3xl p-6 border border-gray-100 shadow-inner">
-                {graphData.length >= 2 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={graphData}>
-                      <defs>
-                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#4f46e5" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                      <XAxis
-                        dataKey="date"
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                        dy={10}
-                      />
-                      <YAxis
-                        axisLine={false}
-                        tickLine={false}
-                        tick={{ fontSize: 10, fontWeight: 700, fill: '#64748b' }}
-                        dx={-10}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          borderRadius: '16px',
-                          border: 'none',
-                          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="value"
-                        name={selectedParam}
-                        stroke="#4f46e5"
-                        strokeWidth={4}
-                        fillOpacity={1}
-                        fill="url(#colorValue)"
-                        dot={{ r: 6, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
-                        activeDot={{ r: 8, strokeWidth: 0 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center px-12">
-                    <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center text-indigo-200 mb-4 shadow-sm">
-                      <i className="fas fa-chart-area text-3xl"></i>
-                    </div>
-                    <h4 className="text-slate-800 font-black mb-1">Dados Insuficientes</h4>
-                    <p className="text-gray-400 text-xs font-medium leading-relaxed">
-                      São necessários pelo menos 2 exames com resultados numéricos para gerar o gráfico de evolução.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 flex items-start gap-3 bg-blue-50 p-4 rounded-2xl border border-blue-100">
-                <i className="fas fa-lightbulb text-blue-500 mt-0.5"></i>
-                <p className="text-[10px] text-blue-700 font-bold leading-relaxed">
-                  DICA: O sistema extrai automaticamente o primeiro valor numérico de cada linha do resultado.
-                  Certifique-se de manter o formato "Parâmetro: Valor" para melhor precisão.
-                </p>
-              </div>
             </div>
-            <div className="p-8 bg-gray-50 border-t border-gray-100 text-center">
-              <button onClick={() => setGraphModalOpen(false)} className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-700 transition-all shadow-xl">Concluído</button>
+
+            {/* Modal Body */}
+            <div className="p-6 md:p-8 overflow-y-auto max-h-[calc(92vh-100px)] space-y-6">
+              <HealthHistoryTab
+                exams={patientHistory.length > 0 ? patientHistory : (selectedExam ? [selectedExam] : [])}
+                user={patientProfile || (selectedExam ? { id: selectedExam.patientId, name: selectedExam.patientName, cpf: selectedExam.patientCpf } as any : undefined)}
+                mode="doctor"
+                onOpenExam={(exam) => {
+                  setSelectedExam(exam);
+                  if (exam.fileUrl) setViewingExam(exam);
+                }}
+              />
             </div>
           </div>
         </div>
