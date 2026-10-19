@@ -336,84 +336,169 @@ function cleanNumber(str: string, paramId: string): number | null {
   return isNaN(val) ? null : val;
 }
 
-// Extrai o valor numérico de um parâmetro específico no laudo de forma inteligente e segura
-export function extractParameterValue(rawText: string, paramId: string): number | null {
-  if (!rawText) return null;
-
-  const normalized = normalizeText(rawText);
-  const aliases = PARAM_ALIASES[paramId] || [normalizeText(paramId)];
-
-  const allHeaderKeywords = [
-    'glicose', 'glicemia', 'colesterol', 'triglicerides', 'triglicerideos',
-    'ureia', 'creatinina', 'hemoglobina', 'hematocrito', 'leucocitos',
-    'plaquetas', 'acido urico', 'ast', 'alt', 'tgo', 'tgp', 'bilirrubina',
-    'gama gt', 'ggt', 'proteina c', 'pcr', 'hba1c', 'ferritina', 'vitamina',
-    'tsh', 't4', 'urina', 'eas', 'fezes', 'parasitologico'
+function isNextHeaderLine(normLine: string): boolean {
+  const headers = [
+    'colesterol', 'triglic', 'ureia', 'creatinina', 'hemoglobina',
+    'hematocrito', 'leucocitos', 'plaquetas', 'acido urico', 'tgo',
+    'tgp', 'gama gt', 'pcr', 'hba1c', 'ferritina', 'exame:', 'paciente:'
   ];
+  return headers.some(h => normLine.startsWith(h) || normLine.includes(h + ':'));
+}
 
+export function isParamMatchingExamName(paramId: string, examName?: string): boolean {
+  if (!examName) return false;
+  const normExam = normalizeText(examName);
+  const aliases = PARAM_ALIASES[paramId] || [normalizeText(paramId)];
   for (const alias of aliases) {
-    const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(?:^|[^a-z0-9])${escapedAlias}(?:[^a-z0-9]|$)`, 'i');
-    const match = normalized.match(regex);
-    if (!match || match.index === undefined) continue;
+    if (normExam.includes(alias)) return true;
+  }
+  return false;
+}
 
-    const aliasIndex = match.index + (match[0].startsWith(' ') || /[^a-z0-9]/i.test(match[0][0]) ? 1 : 0);
+// Extrai o valor numérico de um parâmetro específico no laudo de forma inteligente, segura e contextual
+export function extractParameterValue(
+  rawText: string,
+  paramId: string,
+  examName?: string
+): number | null {
+  if (!rawText && !examName) return null;
 
-    // Evitar falsos positivos de colesterol / glicose
-    if (paramId === 'COLESTEROL TOTAL' && alias === 'colesterol') {
-      const peek = normalized.slice(aliasIndex, aliasIndex + 25);
-      if (peek.includes('ldl') || peek.includes('hdl') || peek.includes('vldl') || peek.includes('fracionado')) {
-        continue;
-      }
-    }
-    if (paramId === 'GLICOSE' && (alias === 'glicose' || alias === 'glicemia')) {
-      const peekBehind = normalized.slice(Math.max(0, aliasIndex - 15), aliasIndex);
-      if (peekBehind.includes('hemoglobina') || peekBehind.includes('hb')) {
-        continue;
-      }
-    }
+  const text = rawText || '';
+  const normalized = normalizeText(text);
+  const aliases = PARAM_ALIASES[paramId] || [normalizeText(paramId)];
+  const parseNum = (str: string): number | null => cleanNumber(str, paramId);
 
-    // Delimitar a seção até o próximo cabeçalho ou ~350 caracteres
-    let sectionEnd = Math.min(normalized.length, aliasIndex + 350);
-    for (const h of allHeaderKeywords) {
-      if (alias.includes(h)) continue;
-      const nextIdx = normalized.indexOf(h, aliasIndex + alias.length + 3);
-      if (nextIdx !== -1 && nextIdx < sectionEnd) {
-        sectionEnd = nextIdx;
-      }
+  // ESTRATÉGIA 1: Se o nome do próprio exame identifica este parâmetro
+  // (Exemplo: Exame = "Glicose" ou "Glicemia de Jejum" e no texto o médico digitou apenas "95", "95 mg/dL" ou "Resultado: 95")
+  if (examName && isParamMatchingExamName(paramId, examName)) {
+    // 1.1 Se o texto tem "resultado: X" ou "valor: X"
+    const resDirect = normalized.match(/(?:resultado|valor\s*(?:encontrado|obtido)?|dosagem)[:\s=–-]*([\d]+(?:[.,]\d+)?)/i);
+    if (resDirect && resDirect[1]) {
+      const val = parseNum(resDirect[1]);
+      if (val !== null) return val;
     }
 
-    const section = normalized.slice(aliasIndex, sectionEnd);
+    // 1.2 Se o texto começa diretamente com o número ou é apenas o valor (ex: "95 mg/dL", "95", "104.5")
+    const shortDirect = normalized.match(/(?:^|[^\d.,])([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|%|\b)/i);
+    if (shortDirect && shortDirect[1]) {
+      // Evitar pegar ano se for data (ex: 2026)
+      const numCandidate = shortDirect[1];
+      if (!text.includes(`/${numCandidate}`) && !text.includes(`-${numCandidate}`)) {
+        const val = parseNum(numCandidate);
+        if (val !== null && val < 1900) return val;
+      }
+    }
+  }
 
-    // Estratégia A: Se houver a palavra "resultado" ou "valor", extrair número após ela e antes de valores de referência
-    const resIdx = section.search(/\b(?:resultado|valor|obtido|dosagem)\b/);
-    if (resIdx !== -1) {
-      const afterRes = section.slice(resIdx);
-      const refIdx = afterRes.search(/\b(?:referencia|val\.?\s*ref|desejavel|limite|normal|inferior|superior)\b/);
-      const targetSub = refIdx !== -1 ? afterRes.slice(0, refIdx) : afterRes;
+  // ESTRATÉGIA 2: Extração linha a linha onde o alias aparece junto do resultado
+  // (Exemplo: "Glicose: 95 mg/dL", "Glicemia de jejum - 98", "Triglicérides ............: 160")
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    const normLine = normalizeText(line);
 
-      const numMatch = targetSub.match(/[:=\s–-]*([\d]+(?:[.,]\d+)?)/);
+    for (const alias of aliases) {
+      const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`, 'i');
+      const m = normLine.match(regex);
+      if (!m || m.index === undefined) continue;
+
+      // Proteção contra colisões de sub-palavras
+      if (paramId === 'COLESTEROL TOTAL' && alias === 'colesterol') {
+        if (normLine.includes('ldl') || normLine.includes('hdl') || normLine.includes('vldl') || normLine.includes('fracionado')) continue;
+      }
+      if (paramId === 'GLICOSE' && (alias === 'glicose' || alias === 'glicemia')) {
+        if (normLine.includes('hemoglobina') || normLine.includes('hb')) continue;
+      }
+
+      // Analisar o trecho da linha posterior ao alias
+      const afterAlias = normLine.slice(m.index + alias.length);
+
+      // Descartar trechos de referência (ex: não capturar "70 a 99" ou "inferior a 150")
+      const refIdx = afterAlias.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores\s+de|inferior\s+a|ate\s+\d)\b/);
+      const targetText = refIdx !== -1 ? afterAlias.slice(0, refIdx) : afterAlias;
+
+      // Buscar separador e valor (dois pontos, traço, pontos contínuos, igualdade)
+      const numMatch = targetText.match(/(?:[:=–-]|(?:\.{2,}))\s*([\d]+(?:[.,]\d+)?)/);
       if (numMatch && numMatch[1]) {
-        const val = cleanNumber(numMatch[1], paramId);
+        const val = parseNum(numMatch[1]);
+        if (val !== null) return val;
+      }
+
+      // Buscar valor com unidade na mesma linha
+      const numMatch2 = targetText.match(/\b([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|ug\/dl|ng\/ml|ui\/l|mm3|mil\/mm3|%|\b)/);
+      if (numMatch2 && numMatch2[1]) {
+        const val = parseNum(numMatch2[1]);
         if (val !== null) return val;
       }
     }
+  }
 
-    // Estratégia B: Formato direto na linha "PARAMETRO: VALOR" ou "PARAMETRO ... VALOR"
-    const refIdx2 = section.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores\s+de|inferior\s+a|ate\s+\d)\b/);
-    const textBeforeRef = refIdx2 !== -1 ? section.slice(0, refIdx2) : section;
+  // ESTRATÉGIA 3: Bloco multi-linhas (Exame na linha X e "Resultado: Y" na linha X+1 ou X+2)
+  for (let i = 0; i < lines.length; i++) {
+    const normLine = normalizeText(lines[i]);
+    let hasAlias = false;
 
-    const directMatch = textBeforeRef.match(/(?:[:=–-]|(?:\.{2,}))\s*([\d]+(?:[.,]\d+)?)/);
-    if (directMatch && directMatch[1]) {
-      const val = cleanNumber(directMatch[1], paramId);
-      if (val !== null) return val;
+    for (const alias of aliases) {
+      const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(?:^|[^a-z0-9])${escaped}(?:[^a-z0-9]|$)`, 'i');
+      if (regex.test(normLine)) {
+        if (paramId === 'COLESTEROL TOTAL' && alias === 'colesterol') {
+          if (normLine.includes('ldl') || normLine.includes('hdl') || normLine.includes('vldl')) continue;
+        }
+        if (paramId === 'GLICOSE' && (alias === 'glicose' || alias === 'glicemia')) {
+          if (normLine.includes('hemoglobina') || normLine.includes('hb')) continue;
+        }
+        hasAlias = true;
+        break;
+      }
     }
 
-    // Estratégia C: Primeiro número na seção antes de referência
-    const firstNumMatch = textBeforeRef.match(/\b([\d]+(?:[.,]\d+)?)\s*(?:mg\/dl|g\/dl|u\/l|ug\/dl|ng\/ml|ui\/l|mm3|mil\/mm3|%|\b)/);
-    if (firstNumMatch && firstNumMatch[1]) {
-      const val = cleanNumber(firstNumMatch[1], paramId);
-      if (val !== null) return val;
+    if (hasAlias) {
+      // Olhar as próximas 3 linhas
+      for (let j = i + 1; j < Math.min(lines.length, i + 4); j++) {
+        const nextNorm = normalizeText(lines[j]);
+        if (isNextHeaderLine(nextNorm)) break;
+
+        const resMatch = nextNorm.match(/(?:resultado|valor\s*(?:encontrado|obtido)?|dosagem)?[:\s=–-]*([\d]+(?:[.,]\d+)?)/i);
+        if (resMatch && resMatch[1]) {
+          if (!nextNorm.includes('referencia') && !nextNorm.includes('desejavel') && !nextNorm.includes('limite') && !nextNorm.includes('inferior')) {
+            const val = parseNum(resMatch[1]);
+            if (val !== null) return val;
+          }
+        }
+      }
+    }
+  }
+
+  // ESTRATÉGIA 4: Varredura de texto contínuo / OCR de PDF
+  for (const alias of aliases) {
+    const escapedAlias = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?:^|[^a-z0-9])${escapedAlias}(?:[^a-z0-9]|$)`, 'gi');
+    let match: RegExpExecArray | null;
+
+    while ((match = regex.exec(normalized)) !== null) {
+      const aliasIndex = match.index + (match[0].startsWith(' ') || /[^a-z0-9]/i.test(match[0][0]) ? 1 : 0);
+      const section = normalized.slice(aliasIndex, Math.min(normalized.length, aliasIndex + 250));
+
+      // Extrai número antes da seção de referência
+      const refIdx = section.search(/\b(?:referencia|val\.?\s*ref|desejavel|valores\s+de)\b/);
+      const targetSub = refIdx !== -1 ? section.slice(0, refIdx) : section;
+
+      const directNum = targetSub.match(/(?:resultado|valor|dosagem|[:=–-])[:\s=–-]*([\d]+(?:[.,]\d+)?)/i);
+      if (directNum && directNum[1]) {
+        const val = parseNum(directNum[1]);
+        if (val !== null) return val;
+      }
+    }
+  }
+
+  // ESTRATÉGIA 5: Fallback quando o exame tem o nome do parâmetro e o texto contém qualquer número válido isolado
+  if (examName && isParamMatchingExamName(paramId, examName)) {
+    const textWithoutDates = normalized.replace(/\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, '');
+    const fallbackNum = textWithoutDates.match(/\b([\d]+(?:[.,]\d+)?)\b/);
+    if (fallbackNum && fallbackNum[1]) {
+      const val = parseNum(fallbackNum[1]);
+      if (val !== null && val < 2000) return val;
     }
   }
 
@@ -421,12 +506,12 @@ export function extractParameterValue(rawText: string, paramId: string): number 
 }
 
 // Parser universal que extrai todos os parâmetros laboratoriais mapeados do laudo
-export function parseExamMetrics(text: string): Record<string, number> {
+export function parseExamMetrics(text: string, examName?: string): Record<string, number> {
   const result: Record<string, number> = {};
-  if (!text) return result;
+  if (!text && !examName) return result;
 
   for (const paramKey of Object.keys(PARAMETER_REFERENCES)) {
-    const val = extractParameterValue(text, paramKey);
+    const val = extractParameterValue(text, paramKey, examName);
     if (val !== null && !isNaN(val)) {
       result[paramKey] = val;
     }
@@ -574,7 +659,7 @@ export function analyzePatientHealth(exams: ExamResult[]): HealthAnalysisSummary
 
   sortedExams.forEach((exam) => {
     const organId = detectOrganForExam(exam.examName);
-    const parsedMetrics = parseExamMetrics(exam.resultData || '');
+    const parsedMetrics = parseExamMetrics(exam.resultData || '', exam.examName);
     const textUpper = (exam.resultData || '').toUpperCase();
 
     // Check textual flags

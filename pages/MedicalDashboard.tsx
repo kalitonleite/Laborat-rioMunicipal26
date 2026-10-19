@@ -191,7 +191,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
       setPatientHistory(mapped);
       // Auto-selecionar o primeiro parâmetro disponível para o gráfico
       if (mapped.length > 0) {
-        const firstValues = parseExamValues(mapped[0].resultData || '');
+        const firstValues = parseExamValues(mapped[0].resultData || '', mapped[0].examName);
         const params = Object.keys(firstValues);
         if (params.length > 0 && !selectedParam) {
           setSelectedParam(params[0]);
@@ -203,12 +203,12 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({ user, onUpdateUser 
     setLoadingHistory(false);
   };
 
-  const parseExamValues = (text: string) => {
+  const parseExamValues = (text: string, examName?: string) => {
     const values: Record<string, number> = {};
-    if (!text) return values;
+    if (!text && !examName) return values;
 
-    // 1. Extração inteligente através do motor clínico de biometria (suporte a triglicérides, glicemia, etc.)
-    const smartMetrics = parseExamMetrics(text);
+    // 1. Extração inteligente através do motor clínico de biometria (suporte a glicose, triglicérides, etc.)
+    const smartMetrics = parseExamMetrics(text, examName);
     Object.assign(values, smartMetrics);
 
     // 2. Extração linha a linha para campos legados

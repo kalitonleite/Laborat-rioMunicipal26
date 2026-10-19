@@ -33,7 +33,7 @@ export const HealthHistoryChart: React.FC<HealthHistoryChartProps> = ({
     const points: Array<{ date: string; timestamp: number; value: number; status: string }> = [];
 
     exams.forEach(exam => {
-      const val = extractParameterValue(exam.resultData || '', selectedParamKey);
+      const val = extractParameterValue(exam.resultData || '', selectedParamKey, exam.examName);
 
       if (val !== null && !isNaN(val)) {
         // Parse date DD/MM/YYYY or YYYY-MM-DD
