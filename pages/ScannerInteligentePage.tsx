@@ -209,31 +209,45 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
   const rotateRight = () => setImageRotation((r) => (r + 90) % 360);
 
   const processOCR = async () => {
-    if (!capturedImage) return;
+    if (!capturedImage) {
+      alert('Nenhuma imagem para processar.');
+      return;
+    }
+
+    if (imageType === 'application/pdf') {
+      alert('PDF não pode ser processado pelo OCR local. Use uma imagem JPG/PNG ou faça upload do PDF para extração manual.');
+      return;
+    }
+
     setIsProcessing(true);
     try {
-      const { data } = await Tesseract.recognize(capturedImage, 'por', {
-        langPath: 'https://tesseract.projectnaptha.com/langdata',
-        corePath: 'https://tesseract.projectnaptha.com/wasm/core.wasm',
+      const worker = await Tesseract.createWorker('por', 1, {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            console.log('OCR progresso:', Math.round(m.progress * 100) + '%');
+          }
+        },
       });
+
+      const { data } = await worker.recognize(capturedImage);
+      await worker.terminate();
 
       const textoCompleto = data.text || '';
 
-      // Tenta extrair linhas que parecem campos de exame (nome: valor unidade)
       const linhas = textoCompleto.split('\n').filter(l => l.trim().length > 0);
       const camposExtraidos: ExtractedField[] = linhas.map((linha) => {
-        const partes = linha.split(/\s+/);
-        const nome = partes.slice(0, -2).join(' ') || linha;
-        const valor = partes[partes.length - 2] || '';
-        const unidade = partes[partes.length - 1] || '';
+        const partes = linha.trim().split(/\s+/);
+        if (partes.length < 2) return null;
+        const nome = partes.slice(0, -1).join(' ');
+        const valor = partes[partes.length - 1];
         return {
           nome: nome.trim(),
           valor: valor.trim(),
-          unidade: unidade.trim(),
+          unidade: '',
           referencia: null,
           confianca: 0.7,
         };
-      }).filter(c => c.nome.length > 0);
+      }).filter((c): c is ExtractedField => c !== null && c.nome.length > 0);
 
       const ocrResult: OCRResult = {
         tipo_exame: null,
@@ -258,7 +272,15 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
       setEditedFields(ocrResult.campos);
     } catch (err: any) {
       console.error('OCR error:', err);
-      alert('Erro ao processar OCR: ' + err.message);
+      let msg = 'Erro ao processar OCR.';
+      if (err.message?.includes('load')) {
+        msg = 'Erro ao carregar os modelos de idioma do Tesseract. Verifique sua internet e tente novamente.';
+      } else if (err.message?.includes('network')) {
+        msg = 'Erro de rede ao baixar modelos do OCR. Tente novamente.';
+      } else {
+        msg = 'Erro ao processar OCR: ' + (err.message || 'erro desconhecido');
+      }
+      alert(msg);
     } finally {
       setIsProcessing(false);
     }
