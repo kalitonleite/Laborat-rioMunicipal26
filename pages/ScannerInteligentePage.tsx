@@ -4,7 +4,6 @@ import { User, UserRole } from '../types';
 import { dbService } from '../services/apiService';
 import { useSettings } from '../contexts/SettingsContext';
 import { jsPDF } from 'jspdf';
-import Tesseract from 'tesseract.js';
 import { Search, Camera, FileText, Image, Save, History, Clock, CheckCircle2, AlertCircle, Download, Plus, RotateCcw, RotateCw, Eye, Edit2, Trash2, User as UserIcon } from 'lucide-react';
 
 type Tab = 'nova' | 'historico' | 'pendentes' | 'laudos';
@@ -215,72 +214,53 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     }
 
     if (imageType === 'application/pdf') {
-      alert('PDF não pode ser processado pelo OCR local. Use uma imagem JPG/PNG ou faça upload do PDF para extração manual.');
+      alert('PDF não pode ser processado pelo OCR via IA. Use uma imagem JPG/PNG.');
       return;
     }
 
     setIsProcessing(true);
     try {
-      const worker = await Tesseract.createWorker('por', 1, {
-        logger: (m) => {
-          if (m.status === 'recognizing text') {
-            console.log('OCR progresso:', Math.round(m.progress * 100) + '%');
-          }
+      const response = await fetch('/api/scanner/ocr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('auth_token')}`
         },
+        body: JSON.stringify({
+          imageDataUrl: capturedImage,
+          mimeType: imageType || 'image/jpeg'
+        })
       });
 
-      const { data } = await worker.recognize(capturedImage);
-      await worker.terminate();
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || 'Erro no OCR');
+      }
 
-      const textoCompleto = data.text || '';
+      const result = await response.json();
+      const extracted = result.extracted;
 
-      const linhas = textoCompleto.split('\n').filter(l => l.trim().length > 0);
-      const camposExtraidos: ExtractedField[] = linhas.map((linha) => {
-        const partes = linha.trim().split(/\s+/);
-        if (partes.length < 2) return null;
-        const nome = partes.slice(0, -1).join(' ');
-        const valor = partes[partes.length - 1];
-        return {
-          nome: nome.trim(),
-          valor: valor.trim(),
-          unidade: '',
-          referencia: null,
-          confianca: 0.7,
-        };
-      }).filter((c): c is ExtractedField => c !== null && c.nome.length > 0);
+      setOcrResult(extracted);
+      setEditedFields((extracted.campos || []).map((f: any) => ({
+        nome: f.nome || '',
+        valor: f.valor || '',
+        unidade: f.unidade || '',
+        referencia: f.referencia || null,
+        confianca: f.confianca || 0
+      })));
 
-      const ocrResult: OCRResult = {
-        tipo_exame: null,
-        paciente_nome: null,
-        paciente_idade: null,
-        paciente_sexo: null,
-        data_exame: null,
-        laboratorio: null,
-        campos: camposExtraidos.length > 0 ? camposExtraidos : [{
-          nome: 'Texto extraído',
-          valor: textoCompleto.substring(0, 100),
-          unidade: '',
-          referencia: null,
-          confianca: 0.5,
-        }],
-        texto_completo: textoCompleto,
-        confianca_geral: 0.7,
-        observacoes: 'OCR processado localmente com Tesseract.js. Revise e corrija os campos manualmente.',
-      };
-
-      setOcrResult(ocrResult);
-      setEditedFields(ocrResult.campos);
+      if (extracted.paciente_nome) {
+        const match = searchResults.find((p: any) =>
+          p.name.toLowerCase().includes(extracted.paciente_nome!.toLowerCase()) ||
+          extracted.paciente_nome!.toLowerCase().includes(p.name.toLowerCase())
+        );
+        if (match) {
+          setSelectedPatient({ id: match.id, name: match.name, cpf: match.cpf });
+        }
+      }
     } catch (err: any) {
       console.error('OCR error:', err);
-      let msg = 'Erro ao processar OCR.';
-      if (err.message?.includes('load')) {
-        msg = 'Erro ao carregar os modelos de idioma do Tesseract. Verifique sua internet e tente novamente.';
-      } else if (err.message?.includes('network')) {
-        msg = 'Erro de rede ao baixar modelos do OCR. Tente novamente.';
-      } else {
-        msg = 'Erro ao processar OCR: ' + (err.message || 'erro desconhecido');
-      }
-      alert(msg);
+      alert('Erro ao processar OCR: ' + (err.message || 'erro desconhecido'));
     } finally {
       setIsProcessing(false);
     }
