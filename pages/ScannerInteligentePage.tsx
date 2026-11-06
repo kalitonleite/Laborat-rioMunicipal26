@@ -390,8 +390,25 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     }
   };
 
-  const generateLaudoPDF = (scan: ScannerScan) => {
-    const extracted = scan.extracted_data || {};
+  const generateLaudoPDF = async (scan?: ScannerScan) => {
+    const targetScan = scan || {
+      id: 'temp',
+      patient_name: selectedPatient?.name || ocrResult?.paciente_nome || 'Não informado',
+      patient_cpf: selectedPatient?.cpf || null,
+      scan_date: new Date().toISOString(),
+      user_name: user.name,
+      status: 'PENDENTE',
+      extracted_data: {
+        tipo_exame: ocrResult?.tipo_exame || null,
+        campos: editedFields,
+        texto_completo: ocrResult?.texto_completo || '',
+        confianca_geral: ocrResult?.confianca_geral || 0,
+        observacoes: ocrResult?.observacoes || '',
+      },
+      confidence_score: ocrResult?.confianca_geral || 0,
+    } as ScannerScan;
+
+    const extracted = targetScan.extracted_data || {};
     const campos = extracted.campos || [];
 
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -427,11 +444,11 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     doc.setFont('helvetica', 'bold');
     doc.text('PACIENTE:', 14, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(scan.patient_name || 'Não informado', 45, yPos);
+    doc.text(targetScan.patient_name || 'Não informado', 45, yPos);
     doc.setFont('helvetica', 'bold');
     doc.text('CPF:', 120, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(scan.patient_cpf || '-', 140, yPos);
+    doc.text(targetScan.patient_cpf || '-', 140, yPos);
 
     yPos += 8;
     doc.setFont('helvetica', 'bold');
@@ -441,17 +458,17 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     doc.setFont('helvetica', 'bold');
     doc.text('DATA:', 120, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(new Date(scan.scan_date).toLocaleDateString('pt-BR'), 140, yPos);
+    doc.text(new Date(targetScan.scan_date).toLocaleDateString('pt-BR'), 140, yPos);
 
     yPos += 8;
     doc.setFont('helvetica', 'bold');
     doc.text('RESPONSÁVEL:', 14, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(scan.user_name || 'Sistema', 45, yPos);
+    doc.text(targetScan.user_name || 'Sistema', 45, yPos);
     doc.setFont('helvetica', 'bold');
     doc.text('STATUS:', 120, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(getStatusLabel(scan.status), 140, yPos);
+    doc.text(getStatusLabel(targetScan.status), 140, yPos);
 
     yPos += 16;
     doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
@@ -502,13 +519,73 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     doc.setTextColor(100, 100, 100);
     doc.setFont('helvetica', 'italic');
     doc.text('Laudo gerado a partir de digitalização com auxílio de OCR.', 14, sigY + 6);
-    doc.text(`Digitalizado em: ${new Date(scan.scan_date).toLocaleDateString('pt-BR')} às ${new Date(scan.scan_date).toLocaleTimeString('pt-BR')}`, 14, sigY + 12);
-    doc.text(`Responsável: ${scan.user_name || 'Sistema'}`, 14, sigY + 18);
+    doc.text(`Digitalizado em: ${new Date(targetScan.scan_date).toLocaleDateString('pt-BR')} às ${new Date(targetScan.scan_date).toLocaleTimeString('pt-BR')}`, 14, sigY + 12);
+    doc.text(`Responsável: ${targetScan.user_name || 'Sistema'}`, 14, sigY + 18);
     doc.line(pageWidth / 2 - 30, sigY + 24, pageWidth / 2 + 30, sigY + 24);
     doc.text('Assinatura do Profissional', pageWidth / 2, sigY + 28, { align: 'center' });
 
-    const filename = `laudo_${scan.id.substring(0, 8)}_${(scan.patient_name || 'paciente').replace(/\s+/g, '_')}.pdf`;
-    doc.save(filename);
+    const pdfBlob = doc.output('blob');
+    const pdfArrayBuffer = await pdfBlob.arrayBuffer();
+    const pdfFile = new File([pdfArrayBuffer], `laudo_${targetScan.id.substring(0, 8)}.pdf`, { type: 'application/pdf' });
+
+    const form = new FormData();
+    form.append('file', pdfFile);
+
+    const uploadResp = await fetch('/api/scanner/upload', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('auth_token')}`
+      },
+      body: form
+    });
+
+    if (!uploadResp.ok) {
+      const errData = await uploadResp.json().catch(() => ({}));
+      throw new Error(errData.error || 'Erro ao fazer upload do PDF');
+    }
+
+    const { url: pdfUrl } = await uploadResp.json();
+
+    if (targetScan.id !== 'temp') {
+      await dbService.from('scanner_scans').update(
+        { status: 'LIBERADO', pdf_url: pdfUrl, approved_by: user.id, approved_at: new Date().toISOString() },
+        { id: targetScan.id }
+      );
+      await dbService.from('scanner_scan_history').insert({
+        scan_id: targetScan.id,
+        field_name: 'status',
+        old_value: targetScan.status,
+        new_value: 'LIBERADO',
+        changed_by: user.id,
+        reason: 'Laudo gerado e liberado'
+      });
+      loadScans();
+      alert('Laudo gerado e liberado com sucesso!');
+    } else {
+      const scanData = {
+        patient_id: selectedPatient?.id || null,
+        patient_name: targetScan.patient_name,
+        patient_cpf: targetScan.patient_cpf,
+        original_image_url: capturedImage || null,
+        image_type: imageType || null,
+        ocr_text: ocrResult?.texto_completo || null,
+        extracted_data: targetScan.extracted_data,
+        confidence_score: targetScan.confidence_score,
+        status: 'LIBERADO',
+        user_id: user.id,
+        user_name: user.name,
+        pdf_url: pdfUrl,
+        approved_by: user.id,
+        approved_at: new Date().toISOString()
+      };
+      const result = await dbService.from('scanner_scans').insert(scanData);
+      if (result && result.length > 0) {
+        loadScans();
+        alert('Laudo gerado e salvo com sucesso!');
+        clearImage();
+        setActiveTab('laudos');
+      }
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -791,6 +868,16 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
                       <p className="text-sm text-amber-600">{ocrResult.observacoes}</p>
                     </div>
                   )}
+
+                  <div className="flex justify-end pt-4">
+                    <button
+                      onClick={() => generateLaudoPDF()}
+                      disabled={isUploading}
+                      className={`bg-blue-600 hover:bg-blue-700 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''} text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-blue-600/20 transition-all flex items-center justify-center gap-2`}
+                    >
+                      <i className="fas fa-file-pdf mr-1"></i> Gerar Laudo PDF
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
