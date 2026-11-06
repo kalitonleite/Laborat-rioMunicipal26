@@ -161,6 +161,12 @@ const ScannerPage: React.FC = () => {
                 >
                     <i className="fas fa-arrow-left mr-2"></i> Painel Administrativo
                 </button>
+                <button
+                    onClick={() => navigate('/scanner-inteligente')}
+                    className="mt-3 text-blue-600 font-black text-[9px] uppercase tracking-widest hover:underline border border-blue-200 px-4 py-2 rounded-xl bg-blue-50"
+                >
+                    <i className="fas fa-robot mr-2"></i> Scanner Inteligente OCR
+                </button>
             </div>
 
             <p className="mt-8 text-[9px] font-black text-gray-300 uppercase tracking-widest">Sistema Laboratorial de Uarini &copy; 2026</p>
