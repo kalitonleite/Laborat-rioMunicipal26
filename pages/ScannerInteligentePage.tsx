@@ -92,6 +92,14 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     loadScans();
   }, [loadScans, activeTab]);
 
+  useEffect(() => {
+    return () => {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [videoStream]);
+
   const handlePatientSearch = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setPatientSearch(val);
@@ -122,15 +130,25 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
   }, []);
 
   const startCamera = useCallback(async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Seu navegador não suporta acesso à câmera. Use upload de arquivo.');
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 } }
       });
       setVideoStream(stream);
       setCameraActive(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Camera error:', err);
-      alert('Não foi possível acessar a câmera. Use upload de arquivo.');
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert('Permissão da câmera não concedida. Permita o acesso e tente novamente.');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        alert('Nenhuma câmera encontrada neste dispositivo. Use upload de arquivo.');
+      } else {
+        alert('Não foi possível acessar a câmera. Use upload de arquivo.');
+      }
     }
   }, []);
 
@@ -558,6 +576,7 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
                   <div className="aspect-video bg-gray-100 rounded-2xl overflow-hidden relative mb-2 border border-gray-200">
                     <video
                       ref={videoRef}
+                      srcObject={videoStream}
                       autoPlay
                       playsInline
                       className="w-full h-full object-cover"
