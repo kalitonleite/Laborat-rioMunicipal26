@@ -4,6 +4,7 @@ import { User, UserRole } from '../types';
 import { dbService } from '../services/apiService';
 import { useSettings } from '../contexts/SettingsContext';
 import { jsPDF } from 'jspdf';
+import Tesseract from 'tesseract.js';
 import { Search, Camera, FileText, Image, Save, History, Clock, CheckCircle2, AlertCircle, Download, Plus, RotateCcw, RotateCw, Eye, Edit2, Trash2, User as UserIcon } from 'lucide-react';
 
 type Tab = 'nova' | 'historico' | 'pendentes' | 'laudos';
@@ -211,44 +212,50 @@ const ScannerInteligentePage: React.FC<{ user: User }> = ({ user }) => {
     if (!capturedImage) return;
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/scanner/ocr', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          imageDataUrl: capturedImage,
-          mimeType: imageType || 'image/jpeg'
-        })
+      const { data } = await Tesseract.recognize(capturedImage, 'por', {
+        langPath: 'https://tesseract.projectnaptha.com/langdata',
+        corePath: 'https://tesseract.projectnaptha.com/wasm/core.wasm',
       });
 
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || 'Erro no OCR');
-      }
+      const textoCompleto = data.text || '';
 
-      const result = await response.json();
-      const extracted = result.extracted;
+      // Tenta extrair linhas que parecem campos de exame (nome: valor unidade)
+      const linhas = textoCompleto.split('\n').filter(l => l.trim().length > 0);
+      const camposExtraidos: ExtractedField[] = linhas.map((linha) => {
+        const partes = linha.split(/\s+/);
+        const nome = partes.slice(0, -2).join(' ') || linha;
+        const valor = partes[partes.length - 2] || '';
+        const unidade = partes[partes.length - 1] || '';
+        return {
+          nome: nome.trim(),
+          valor: valor.trim(),
+          unidade: unidade.trim(),
+          referencia: null,
+          confianca: 0.7,
+        };
+      }).filter(c => c.nome.length > 0);
 
-      setOcrResult(extracted);
-      setEditedFields((extracted.campos || []).map((f: any) => ({
-        nome: f.nome || '',
-        valor: f.valor || '',
-        unidade: f.unidade || '',
-        referencia: f.referencia || null,
-        confianca: f.confianca || 0
-      })));
+      const ocrResult: OCRResult = {
+        tipo_exame: null,
+        paciente_nome: null,
+        paciente_idade: null,
+        paciente_sexo: null,
+        data_exame: null,
+        laboratorio: null,
+        campos: camposExtraidos.length > 0 ? camposExtraidos : [{
+          nome: 'Texto extraído',
+          valor: textoCompleto.substring(0, 100),
+          unidade: '',
+          referencia: null,
+          confianca: 0.5,
+        }],
+        texto_completo: textoCompleto,
+        confianca_geral: 0.7,
+        observacoes: 'OCR processado localmente com Tesseract.js. Revise e corrija os campos manualmente.',
+      };
 
-      if (extracted.paciente_nome) {
-        const match = searchResults.find((p: any) =>
-          p.name.toLowerCase().includes(extracted.paciente_nome!.toLowerCase()) ||
-          extracted.paciente_nome!.toLowerCase().includes(p.name.toLowerCase())
-        );
-        if (match) {
-          setSelectedPatient({ id: match.id, name: match.name, cpf: match.cpf });
-        }
-      }
+      setOcrResult(ocrResult);
+      setEditedFields(ocrResult.campos);
     } catch (err: any) {
       console.error('OCR error:', err);
       alert('Erro ao processar OCR: ' + err.message);
