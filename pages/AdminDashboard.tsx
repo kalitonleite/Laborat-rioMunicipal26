@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, ExamResult, Campaign, UserRole } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import ProfileTab from '../components/ProfileTab';
-import QrDashboardTab from '../components/QrDashboardTab';
 import DashboardTabs, { TabItem } from '../components/DashboardTabs';
 import { maskCPF } from '../services/masks';
 import { dbService } from '../services/apiService';
@@ -1566,23 +1565,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
               </div>
               <p className="text-xs text-gray-400 font-bold text-center py-12">Esta funcionalidade estará disponível em futuras atualizações.</p>
             </div>
-          </div>
-        </div>
-      )}
-      {activeTab === 'qr' && (
-        <div className="space-y-6">
-          <QrDashboardTab />
-          <div className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100 text-center">
-            <h3 className="font-black text-slate-800 text-lg mb-3">Scanner Inteligente OCR</h3>
-            <p className="text-[10px] text-gray-500 mb-6 font-bold uppercase tracking-widest">
-              Transforme resultados laboratoriais impressos em dados digitais
-            </p>
-            <button
-              onClick={() => window.location.hash = '#/scanner-inteligente'}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-[30px] font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-600/20 transition-all flex items-center justify-center gap-2 mx-auto"
-            >
-              <i className="fas fa-robot mr-2"></i> Abrir Scanner Inteligente
-            </button>
           </div>
         </div>
       )}
