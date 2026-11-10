@@ -17,7 +17,7 @@ interface AdminDashboardProps {
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) => {
-  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil' | 'configuracoes' | 'qr'>('geral');
+  const [activeTab, setActiveTab] = useState<'geral' | 'exames' | 'relatorios' | 'campanhas' | 'admins' | 'usuarios' | 'perfil' | 'configuracoes'>('geral');
   const { appLogo, updateLogo } = useSettings();
   const [searchTerm, setSearchTerm] = useState('');
   const [adminSearchTerm, setAdminSearchTerm] = useState('');
@@ -601,7 +601,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
           { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
           { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
-          { id: 'qr', label: 'QR', icon: 'fa-qrcode' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
           { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
         ]}
