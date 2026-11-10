@@ -336,12 +336,6 @@ const QrDashboardTab: React.FC = () => {
                 
                 <div className="mb-8 flex gap-4">
                     <button 
-                         onClick={() => window.open('/#/scanner', '_blank')}
-                         className="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-amber-600/20 transition-all flex items-center justify-center gap-2"
-                    >
-                        <i className="fas fa-camera"></i> ABRIR SCANNER (CELULAR / WEBCAM)
-                    </button>
-                    <button 
                          onClick={() => {
                              if (atendimentoId) {
                                  window.open(`/#/atendimento/${atendimentoId}`, '_blank');

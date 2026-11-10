@@ -601,7 +601,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onUpdateUser }) =
           { id: 'campanhas', label: 'Campanhas', icon: 'fa-bullhorn' },
           { id: 'admins', label: 'Equipe', icon: 'fa-user-shield' },
           { id: 'usuarios', label: 'Usuários', icon: 'fa-users' },
-          { id: 'qr', label: 'Scanner', icon: 'fa-qrcode' },
+          { id: 'qr', label: 'QR', icon: 'fa-qrcode' },
           { id: 'perfil', label: 'Perfil', icon: 'fa-circle-user' },
           { id: 'configuracoes', label: 'Configurações', icon: 'fa-cog' },
         ]}
