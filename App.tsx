@@ -13,8 +13,6 @@ import PatientDashboard from './pages/PatientDashboard';
 import MedicalDashboard from './pages/MedicalDashboard';
 import ReceptionDashboard from './pages/ReceptionDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import ScannerPage from './pages/ScannerPage';
-import ScannerInteligentePage from './pages/ScannerInteligentePage';
 import AtendimentoPage from './pages/AtendimentoPage';
 import AdminCarteirinha from './pages/AdminCarteirinha';
 import CarteirinhaPage from './pages/CarteirinhaPage';
@@ -185,17 +183,6 @@ const App: React.FC = () => {
             }
           />
 
-          <Route path="/scanner" element={<ScannerPage />} />
-          <Route
-            path="/scanner-inteligente"
-            element={
-              <ProtectedRoute user={user} allowedRoles={[UserRole.ADMIN, UserRole.MEDICAL, UserRole.RECEPTION]}>
-                <Layout user={user!} onLogout={signOut}>
-                  <ScannerInteligentePage user={user!} />
-                </Layout>
-              </ProtectedRoute>
-            }
-          />
           <Route path="/atendimento/:id" element={<AtendimentoPage />} />
           
           {/* Carteirinha Digital Routes */}
